@@ -24,7 +24,8 @@
             "ngswConfigPath": "ngsw-config.json",
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+            "polyfills": ["zone.js"]
           },
           "configurations": {
             "production": {
@@ -50,6 +51,6 @@
     }
   },
   "cli": {
-    "analytics": "b256734a-3a61-4b50-8221-d8d40b4922f6"
+    "analytics": "24a71072-30fa-4a57-b4e0-795ce00cc1eb"
   }
 }

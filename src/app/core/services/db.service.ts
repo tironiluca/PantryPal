@@ -18,6 +18,7 @@ export class DbService {
   async init(): Promise<void> {
     try {
       this.SQL = await initSqlJs({ locateFile: (file: string) => new URL(`assets/${file}`, document.baseURI).toString() });
+      // this.SQL = await initSqlJs({ locateFile: (file: string) => `assets/${file}` });
       const file = await this.readFromOPFS(DB_FILE);
       this.db = new this.SQL.Database(file ?? undefined);
       this.migrate();
@@ -151,7 +152,7 @@ export class DbService {
     } else if ('createWritable' in handle) {
       // @ts-ignore
       const writable = await (handle as any).createWritable();
-      await writable.write(new Blob([data]));
+      await writable.write(data);
       await writable.close();
     } else {
       // Fallback: localStorage (very small, last resort)

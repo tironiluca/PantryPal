@@ -152,7 +152,7 @@ export class DbService {
     } else if ('createWritable' in handle) {
       // @ts-ignore
       const writable = await (handle as any).createWritable();
-      await writable.write(data);
+      await writable.write(data as Uint8Array);
       await writable.close();
     } else {
       // Fallback: localStorage (very small, last resort)

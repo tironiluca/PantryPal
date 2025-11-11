@@ -6,12 +6,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { DbService } from '../../core/services/db.service';
+import { OcrService } from '../../core/services/ocr.service';
+import { BarcodeService } from '../../core/services/barcode.service';
+import { ProductsService } from '../../core/services/products.service';
+import { MatIconModule } from '@angular/material/icon';
 import { InventoryItem } from '../../core/models/inventory.model';
 
 @Component({
   standalone: true,
   selector: 'pp-inventory-edit-dialog',
-  imports: [CommonModule, FormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
   template: `
   <h2 mat-dialog-title>{{model?.id ? 'Edit' : 'Add'}} Item</h2>
   <div mat-dialog-content class="form">
@@ -27,9 +31,17 @@ import { InventoryItem } from '../../core/models/inventory.model';
     <mat-form-field appearance="outline"><mat-label>Min Restock</mat-label>
       <input matInput type="number" [(ngModel)]="model.minRestock">
     </mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Barcode</mat-label>
+      <input matInput [(ngModel)]="model.barcode">
+    </mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Expiry (YYYY-MM-DD)</mat-label>
       <input matInput [(ngModel)]="model.expiry">
     </mat-form-field>
+  </div>
+  <div class="extras">
+    <button mat-stroked-button (click)="scanBarcode()"><mat-icon>qr_code_scanner</mat-icon>&nbsp;Scan barcode</button>
+    <input type="file" (change)="onFile($event)" accept="image/*" />
+    <button mat-stroked-button (click)="fetchProduct()" [disabled]="!model.barcode">Fetch product</button>
   </div>
   <div mat-dialog-actions>
     <button mat-button (click)="close()">Cancel</button>
@@ -38,7 +50,7 @@ import { InventoryItem } from '../../core/models/inventory.model';
   `,
   styles: [`.form{display:grid;gap:12px;min-width:280px}`]
 })
-export class InventoryEditDialog {
+export class InventoryEditDialog { private ocr = inject(OcrService); private barcode = inject(BarcodeService); private products = inject(ProductsService);
   private db = inject(DbService);
   model: any = {
     id: '', ingredientId: '', quantity: 1, unit: 'pcs', minRestock: 1, expiry: ''
@@ -64,5 +76,33 @@ export class InventoryEditDialog {
     }
     this.ref.close(true);
   }
-  close() { this.ref.close(false); }
+
+  close() { 
+    this.ref.close(false);
+   }
+
+
+
+  async onFile(ev: any){
+    const f = ev.target?.files?.[0];
+    if (!f) return;
+    const iso = await this.ocr.extractExpiry(f);
+    if (iso) this.model.expiry = iso;
+  }
+
+  async scanBarcode(){
+    try {
+      const v = document.createElement('video');
+      const code = await this.barcode.scan(v);
+      if (code) this.model.barcode = code;
+    } catch (e) { console.warn(e); }
+  }
+
+  async fetchProduct(){
+    if (!this.model.barcode) return;
+    this.products.byBarcode(this.model.barcode).subscribe((res:any)=>{
+      const name = res?.product?.product_name || res?.product?.generic_name;
+      if (name && !this.model.ingredientId) this.model.ingredientId = name.toLowerCase().replace(/\s+/g,'-').slice(0,30);
+    });
+  }
 }

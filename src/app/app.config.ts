@@ -1,5 +1,5 @@
 // app.config.ts
-import { ApplicationConfig, APP_INITIALIZER, inject } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER, inject, isDevMode } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withFetch } from '@angular/common/http';
@@ -25,7 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
     provideAnimations(),
-    provideServiceWorker('ngsw-worker.js', { enabled: true }),
+    provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() }),
     { provide: APP_INITIALIZER, multi: true, useFactory: initAppFactory },
   ]
 };

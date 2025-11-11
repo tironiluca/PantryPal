@@ -1,0 +1,55 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "pantrypal": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/pantrypal",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/manifest.webmanifest"
+            ],
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json",
+            "styles": [
+              "src/styles.scss"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all"
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "pantrypal:build"
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "b256734a-3a61-4b50-8221-d8d40b4922f6"
+  }
+}

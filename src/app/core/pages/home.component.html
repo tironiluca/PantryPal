@@ -1,0 +1,25 @@
+<section class="home-shell">
+  <header class="hero">
+    <h1>PantryPal Hub</h1>
+  </header>
+
+  <mat-tab-nav-panel #featurePanel>
+    <router-outlet></router-outlet>
+  </mat-tab-nav-panel>
+
+  <nav mat-tab-nav-bar mat-stretch-tabs [tabPanel]="featurePanel" style="border: 1px 0px 0px 0px solid black;">
+    <a
+      mat-tab-link
+      *ngFor="let tab of tabs"
+      [routerLink]="tab.route"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [routerLinkActiveOptions]="{ exact: true }"
+      [active]="rla.isActive">
+      <mat-icon aria-hidden="true" style="margin: 3px;;">{{ tab.icon }}</mat-icon>
+      <span class="labels" [matTooltip]="tab.description">
+        <span class="primary">{{ tab.label }}</span>
+      </span>
+    </a>
+  </nav>
+</section>

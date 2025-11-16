@@ -1,0 +1,67 @@
+    :host {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 64px);
+        // background: var(--mat-sys-surface, #fafafa);
+    }
+
+    .home-shell {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .hero {
+        padding: 2rem 1.5rem 1rem;
+        text-align: center;
+    }
+
+    .hero h1 {
+        margin: 0 0 .35rem;
+        font-weight: 600;
+    }
+
+    .hero p {
+        margin: 0;
+        color: rgba(0, 0, 0, .6);
+    }
+
+    nav[mat-tab-nav-bar] {
+        padding: 0 1rem;
+        border-bottom: none;
+    }
+
+    nav[mat-tab-nav-bar] a[mat-tab-link] {
+        gap: .65rem;
+        text-transform: none;
+        font-size: .95rem;
+        padding: .5rem 1rem;
+    }
+
+    nav[mat-tab-nav-bar] mat-icon {
+        font-size: 1.25rem;
+    }
+
+    nav[mat-tab-nav-bar] .labels {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+        text-align: left;
+    }
+
+    nav[mat-tab-nav-bar] .primary {
+        font-weight: 600;
+    }
+
+    nav[mat-tab-nav-bar] .secondary {
+        font-size: .75rem;
+        opacity: .72;
+    }
+
+    mat-tab-nav-panel {
+        flex: 1;
+        height: 100%;
+        padding: 1rem;
+        overflow: auto;
+    }

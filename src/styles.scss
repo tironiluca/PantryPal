@@ -11,6 +11,10 @@ html.dark-theme {
     @include mat.all-component-colors($dark-theme);
 }
 
+.mat-typography {
+    background-color: #ddd;
+}
+
 .dark-theme {
     .mat-typography {
         background-color: #333;

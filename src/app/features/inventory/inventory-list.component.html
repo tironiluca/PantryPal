@@ -1,0 +1,31 @@
+<div class="container">
+    <table mat-table [dataSource]="rows" class="mat-elevation-z1" *ngIf="rows">
+        <ng-container matColumnDef="ingredientId">
+            <th mat-header-cell *matHeaderCellDef>Ingredient</th>
+            <td mat-cell *matCellDef="let r">{{r.ingredientId}}</td>
+        </ng-container>
+        <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef>Qty</th>
+            <td mat-cell *matCellDef="let r">{{r.quantity}} {{r.unit}}</td>
+        </ng-container>
+        <ng-container matColumnDef="expiry">
+            <th mat-header-cell *matHeaderCellDef>Expiry</th>
+            <td mat-cell *matCellDef="let r">{{r.expiry || '-'}}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let r">
+                <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
+            </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: cols;"></tr>
+    </table>
+    @if (!rows.length) {
+    <p>No items yet.</p>}
+
+    <button mat-fab color="primary" class="fab" (click)="add()">
+        <mat-icon>add</mat-icon>
+    </button>
+</div>

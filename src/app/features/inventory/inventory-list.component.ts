@@ -18,8 +18,7 @@ import { InventoryEditDialog } from "./inventory-edit/inventory-edit.dialog";
     MatIconModule,
     MatDialogModule,
   ],
-  templateUrl: './inventory-list.component.html',
-  styleUrls: ['./inventory-list.component.scss']
+  templateUrl: './inventory-list.component.html'
 })
 export class InventoryListComponent {
   private db = inject(DbService);

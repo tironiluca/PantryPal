@@ -12,3 +12,11 @@ Open http://localhost:4200 — you should see an Inventory table with Add/Edit/D
 - This starter includes a **sql.js** (SQLite/wasm) integration with OPFS persistence. If the `sql-wasm.wasm` asset is not found, the app automatically falls back to an in-memory store so you can still try CRUD immediately.
 - To enable SQLite persistence, download `sql-wasm.wasm` from the `sql.js` package and place it in `src/assets/`.
 - PWA service worker is enabled. Use an HTTPS origin or `localhost` for notifications.
+
+### Formatting
+Use Prettier to keep Angular templates, TypeScript, and SCSS indented consistently:
+
+```bash
+npm run format       # writes fixes
+npm run format:check # verifies formatting
+```

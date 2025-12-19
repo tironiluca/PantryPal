@@ -45,6 +45,20 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "buildTarget": "pantrypal:build"
+          },
+          "configurations": {
+            "stable-live": {
+              "liveReload": true,
+              "watch": true,
+              "hmr": false,
+              "poll": 2000,
+              "publicHost": "localhost:4200",
+              "allowedHosts": [
+                "localhost",
+                "127.0.0.1"
+              ],
+              "forceEsbuild": true
+            }
           }
         }
       }

@@ -5,8 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { DbService } from '../../core/services/db.service';
-import { Ingredient } from '../../core/models/ingredient.model';
+import { DbService } from '../../../core/services/db.service';
+import { Ingredient } from '../../../core/models/ingredient.model';
 
 @Component({
   standalone: true,

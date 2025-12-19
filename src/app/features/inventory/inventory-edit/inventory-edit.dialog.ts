@@ -28,16 +28,7 @@ import { InventoryItem } from "../../../core/models/inventory.model";
     MatButtonModule,
     MatIconModule,
   ],
-  templateUrl: './inventory-edit.dialog.html',
-  styles: [
-    `
-      .form {
-        display: grid;
-        gap: 12px;
-        min-width: 280px;
-      }
-    `,
-  ],
+  templateUrl: './inventory-edit.dialog.html'
 })
 export class InventoryEditDialog {
 

@@ -1,0 +1,885 @@
+Node.js version v25.1.0 detected.
+Odd numbered Node.js versions will not enter LTS status and should not be used for production. For more information, please see https://nodejs.org/en/about/previous-releases/.
+- Generating browser application bundles (phase: setup)...
+    [webpack.cache.PackFileCacheStrategy] No pack exists at c:\Project\PantryPal\.angular\cache\20.3.9\angular-webpack\e3cb93338d8e32ddcaa0a2529b993aebc2fefe9a.pack: Error: ENOENT: no such file or directory, stat 'c:\Project\PantryPal\.angular\cache\20.3.9\angular-webpack\e3cb93338d8e32ddcaa0a2529b993aebc2fefe9a\index.pack'
+<t> [webpack.cache.PackFileCacheStrategy] restore cache container: 1465.0181 ms
+- Generating index html...
+    [IdleFileCachePlugin] Initial cache was generated and cache will be persisted in 5s.
+√ Browser application bundle generation complete.
+asset main.js 755 KiB {461}, {792} [emitted] (name: main)
+asset assets/node_modules/sql.js/dist/sql-wasm.wasm 644 KiB [emitted] [from: src/assets/node_modules/sql.js/dist/sql-wasm.wasm] [copied]
+asset assets/sql-wasm.wasm 644 KiB [emitted] [from: src/assets/sql-wasm.wasm] [copied]
+asset 709.js 428 KiB {709} [emitted] (name: features-inventory-inventory-routes)
+asset 768.js 131 KiB {768} [emitted] (name: features-inventory-inventory-routes) (id hint: default)
+asset styles.css 84.1 KiB {869} [emitted] (name: styles)
+asset 3rdpartylicenses.txt 53.1 KiB [emitted]
+asset polyfills.js 34 KiB {461} [emitted] (name: polyfills)
+asset 417.js 32.2 KiB {417} [emitted] (name: features-inventory-inventory-routes) (id hint: default)
+asset 511.js 28.5 KiB {511} [emitted] (name: features-cart-cart-routes)
+asset 954.js 25 KiB {954} [emitted] (name: features-settings-settings-routes)
+asset 242.js 7.7 KiB {242} [emitted] (name: features-recipes-recipes-routes)
+asset 984.js 6.84 KiB {984} [emitted] (name: features-ingredients-ingredients-routes)
+asset 596.js 5.29 KiB {596} [emitted] (name: features-recipes-recipes-routes) (id hint: default)
++ 2 assets
+Entrypoint main 758 KiB = runtime.js 2.77 KiB main.js 755 KiB
+Entrypoint polyfills 36.8 KiB = runtime.js 2.77 KiB polyfills.js 34 KiB
+Entrypoint styles 86.8 KiB = runtime.js 2.77 KiB styles.css 84.1 KiB
+chunk {121} (runtime: runtime) runtime.js (runtime) 7.64 KiB [entry] [rendered]
+  runtime modules 7.64 KiB 15 modules
+chunk {242} (runtime: runtime) 242.js (features-recipes-recipes-routes) 16.9 KiB [rendered]
+  ./src/app/features/recipes/recipes.routes.ts + 3 modules [1242] 16.9 KiB {242} [built] [code generated]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/card.mjs: Module ./node_modules/@angular/material/fesm2022/card.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) features-recipes-recipes-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/dialog-module.mjs: Module ./node_modules/@angular/material/fesm2022/dialog-module.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field-module.mjs: Module ./node_modules/@angular/material/fesm2022/form-field-module.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field2.mjs: Module ./node_modules/@angular/material/fesm2022/form-field2.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/input.mjs: Module ./node_modules/@angular/material/fesm2022/input.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/table.mjs: Module ./node_modules/@angular/material/fesm2022/table.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/router/fesm2022/router_module.mjs: Module ./node_modules/@angular/router/fesm2022/router_module.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    import() ./features/recipes/recipes.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 21:24-67
+chunk {417} (runtime: runtime) 417.js (features-inventory-inventory-routes) (id hint: default) 274 KiB [rendered] split chunk (cache group: default)
+  ./node_modules/@angular/forms/fesm2022/forms.mjs [9417] 274 KiB {417} [built] [code generated]
+    [only some exports used: DefaultValueAccessor, FormGroupDirective, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgControl, NgControlStatus, NgForm, NgModel, NumberValueAccessor, Validators]
+    Statement (ExpressionStatement) with side effects in source code at 77:13-79:5
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/forkJoin.js: Module ./node_modules/rxjs/dist/esm/internal/observable/forkJoin.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/from.js: Module ./node_modules/rxjs/dist/esm/internal/observable/from.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/map.js: Module ./node_modules/rxjs/dist/esm/internal/operators/map.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/location.mjs: Module ./node_modules/@angular/common/fesm2022/location.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/resource.mjs: Module ./node_modules/@angular/core/fesm2022/resource.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    [inactive] harmony side effect evaluation @angular/forms [511] ./src/app/features/cart/cart.routes.ts + 5 modules ./node_modules/@angular/material/fesm2022/list.mjs 143:0-51
+    harmony import specifier @angular/forms [511] ./src/app/features/cart/cart.routes.ts + 5 modules ./node_modules/@angular/material/fesm2022/list.mjs 1173:11-28
+    [inactive] harmony side effect evaluation @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 4:0-45
+    [inactive] harmony side effect evaluation @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 11:0-37
+    harmony import specifier @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:35-46
+    harmony import specifier @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:48-71
+    harmony import specifier @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:73-95
+    harmony import specifier @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:97-115
+    harmony import specifier @angular/forms [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:117-127
+    [inactive] harmony side effect evaluation @angular/forms [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 5:0-45
+    [inactive] harmony side effect evaluation @angular/forms [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 16:0-37
+    harmony import specifier @angular/forms [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:35-46
+    harmony import specifier @angular/forms [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:48-71
+    harmony import specifier @angular/forms [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:73-95
+    + 16 reasons
+chunk {461} (runtime: runtime) polyfills.js (polyfills) 113 KiB [initial] [rendered]
+  ./node_modules/zone.js/fesm2015/zone.js [6935] 113 KiB {461} {792} [built] [code generated]
+    [no exports used]
+    Statement (VariableDeclaration) with side effects in source code at 661:0-71
+    ModuleConcatenation bailout: Module is not an ECMAScript module
+    harmony side effect evaluation zone.js [2277] ./src/main.ts + 20 modules ./src/main.ts 1:0-17
+    entry zone.js polyfills
+chunk {511} (runtime: runtime) 511.js (features-cart-cart-routes) 133 KiB [rendered]
+  ./src/app/features/cart/cart.routes.ts + 5 modules [511] 133 KiB {511} [built] [code generated]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subscription.js: Module ./node_modules/rxjs/dist/esm/internal/Subscription.js is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/merge.js: Module ./node_modules/rxjs/dist/esm/internal/observable/merge.js is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js: Module ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/coercion.mjs: Module ./node_modules/@angular/cdk/fesm2022/coercion.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/observers.mjs: Module ./node_modules/@angular/cdk/fesm2022/observers.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/shadow-dom.mjs: Module ./node_modules/@angular/cdk/fesm2022/shadow-dom.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/style-loader.mjs: Module ./node_modules/@angular/cdk/fesm2022/style-loader.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/animation.mjs: Module ./node_modules/@angular/material/fesm2022/animation.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/ripple-module.mjs: Module ./node_modules/@angular/material/fesm2022/ripple-module.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/ripple.mjs: Module ./node_modules/@angular/material/fesm2022/ripple.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/structural-styles.mjs: Module ./node_modules/@angular/material/fesm2022/structural-styles.mjs is not in the same chunk(s) (expected in chunk(s) features-cart-cart-routes, module is in chunk(s) main)
+    import() ./features/cart/cart.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 24:24-61
+chunk {596} (runtime: runtime) 596.js (features-recipes-recipes-routes) (id hint: default) 20.4 KiB [rendered] split chunk (cache group: default)
+  ./node_modules/@angular/material/fesm2022/card.mjs [5596] 20.4 KiB {596} [built] [code generated]
+    [only some exports used: MatCard, MatCardModule]
+    Statement (VariableDeclaration) with side effects in source code at 13:0-75
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-recipes-recipes-routes, module is in chunk(s) main)
+    [inactive] harmony side effect evaluation @angular/material/card [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/meal-of-day.component.ts 3:0-55
+    [inactive] harmony side effect evaluation @angular/material/card [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/meal-of-day.component.ts 7:0-45
+    harmony import specifier @angular/material/card [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/meal-of-day.component.ts 86:44-57
+    harmony import specifier @angular/material/card [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/meal-of-day.component.ts 86:59-69
+    [inactive] harmony side effect evaluation @angular/material/card [6954] ./src/app/features/settings/settings.routes.ts + 3 modules ./src/app/features/settings/settings.component.ts 3:0-55
+    [inactive] harmony side effect evaluation @angular/material/card [6954] ./src/app/features/settings/settings.routes.ts + 3 modules ./src/app/features/settings/settings.component.ts 7:0-45
+    harmony import specifier @angular/material/card [6954] ./src/app/features/settings/settings.routes.ts + 3 modules ./src/app/features/settings/settings.component.ts 37:35-48
+    harmony import specifier @angular/material/card [6954] ./src/app/features/settings/settings.routes.ts + 3 modules ./src/app/features/settings/settings.component.ts 37:50-60
+chunk {709} (runtime: runtime) 709.js (features-inventory-inventory-routes) 1.28 MiB [rendered]
+  dependent modules 54 KiB [dependent] 24 modules
+  ./src/app/features/inventory/inventory.routes.ts + 213 modules [709] 1.23 MiB {709} [built] [code generated]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/tesseract.js/src/index.js: Module is not an ECMAScript module
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/module.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/dialog-module.mjs: Module ./node_modules/@angular/material/fesm2022/dialog-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field-module.mjs: Module ./node_modules/@angular/material/fesm2022/form-field-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field2.mjs: Module ./node_modules/@angular/material/fesm2022/form-field2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/input.mjs: Module ./node_modules/@angular/material/fesm2022/input.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/table.mjs: Module ./node_modules/@angular/material/fesm2022/table.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js: Module ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    import() ./features/inventory/inventory.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 15:24-71
+chunk {768} (runtime: runtime) 768.js (features-inventory-inventory-routes) (id hint: default) 373 KiB [rendered] split chunk (cache group: default)
+  dependent modules 94.3 KiB [dependent] 2 modules
+  ./node_modules/@angular/material/fesm2022/dialog-module.mjs + 1 modules [1585] 80.4 KiB {768} [built] [code generated]
+    [only some exports used: MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogModule, MatDialogRef, MatDialogTitle]
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/defer.js: Module ./node_modules/rxjs/dist/esm/internal/observable/defer.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/merge.js: Module ./node_modules/rxjs/dist/esm/internal/observable/merge.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/filter.js: Module ./node_modules/rxjs/dist/esm/internal/operators/filter.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/startWith.js: Module ./node_modules/rxjs/dist/esm/internal/operators/startWith.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/take.js: Module ./node_modules/rxjs/dist/esm/internal/operators/take.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/directionality.mjs: Module ./node_modules/@angular/cdk/fesm2022/directionality.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/id-generator.mjs: Module ./node_modules/@angular/cdk/fesm2022/id-generator.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/portal.mjs: Module ./node_modules/@angular/cdk/fesm2022/portal.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/scrolling.mjs: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/shadow-dom.mjs: Module ./node_modules/@angular/cdk/fesm2022/shadow-dom.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/animation.mjs: Module ./node_modules/@angular/material/fesm2022/animation.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 47:82-97 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 47:121-136 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:129-144 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:146-163 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:165-184 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:186-205 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 148:27-36 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:297-312 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 88:81-96 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 88:120-135 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:129-144 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:146-163 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:165-184 (skipped side-effect-free modules)
+    harmony import specifier @angular/material/dialog [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:186-205 (skipped side-effect-free modules)
+    + 10 reasons
+  ./node_modules/@angular/material/fesm2022/input.mjs + 5 modules [3889] 45.9 KiB {768} [built] [code generated]
+    [only some exports used: MatInput, MatInputModule]
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/empty.js: Module ./node_modules/rxjs/dist/esm/internal/observable/empty.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/coercion.mjs: Module ./node_modules/@angular/cdk/fesm2022/coercion.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/id-generator.mjs: Module ./node_modules/@angular/cdk/fesm2022/id-generator.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/style-loader.mjs: Module ./node_modules/@angular/cdk/fesm2022/style-loader.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/resource.mjs: Module ./node_modules/@angular/core/fesm2022/resource.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field-module.mjs: Module ./node_modules/@angular/material/fesm2022/form-field-module.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/recipes/recipe-edit.dialog.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field2.mjs: Module ./node_modules/@angular/material/fesm2022/form-field2.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/recipes/recipe-edit.dialog.ts
+    [inactive] harmony side effect evaluation @angular/material/input [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 6:0-57
+    [inactive] harmony side effect evaluation @angular/material/input [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 13:0-46
+    harmony import specifier @angular/material/input [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:257-271
+    harmony import specifier @angular/material/input [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-edit.dialog.ts 132:273-284
+    [inactive] harmony side effect evaluation @angular/material/input [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 7:0-57
+    [inactive] harmony side effect evaluation @angular/material/input [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 18:0-46
+    harmony import specifier @angular/material/input [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:257-271
+    harmony import specifier @angular/material/input [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts 231:273-284
+    [inactive] harmony side effect evaluation @angular/material/input [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/recipe-edit.dialog.ts 6:0-57
+    [inactive] harmony side effect evaluation @angular/material/input [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/recipe-edit.dialog.ts 13:0-46
+    harmony import specifier @angular/material/input [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/recipe-edit.dialog.ts 120:233-247
+    harmony import specifier @angular/material/input [1242] ./src/app/features/recipes/recipes.routes.ts + 3 modules ./src/app/features/recipes/recipe-edit.dialog.ts 120:249-260
+  ./node_modules/@angular/material/fesm2022/table.mjs + 4 modules [6192] 153 KiB {768} [built] [code generated]
+    [only some exports used: MatCell, MatCellDef, MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef, MatTable, MatTableModule]
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js: Module ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/ConnectableObservable.js: Module ./node_modules/rxjs/dist/esm/internal/observable/ConnectableObservable.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/combineLatest.js: Module ./node_modules/rxjs/dist/esm/internal/observable/combineLatest.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/merge.js: Module ./node_modules/rxjs/dist/esm/internal/observable/merge.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/of.js: Module ./node_modules/rxjs/dist/esm/internal/observable/of.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/map.js: Module ./node_modules/rxjs/dist/esm/internal/operators/map.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js: Module ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/util/isObservable.js: Module ./node_modules/rxjs/dist/esm/internal/util/isObservable.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/directionality.mjs: Module ./node_modules/@angular/cdk/fesm2022/directionality.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/scrolling.mjs: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    [inactive] harmony side effect evaluation @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 3:0-57
+    [inactive] harmony side effect evaluation @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 11:0-46
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:44-58
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:60-71
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:73-92
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:94-112
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:114-129
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:131-144
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:146-158
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:160-176
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:178-188
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:190-205
+    harmony import specifier @angular/material/table [6984] ./src/app/features/ingredients/ingredients.routes.ts + 2 modules ./src/app/features/ingredients/ingredient-list.component.ts 199:207-216
+    [inactive] harmony side effect evaluation @angular/material/table [709] ./src/app/features/inventory/inventory.routes.ts + 213 modules ./src/app/features/inventory/inventory-list.component.ts 3:0-57
+    + 25 reasons
+chunk {792} (runtime: runtime) main.js (main) 3.63 MiB [initial] [rendered]
+  dependent modules 3.12 MiB [dependent] 121 modules
+  ./src/main.ts + 20 modules [2277] 526 KiB {792} [built] [code generated]
+    [no exports used]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is referenced from different chunks by these modules: ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/theme.service.ts: Module ./src/app/core/services/theme.service.ts is referenced from different chunks by these modules: ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js: Module ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Observable.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subscription.js: Module ./node_modules/rxjs/dist/esm/internal/Subscription.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/empty.js: Module ./node_modules/rxjs/dist/esm/internal/observable/empty.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/merge.js: Module ./node_modules/rxjs/dist/esm/internal/observable/merge.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/of.js: Module ./node_modules/rxjs/dist/esm/internal/observable/of.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/timer.js: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/debounceTime.js: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/filter.js: Module ./node_modules/rxjs/dist/esm/internal/operators/filter.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/map.js: Module ./node_modules/rxjs/dist/esm/internal/operators/map.js is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/skip.js: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/startWith.js: Module ./node_modules/rxjs/dist/esm/internal/operators/startWith.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/switchMap.js: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/take.js: Module ./node_modules/rxjs/dist/esm/internal/operators/take.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js: Module ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/util/isObservable.js: Module ./node_modules/rxjs/dist/esm/internal/util/isObservable.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/util/noop.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/zone.js/fesm2015/zone.js: Module is not an ECMAScript module
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/coercion.mjs: Module ./node_modules/@angular/cdk/fesm2022/coercion.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/directionality.mjs: Module ./node_modules/@angular/cdk/fesm2022/directionality.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/id-generator.mjs: Module ./node_modules/@angular/cdk/fesm2022/id-generator.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/observers.mjs: Module ./node_modules/@angular/cdk/fesm2022/observers.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/observers/private.mjs: Module ./node_modules/@angular/cdk/fesm2022/observers/private.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/passive-listeners.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/portal.mjs: Module ./node_modules/@angular/cdk/fesm2022/portal.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/private.mjs: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/scrolling.mjs: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/style-loader.mjs: Module ./node_modules/@angular/cdk/fesm2022/style-loader.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/typeahead.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/location.mjs: Module ./node_modules/@angular/common/fesm2022/location.mjs is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/module.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/xhr.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/internal-form-field.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/resource.mjs: Module ./node_modules/@angular/core/fesm2022/resource.mjs is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/error-options.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input-value-accessor.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs, ./src/app/core/services/barcode.service.ts, ./src/app/core/services/ocr.service.ts, ./src/app/core/services/products.service.ts, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/animation.mjs: Module ./node_modules/@angular/material/fesm2022/animation.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/ripple.mjs: Module ./node_modules/@angular/material/fesm2022/ripple.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/structural-styles.mjs: Module ./node_modules/@angular/material/fesm2022/structural-styles.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/router/fesm2022/router2.mjs: Module ./node_modules/@angular/router/fesm2022/router_module.mjs is referenced from different chunks by these modules: ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/router/fesm2022/router_module.mjs: Module ./node_modules/@angular/router/fesm2022/router_module.mjs is referenced from different chunks by these modules: ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js: Module ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js is referenced from different chunks by these modules: ./src/app/core/services/barcode.service.ts, ./src/app/core/services/ocr.service.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts
+    entry c:\Project\PantryPal\src\main.ts main
+chunk {869} (runtime: runtime) styles.css (styles) 50 bytes (javascript) 88.8 KiB (css/mini-extract) [initial] [rendered]
+  dependent modules 88.8 KiB [dependent] 1 module
+  ./src/styles.scss?ngGlobalStyle [7888] 50 bytes {869} [built] [code generated]
+    [no exports used]
+    entry c:\Project\PantryPal\src\styles.scss?ngGlobalStyle styles
+chunk {954} (runtime: runtime) 954.js (features-settings-settings-routes) 36.4 KiB [rendered]
+  ./src/app/features/settings/settings.routes.ts + 3 modules [6954] 36.4 KiB {954} [built] [code generated]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/theme.service.ts: Module ./src/app/core/services/theme.service.ts is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/id-generator.mjs: Module ./node_modules/@angular/cdk/fesm2022/id-generator.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/style-loader.mjs: Module ./node_modules/@angular/cdk/fesm2022/style-loader.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/animation.mjs: Module ./node_modules/@angular/material/fesm2022/animation.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/card.mjs: Module ./node_modules/@angular/material/fesm2022/card.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) features-recipes-recipes-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/ripple.mjs: Module ./node_modules/@angular/material/fesm2022/ripple.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/structural-styles.mjs: Module ./node_modules/@angular/material/fesm2022/structural-styles.mjs is not in the same chunk(s) (expected in chunk(s) features-settings-settings-routes, module is in chunk(s) main)
+    import() ./features/settings/settings.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 27:24-69
+chunk {984} (runtime: runtime) 984.js (features-ingredients-ingredients-routes) 15.4 KiB [rendered]
+  ./src/app/features/ingredients/ingredients.routes.ts + 2 modules [6984] 15.4 KiB {984} [built] [code generated]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/dialog-module.mjs: Module ./node_modules/@angular/material/fesm2022/dialog-module.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field-module.mjs: Module ./node_modules/@angular/material/fesm2022/form-field-module.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field2.mjs: Module ./node_modules/@angular/material/fesm2022/form-field2.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/input.mjs: Module ./node_modules/@angular/material/fesm2022/input.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/table.mjs: Module ./node_modules/@angular/material/fesm2022/table.mjs is not in the same chunk(s) (expected in chunk(s) features-ingredients-ingredients-routes, module is in chunk(s) )
+    import() ./features/ingredients/ingredients.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 18:24-75
+  
+
+LOG from webpack.Compilation
+<t> runtime requirements.modules: 0.0889 ms
+<t> runtime requirements.chunks: 0.0787 ms
+<t> runtime requirements.entries: 0.4413 ms
+<t> compute affected modules: 0.0022 ms
+<t> finish modules: 18.7106 ms
+<t> report dependency errors and warnings: 6.3462 ms
+<t> optimize dependencies: 69.9987 ms
+<t> create chunks: 7.0226 ms
+<t> compute affected modules with chunk graph: 0.0021 ms
+<t> optimize: 37.2188 ms
+    160 modules hashed, 0 from cache (0.26 variants per module in average)
+<t> module hashing: 9.5624 ms
+    100% code generated (160 generated, 0 from cache)
+<t> code generation: 228.3286 ms
+<t> runtime requirements.modules: 0.4172 ms
+<t> runtime requirements.chunks: 0.0857 ms
+<t> runtime requirements.entries: 1.0993 ms
+<t> runtime requirements: 1.6623 ms
+<t> hashing: initialize hash: 0.0054 ms
+<t> hashing: hash warnings: 0.0043 ms
+<t> hashing: sort chunks: 0.04 ms
+<t> hashing: hash runtime modules: 1.4686 ms
+<t> hashing: hash chunks: 0.7373 ms
+<t> hashing: hash digest: 0.0132 ms
+<t> hashing: process full hash modules: 0.0007 ms
+<t> hashing: 2.3927 ms
+    100% code generated (15 generated, 0 from cache)
+<t> record hash: 0.0544 ms
+<t> module assets: 0.0836 ms
+<t> create chunk assets: 2.1745 ms
+<t> process assets: 3094.5738 ms
+
+LOG from webpack.Compiler
+<t> make hook: 4325.9416 ms
+<t> finish make hook: 0.0867 ms
+<t> finish compilation: 25.0728 ms
+<t> seal compilation: 3454.3818 ms
+<t> afterCompile hook: 0.0597 ms
+<t> emitAssets: 5.4164 ms
+<t> emitRecords: 0.0317 ms
+
+LOG from webpack.ResolverCachePlugin
+    29% really resolved (1278 real resolves with 0 cached but invalid, 3180 cached valid, 0 concurrent)
+
+LOG from webpack.FlagDependencyExportsPlugin
+<t> restore cached provided exports: 1.0218 ms
+<t> figure out provided exports: 11.795 ms
+    94% of exports of modules have been determined (38 no declared exports, 571 not cached, 0 flagged uncacheable, 0 from cache, 0 from mem cache, 29 additional calculations due to dependencies)
+<t> store provided exports into cache: 1.3822 ms
+
+LOG from webpack.InnerGraphPlugin
+<t> infer dependency usage: 12.3995 ms
+
+LOG from webpack.SideEffectsFlagPlugin
+<t> update dependencies: 60.2698 ms
+
+LOG from webpack.FlagDependencyUsagePlugin
+<t> initialize exports usage: 0.2564 ms
+<t> trace exports usage in graph: 9.17 ms
+
+LOG from webpack.buildChunkGraph
+<t> visitModules: prepare: 2.0315 ms
+<t> visitModules: visiting: 2.5769 ms
+<t> visitModules: calculating available modules: 0.0753 ms
+<t> visitModules: merging available modules: 0.0452 ms
+<t> visitModules: check modules for revisit: 0.061 ms
+<t> visitModules: prepare: 2.0017 ms
+<t> visitModules: visiting: 2.5903 ms
+    1170 queue items processed (507 blocks)
+    5 chunk groups connected
+    5 chunk groups processed for merging (5 module sets, 0 forked, 0 + 0 modules forked, 0 + 0 modules merged into fork, 0 resulting modules)
+    5 chunk group info updated (0 already connected chunk groups reconnected)
+<t> visitModules: 5.7828 ms
+<t> connectChunkGroups: 0.0865 ms
+<t> cleanup: 0.0062 ms
+
+LOG from webpack.SplitChunksPlugin
+<t> prepare: 0.0203 ms
+<t> modules: 1.8331 ms
+<t> queue: 0.229 ms
+<t> maxSize: 0.0091 ms
+
+LOG from webpack.ModuleConcatenationPlugin
+<t> select relevant modules: 0.8704 ms
+<t> sort relevant modules: 0.1266 ms
+<t> find modules to concatenate: 18.6673 ms
+<t> sort concat configurations: 0.0395 ms
+<t> create concatenated modules: 8.4565 ms
++ 3 hidden lines
+
+LOG from copy-webpack-plugin
+    starting to add additional assets...
+    starting to process a pattern from '**/*' using 'c:/Project/PantryPal/src/favicon.ico/' context
+    starting to process a pattern from '**/*' using 'c:/Project/PantryPal/src/assets/' context
+    begin globbing 'c:/Project/PantryPal/src/favicon.ico/**/*'...
+    begin globbing 'c:/Project/PantryPal/src/assets/**/*'...
+    finished to process a pattern from '**/*' using 'c:/Project/PantryPal/src/favicon.ico/' context to 'favicon.ico/'
+    starting to process a pattern from 'manifest.webmanifest' using 'c:/Project/PantryPal/src/' context
+    begin globbing 'c:/Project/PantryPal/src/manifest.webmanifest'...
+    'to' option '.' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\manifest.webmanifest' should write to 'manifest.webmanifest'
+    'to' option 'assets\' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' should write to 'assets\sql-wasm.wasm'
+    'to' option 'assets\' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' should write to 'assets\node_modules\sql.js\dist\sql-wasm.wasm'
+    finished to process a pattern from 'manifest.webmanifest' using 'c:\Project\PantryPal\src' context
+    finished to process a pattern from '**/*' using 'c:/Project/PantryPal/src/assets/' context
+    writing 'assets/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' to compilation assets...
+    written 'assets/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' to compilation assets
+    writing 'assets/node_modules/sql.js/dist/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' to compilation assets...
+    written 'assets/node_modules/sql.js/dist/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' to compilation assets
+    writing 'manifest.webmanifest' from 'c:\Project\PantryPal\src\manifest.webmanifest' to compilation assets...
+    written 'manifest.webmanifest' from 'c:\Project\PantryPal\src\manifest.webmanifest' to compilation assets
+    finished to adding additional assets
++ 38 hidden lines
+
+LOG from build-angular.JavaScriptOptimizerPlugin
+<t> optimize asset: 596.js: 69.8691 ms
+<t> optimize asset: runtime.js: 86.4376 ms
+<t> optimize asset: 984.js: 86.4741 ms
+<t> optimize asset: 242.js: 95.1929 ms
+<t> optimize asset: 417.js: 241.1292 ms
+<t> optimize asset: polyfills.js: 261.268 ms
+<t> optimize asset: 954.js: 265.0227 ms
+<t> optimize asset: 511.js: 310.7802 ms
+<t> optimize asset: 768.js: 313.6742 ms
+<t> optimize asset: 709.js: 1484.1926 ms
+<t> optimize asset: main.js: 2232.9141 ms
+<t> optimize js assets: 2297.6326 ms
+
+LOG from build-angular.CssOptimizerPlugin
+<t> optimize asset: styles.css: 4.0113 ms
+<t> optimize css assets: 4.2776 ms
+
+LOG from webpack.FileSystemInfo
+    1882 new snapshots created
+    0% root snapshot uncached (0 / 3180)
+    0% children snapshot uncached (0 / 0)
+    0 entries tested
+    File info in cache: 406 timestamps 60 hashes 60 timestamp hash combinations
+    File timestamp snapshot optimization: 87% (412/473) entries shared via 3 shared snapshots (3 times referenced)
+    File timestamp hash combination snapshot optimization: 67% (4127/6126) entries shared via 16 shared snapshots (1291 times referenced)
+    Directory info in cache: 0 timestamps 0 hashes 0 timestamp hash combinations
+    Missing items snapshot optimization: 74% (938/1269) entries shared via 28 shared snapshots (195 times referenced)
+    Managed items info in cache: 100 items
+    Managed items snapshot optimization: 17% (418/2455) entries shared via 21 shared snapshots (75 times referenced)
+    Managed files snapshot optimization: 73% (6457/8814) entries shared via 248 shared snapshots (1725 times referenced)
+    Managed missing snapshot optimization: 81% (7321/9055) entries shared via 315 shared snapshots (1584 times referenced)
+
+LOG from webpack.Watching
+<t> done hook: 0.0977 ms
+
+WARNING in c:\Project\PantryPal\src\app\core\services\db.service.ts depends on 'sql.js/dist/sql-wasm.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+Error: c:\Project\PantryPal\src\app\core\services\db.service.ts depends on 'sql.js/dist/sql-wasm.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+    at addWarning (c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\utils\webpack-diagnostics.js:13:31)
+    at c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\webpack\plugins\common-js-usage-warn-plugin.js:79:70
+    at _next0 (eval at create (c:\Project\PantryPal\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:57:1)
+    at eval (eval at create (c:\Project\PantryPal\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:100:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+WARNING in c:\Project\PantryPal\src\app\core\services\ocr.service.ts depends on 'tesseract.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+Error: c:\Project\PantryPal\src\app\core\services\ocr.service.ts depends on 'tesseract.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+    at addWarning (c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\utils\webpack-diagnostics.js:13:31)
+    at c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\webpack\plugins\common-js-usage-warn-plugin.js:79:70
+    at _next0 (eval at create (c:\Project\PantryPal\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:57:1)
+    at eval (eval at create (c:\Project\PantryPal\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:100:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+2025-11-16 11:18:27: webpack 5.101.2 compiled in 9253 ms (ac39805b5260dae3)
+√ Index html generation complete.
+- Generating service worker...
+√ Service worker generation complete.
+
+Initial chunk files | Names                                   |  Raw size | Estimated transfer size
+main.js             | main                                    | 773.17 kB |               197.15 kB
+styles.css          | styles                                  |  86.08 kB |                 6.51 kB
+polyfills.js        | polyfills                               |  34.85 kB |                11.37 kB
+runtime.js          | runtime                                 |   2.84 kB |                 1.31 kB
+
+                    | Initial total                           | 896.94 kB |               216.34 kB
+
+Lazy chunk files    | Names                                   |  Raw size | Estimated transfer size
+709.js              | features-inventory-inventory-routes     | 438.25 kB |                92.10 kB
+768.js              | features-inventory-inventory-routes     | 134.58 kB |                25.20 kB
+417.js              | features-inventory-inventory-routes     |  32.97 kB |                 7.26 kB
+511.js              | features-cart-cart-routes               |  29.16 kB |                 5.18 kB
+954.js              | features-settings-settings-routes       |  25.64 kB |                 4.63 kB
+242.js              | features-recipes-recipes-routes         |   7.88 kB |                 2.51 kB
+984.js              | features-ingredients-ingredients-routes |   7.00 kB |                 2.06 kB
+596.js              | features-recipes-recipes-routes         |   5.42 kB |                 1.29 kB
+
+Build at: 2025-11-16T10:18:27.833Z - Hash: ac39805b5260dae3 - Time: 9622ms
+[1m[33m
+Warning: c:\Project\PantryPal\src\app\core\services\db.service.ts depends on 'sql.js/dist/sql-wasm.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+Warning: c:\Project\PantryPal\src\app\core\services\ocr.service.ts depends on 'tesseract.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+[39m[22m
+    [webpack.cache.PackFileCacheStrategy] Pack got invalid because of write to: ResolverCachePlugin|normal|default|dependencyType=|esm|path=|c:\Project\PantryPal|request=|c:\Project\PantryPal\src\styles.scss?ngGlobalStyle
+    [webpack.cache.PackFileCacheStrategy] Storing pack...
+    [webpack.cache.PackFileCacheStrategy] Capturing build dependencies... (c:\Project\PantryPal\node_modules\webpack\lib\, c:\Project\PantryPal\node_modules\css-loader\dist\cjs.js, c:\Project\PantryPal\node_modules\postcss-loader\dist\cjs.js, c:\Project\PantryPal\node_modules\@ngtools\webpack\src\loaders\inline-resource.js, c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js, c:\Project\PantryPal\node_modules\resolve-url-loader\index.js, c:\Project\PantryPal\node_modules\sass-loader\dist\cjs.js, c:\Project\PantryPal\node_modules\mini-css-extract-plugin\dist\loader.js, c:\Project\PantryPal\node_modules\@ngtools\webpack\src\ivy\index.js)
+<t> [webpack.cache.PackFileCacheStrategy] resolve build dependencies: 316.3508 ms
+<t> [webpack.cache.PackFileCacheStrategy] snapshot build dependencies: 13.4386 ms
+    [webpack.cache.PackFileCacheStrategy] Captured build dependencies
+    [webpack.cache.PackFileCacheStrategy] 2720 fresh items in cache put into pack 0
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\core.mjs': 1.7006 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\material\fesm2022\tabs.mjs': 1.1067 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\debug_node.mjs': 4.7102 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\rxjs\dist\esm\internal\operators\timeout.js': 1.0972 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\cdk\fesm2022\table.mjs': 1.9007 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@zxing\library\esm\core\PlanarYUVLuminanceSource.js': 4.1799 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@zxing\library\esm\core\qrcode\decoder\DecodedBitStreamParser.js': 1.6865 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/codeGeneration|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\debug_node.mjs|runtime': 2.3772 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/codeGeneration|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@ngtools\webpack\src\ivy\index.js!c:\Project\PantryPal\src\app\features\inventory\inventory.routes.ts|ec06c221bdb03959|runtime': 4.0637 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/codeGeneration|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@ngtools\webpack\src\ivy\index.js!c:\Project\PantryPal\src\main.ts|971e4e3c02560949|runtime': 1.09 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/assets|chunk792': 4.3562 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/assets|chunk709': 1.4374 ms
+<t> [webpack.cache.PackFileCacheStrategy] store pack: 177.9701 ms
+    [webpack.cache.PackFileCacheStrategy] Stored pack (2720 items, 1 files, 79 MiB)
+<t> [webpack.cache.PackFileCacheStrategy] restore cache container: 7.0656 ms
+<t> [webpack.cache.PackFileCacheStrategy] check build dependencies: 0.3545 ms
+<t> [webpack.cache.PackFileCacheStrategy] restore cache content metadata: 4.5932 ms
+- Generating index html...
+    [IdleFileCachePlugin] Spend 1.801s in build and 0.51s in average in cache store. This is considered as large change and cache will be persisted in 1s.
+√ Browser application bundle generation complete.
+    [MemoryWithGcCachePlugin] 1479 active entries, 0 recently unused cached entries, 1283 old unused cache entries removed e. g. ResolverCachePlugin|normal|default|fullySpecified=|false|dependencyType=|esm|path=|c:\Project\PantryPal\node_modules\@zxing\library\esm\core\common|request=|./StringUtils
+asset main.js 755 KiB {461}, {792} [cached] (name: main)
+asset assets/node_modules/sql.js/dist/sql-wasm.wasm 644 KiB [cached] [from: src/assets/node_modules/sql.js/dist/sql-wasm.wasm] [copied]
+asset assets/sql-wasm.wasm 644 KiB [cached] [from: src/assets/sql-wasm.wasm] [copied]
+asset 709.js 428 KiB {709} [cached] (name: features-inventory-inventory-routes)
+asset 768.js 131 KiB {768} [cached] (name: features-inventory-inventory-routes) (id hint: default)
+asset styles.css 84.1 KiB {869} [cached] (name: styles)
+asset 3rdpartylicenses.txt 53.1 KiB [emitted]
+asset polyfills.js 34 KiB {461} [cached] (name: polyfills)
+asset 417.js 32.2 KiB {417} [cached] (name: features-inventory-inventory-routes) (id hint: default)
+asset 511.js 28.5 KiB {511} [cached] (name: features-cart-cart-routes)
+asset 954.js 25 KiB {954} [cached] (name: features-settings-settings-routes)
+asset 242.js 7.7 KiB {242} [cached] (name: features-recipes-recipes-routes)
+asset 984.js 6.84 KiB {984} [cached] (name: features-ingredients-ingredients-routes)
+asset 596.js 5.29 KiB {596} [cached] (name: features-recipes-recipes-routes) (id hint: default)
++ 2 assets
+Entrypoint main 758 KiB = runtime.js 2.77 KiB main.js 755 KiB
+Entrypoint polyfills 36.8 KiB = runtime.js 2.77 KiB polyfills.js 34 KiB
+Entrypoint styles 86.8 KiB = runtime.js 2.77 KiB styles.css 84.1 KiB
+chunk {121} (runtime: runtime) runtime.js (runtime) 7.97 KiB [entry]
+  cached modules 7.97 KiB [cached] 15 modules
+chunk {242} (runtime: runtime) 242.js (features-recipes-recipes-routes) 16.9 KiB
+  cached modules 16.9 KiB [cached] 1 module
+chunk {417} (runtime: runtime) 417.js (features-inventory-inventory-routes) (id hint: default) 274 KiB split chunk (cache group: default)
+  cached modules 274 KiB [cached] 1 module
+chunk {461} (runtime: runtime) polyfills.js (polyfills) 113 KiB [initial]
+  cached modules 113 KiB [cached] 1 module
+chunk {511} (runtime: runtime) 511.js (features-cart-cart-routes) 133 KiB
+  cached modules 133 KiB [cached] 1 module
+chunk {596} (runtime: runtime) 596.js (features-recipes-recipes-routes) (id hint: default) 20.4 KiB split chunk (cache group: default)
+  cached modules 20.4 KiB [cached] 1 module
+chunk {709} (runtime: runtime) 709.js (features-inventory-inventory-routes) 1.28 MiB
+  cached modules 54 KiB [cached] 24 modules
+  ./src/app/features/inventory/inventory.routes.ts + 213 modules [709] 1.23 MiB {709} [built]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/tesseract.js/src/index.js: Module is not an ECMAScript module
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/module.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/forms/fesm2022/forms.mjs: Module ./node_modules/@angular/forms/fesm2022/forms.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/dialog-module.mjs: Module ./node_modules/@angular/material/fesm2022/dialog-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field-module.mjs: Module ./node_modules/@angular/material/fesm2022/form-field-module.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) features-inventory-inventory-routes)
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/form-field2.mjs: Module ./node_modules/@angular/material/fesm2022/form-field2.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/input.mjs: Module ./node_modules/@angular/material/fesm2022/input.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/table.mjs: Module ./node_modules/@angular/material/fesm2022/table.mjs is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) )
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js: Module ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js is not in the same chunk(s) (expected in chunk(s) features-inventory-inventory-routes, module is in chunk(s) main)
+    import() ./features/inventory/inventory.routes [2277] ./src/main.ts + 20 modules ./src/app/app.routes.ts 15:24-71
+chunk {768} (runtime: runtime) 768.js (features-inventory-inventory-routes) (id hint: default) 373 KiB split chunk (cache group: default)
+  cached modules 373 KiB [cached] 5 modules
+chunk {792} (runtime: runtime) main.js (main) 3.63 MiB [initial]
+  cached modules 3.12 MiB [cached] 121 modules
+  ./src/main.ts + 20 modules [2277] 526 KiB {792} [built]
+    [no exports used]
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/db.service.ts: Module ./src/app/core/services/db.service.ts is referenced from different chunks by these modules: ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./src/app/core/services/theme.service.ts: Module ./src/app/core/services/theme.service.ts is referenced from different chunks by these modules: ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js: Module ./node_modules/rxjs/dist/esm/internal/BehaviorSubject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Observable.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subject.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/Subscription.js: Module ./node_modules/rxjs/dist/esm/internal/Subscription.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/empty.js: Module ./node_modules/rxjs/dist/esm/internal/observable/empty.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/merge.js: Module ./node_modules/rxjs/dist/esm/internal/observable/merge.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/of.js: Module ./node_modules/rxjs/dist/esm/internal/observable/of.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/observable/timer.js: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/debounceTime.js: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/filter.js: Module ./node_modules/rxjs/dist/esm/internal/operators/filter.js is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/map.js: Module ./node_modules/rxjs/dist/esm/internal/operators/map.js is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/skip.js: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/startWith.js: Module ./node_modules/rxjs/dist/esm/internal/operators/startWith.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/switchMap.js: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/take.js: Module ./node_modules/rxjs/dist/esm/internal/operators/take.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js: Module ./node_modules/rxjs/dist/esm/internal/operators/takeUntil.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/util/isObservable.js: Module ./node_modules/rxjs/dist/esm/internal/util/isObservable.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/rxjs/dist/esm/internal/util/noop.js: Module ./node_modules/rxjs/dist/esm/internal/Subject.js is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/selection-model.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/zone.js/fesm2015/zone.js: Module is not an ECMAScript module
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/coercion.mjs: Module ./node_modules/@angular/cdk/fesm2022/coercion.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/directionality.mjs: Module ./node_modules/@angular/cdk/fesm2022/directionality.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/element.mjs: Module ./node_modules/@angular/cdk/fesm2022/element.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/id-generator.mjs: Module ./node_modules/@angular/cdk/fesm2022/id-generator.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs: Module ./node_modules/@angular/cdk/fesm2022/keycodes2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/observers.mjs: Module ./node_modules/@angular/cdk/fesm2022/observers.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/observers/private.mjs: Module ./node_modules/@angular/cdk/fesm2022/observers/private.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs: Module ./node_modules/@angular/cdk/fesm2022/overlay-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/passive-listeners.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-monitor.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/platform2.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/portal.mjs: Module ./node_modules/@angular/cdk/fesm2022/portal.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/private.mjs: Module ./node_modules/@angular/cdk/fesm2022/a11y-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/scrolling.mjs: Module ./node_modules/@angular/cdk/fesm2022/scrolling.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/style-loader.mjs: Module ./node_modules/@angular/cdk/fesm2022/style-loader.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/cdk/fesm2022/typeahead.mjs: Module ./node_modules/@angular/cdk/fesm2022/focus-key-manager.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common.mjs: Module ./node_modules/@angular/cdk/fesm2022/platform2.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/common_module.mjs: Module ./node_modules/@angular/common/fesm2022/common_module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/location.mjs: Module ./node_modules/@angular/common/fesm2022/location.mjs is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/module.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/common/fesm2022/xhr.mjs: Module ./node_modules/@angular/common/fesm2022/module.mjs is referenced from different chunks by these modules: ./src/app/core/services/products.service.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/core.mjs: Module ./node_modules/@angular/core/fesm2022/core.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/debug_node.mjs: Module ./node_modules/@angular/core/fesm2022/debug_node.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/internal-form-field.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/resource.mjs: Module ./node_modules/@angular/core/fesm2022/resource.mjs is referenced from different chunks by these modules: ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs: Module ./node_modules/@angular/core/fesm2022/root_effect_scheduler.mjs is referenced from different chunks by these modules: ./node_modules/@angular/cdk/fesm2022/dialog.mjs, ./node_modules/@angular/cdk/fesm2022/recycle-view-repeater-strategy.mjs, ./node_modules/@angular/cdk/fesm2022/table.mjs, ./node_modules/@angular/cdk/fesm2022/text-field.mjs, ./node_modules/@angular/forms/fesm2022/forms.mjs, ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/error-options.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/input-value-accessor.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs, ./src/app/core/services/barcode.service.ts, ./src/app/core/services/ocr.service.ts, ./src/app/core/services/products.service.ts, ./src/app/features/cart/cart-view.component.ts, ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/meal-of-day.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts, ./src/app/features/settings/settings.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/animation.mjs: Module ./node_modules/@angular/material/fesm2022/animation.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/form-field2.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/button.mjs: Module ./node_modules/@angular/material/fesm2022/button.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-edit.dialog.ts, ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-edit.dialog.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/common-module.mjs: Module ./node_modules/@angular/material/fesm2022/common-module.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/card.mjs, ./node_modules/@angular/material/fesm2022/dialog-module.mjs, ./node_modules/@angular/material/fesm2022/divider.mjs, ./node_modules/@angular/material/fesm2022/form-field-module.mjs, ./node_modules/@angular/material/fesm2022/input.mjs, ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/pseudo-checkbox-module.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs, ./node_modules/@angular/material/fesm2022/table.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon-button.mjs: Module ./node_modules/@angular/material/fesm2022/icon-button.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/icon.mjs: Module ./node_modules/@angular/material/fesm2022/icon.mjs is referenced from different chunks by these modules: ./src/app/features/ingredients/ingredient-list.component.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts, ./src/app/features/inventory/inventory-list.component.ts, ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/ripple.mjs: Module ./node_modules/@angular/material/fesm2022/ripple.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/material/fesm2022/structural-styles.mjs: Module ./node_modules/@angular/material/fesm2022/structural-styles.mjs is referenced from different chunks by these modules: ./node_modules/@angular/material/fesm2022/list.mjs, ./node_modules/@angular/material/fesm2022/slide-toggle.mjs
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/router/fesm2022/router2.mjs: Module ./node_modules/@angular/router/fesm2022/router_module.mjs is referenced from different chunks by these modules: ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@angular/router/fesm2022/router_module.mjs: Module ./node_modules/@angular/router/fesm2022/router_module.mjs is referenced from different chunks by these modules: ./src/app/features/recipes/recipe-list.component.ts
+    ModuleConcatenation bailout: Cannot concat with ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js: Module ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js is referenced from different chunks by these modules: ./src/app/core/services/barcode.service.ts, ./src/app/core/services/ocr.service.ts, ./src/app/features/inventory/inventory-edit/inventory-edit.dialog.ts
+    entry c:\Project\PantryPal\src\main.ts main
+chunk {869} (runtime: runtime) styles.css (styles) 50 bytes (javascript) 88.8 KiB (css/mini-extract) [initial]
+  cached modules 88.8 KiB [cached] 1 module
+  ./src/styles.scss?ngGlobalStyle [7888] 50 bytes {869} [built]
+    [no exports used]
+    entry c:\Project\PantryPal\src\styles.scss?ngGlobalStyle styles
+    entry c:\Project\PantryPal\src\styles.scss?ngGlobalStyle styles
+chunk {954} (runtime: runtime) 954.js (features-settings-settings-routes) 36.4 KiB
+  cached modules 36.4 KiB [cached] 1 module
+chunk {984} (runtime: runtime) 984.js (features-ingredients-ingredients-routes) 15.4 KiB
+  cached modules 15.4 KiB [cached] 1 module
+  
+
+LOG from angular.watch-files-logs-plugin
+    Modified files:
+    C:\Project\PantryPal\package.json
+    c:\Project\PantryPal\package.json
+
+LOG from webpack.FileSystemInfo
+    76 new snapshots created
+    88% root snapshot uncached (676 / 764)
+    25% children snapshot uncached (32 / 128)
+    1003 entries tested
+    File info in cache: 4732 timestamps 58 hashes 58 timestamp hash combinations
+    File timestamp snapshot optimization: 97% (400/411) entries shared via 1 shared snapshots (1 times referenced)
+    File timestamp hash combination snapshot optimization: 81% (408/505) entries shared via 12 shared snapshots (87 times referenced)
+    Directory info in cache: 1602 timestamps 0 hashes 0 timestamp hash combinations
+    Missing items snapshot optimization: 68% (327/483) entries shared via 10 shared snapshots (58 times referenced)
+    Managed items info in cache: 48 items
+    Managed items snapshot optimization: 27% (26/96) entries shared via 2 shared snapshots (3 times referenced)
+    Managed files snapshot optimization: 64% (104/163) entries shared via 10 shared snapshots (21 times referenced)
+    Managed missing snapshot optimization: 51% (50/99) entries shared via 3 shared snapshots (4 times referenced)
++ 3 hidden lines
+
+LOG from webpack.Compilation
+<t> runtime requirements.modules: 0.0447 ms
+<t> runtime requirements.chunks: 0.0634 ms
+<t> runtime requirements.entries: 0.2038 ms
+<t> compute affected modules: 0.0039 ms
+<t> finish modules: 11.8213 ms
+<t> report dependency errors and warnings: 6.4988 ms
+<t> optimize dependencies: 103.17 ms
+<t> create chunks: 6.1079 ms
+<t> compute affected modules with chunk graph: 0.003 ms
+<t> optimize: 39.4134 ms
+    160 modules hashed, 0 from cache (0.26 variants per module in average)
+<t> module hashing: 13.2102 ms
+    0% code generated (0 generated, 160 from cache)
+<t> code generation: 0.5852 ms
+<t> runtime requirements.modules: 0.2031 ms
+<t> runtime requirements.chunks: 0.1034 ms
+<t> runtime requirements.entries: 0.5382 ms
+<t> runtime requirements: 0.9009 ms
+<t> hashing: initialize hash: 0.0198 ms
+<t> hashing: sort chunks: 0.0231 ms
+<t> hashing: hash runtime modules: 0.5821 ms
+<t> hashing: hash chunks: 0.5168 ms
+<t> hashing: hash digest: 0.0099 ms
+<t> hashing: process full hash modules: 0.0009 ms
+<t> hashing: 1.257 ms
+    0% code generated (0 generated, 15 from cache)
+<t> record hash: 0.0283 ms
+<t> module assets: 0.1113 ms
+<t> create chunk assets: 0.5936 ms
+<t> process assets: 937.1648 ms
+
+LOG from webpack.Compiler
+<t> make hook: 518.699 ms
+<t> finish make hook: 0.0494 ms
+<t> finish compilation: 18.35 ms
+<t> seal compilation: 1103.8255 ms
+<t> afterCompile hook: 0.0201 ms
+<t> emitAssets: 1.6166 ms
+<t> emitRecords: 0.0519 ms
+
+LOG from webpack.ResolverCachePlugin
+    45% really resolved (72 real resolves with 72 cached but invalid, 88 cached valid, 0 concurrent)
+
+LOG from webpack.FlagDependencyExportsPlugin
+<t> restore cached provided exports: 1.942 ms
+<t> figure out provided exports: 4.8939 ms
+    6% of exports of modules have been determined (38 no declared exports, 34 not cached, 0 flagged uncacheable, 537 from cache, 0 from mem cache, 4 additional calculations due to dependencies)
+<t> store provided exports into cache: 0.0336 ms
+
+LOG from webpack.InnerGraphPlugin
+<t> infer dependency usage: 0.0455 ms
+
+LOG from webpack.SideEffectsFlagPlugin
+<t> update dependencies: 90.6749 ms
+
+LOG from webpack.FlagDependencyUsagePlugin
+<t> initialize exports usage: 0.3416 ms
+<t> trace exports usage in graph: 11.9419 ms
+
+LOG from webpack.buildChunkGraph
+<t> visitModules: prepare: 1.865 ms
+<t> visitModules: visiting: 2.4966 ms
+<t> visitModules: calculating available modules: 0.0259 ms
+<t> visitModules: merging available modules: 0.0314 ms
+<t> visitModules: check modules for revisit: 0.0056 ms
+<t> visitModules: prepare: 1.2973 ms
+<t> visitModules: visiting: 1.9392 ms
+    1171 queue items processed (507 blocks)
+    5 chunk groups connected
+    5 chunk groups processed for merging (5 module sets, 0 forked, 0 + 0 modules forked, 0 + 0 modules merged into fork, 0 resulting modules)
+    5 chunk group info updated (0 already connected chunk groups reconnected)
+<t> visitModules: 4.951 ms
+<t> connectChunkGroups: 0.0302 ms
+<t> cleanup: 0.0011 ms
+
+LOG from webpack.SplitChunksPlugin
+<t> prepare: 0.036 ms
+<t> modules: 1.1699 ms
+<t> queue: 0.0989 ms
+<t> maxSize: 0.0062 ms
+
+LOG from webpack.ModuleConcatenationPlugin
+<t> select relevant modules: 0.9252 ms
+<t> sort relevant modules: 0.0633 ms
+<t> find modules to concatenate: 26.3873 ms
+<t> sort concat configurations: 0.0106 ms
+<t> create concatenated modules: 5.8893 ms
++ 3 hidden lines
+
+LOG from copy-webpack-plugin
+    starting to add additional assets...
+    starting to process a pattern from '**/*' using 'c:/Project/PantryPal/src/favicon.ico/' context
+    starting to process a pattern from '**/*' using 'c:/Project/PantryPal/src/assets/' context
+    begin globbing 'c:/Project/PantryPal/src/favicon.ico/**/*'...
+    begin globbing 'c:/Project/PantryPal/src/assets/**/*'...
+    finished to process a pattern from '**/*' using 'c:/Project/PantryPal/src/favicon.ico/' context to 'favicon.ico/'
+    starting to process a pattern from 'manifest.webmanifest' using 'c:/Project/PantryPal/src/' context
+    begin globbing 'c:/Project/PantryPal/src/manifest.webmanifest'...
+    'to' option '.' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\manifest.webmanifest' should write to 'manifest.webmanifest'
+    finished to process a pattern from 'manifest.webmanifest' using 'c:\Project\PantryPal\src' context
+    'to' option 'assets\' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' should write to 'assets\sql-wasm.wasm'
+    'to' option 'assets\' determinated as 'dir'
+    determined that 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' should write to 'assets\node_modules\sql.js\dist\sql-wasm.wasm'
+    finished to process a pattern from '**/*' using 'c:/Project/PantryPal/src/assets/' context
+    writing 'assets/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' to compilation assets...
+    written 'assets/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\sql-wasm.wasm' to compilation assets
+    writing 'assets/node_modules/sql.js/dist/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' to compilation assets...
+    written 'assets/node_modules/sql.js/dist/sql-wasm.wasm' from 'c:\Project\PantryPal\src\assets\node_modules\sql.js\dist\sql-wasm.wasm' to compilation assets
+    writing 'manifest.webmanifest' from 'c:\Project\PantryPal\src\manifest.webmanifest' to compilation assets...
+    written 'manifest.webmanifest' from 'c:\Project\PantryPal\src\manifest.webmanifest' to compilation assets
+    finished to adding additional assets
++ 26 hidden lines
+
+LOG from build-angular.CssOptimizerPlugin
+<t> optimize css assets: 0.0247 ms
++ 1 hidden lines
+
+LOG from webpack.Watching
+<t> done hook: 0.0813 ms
+
+2025-11-16 11:20:04: webpack 5.101.2 compiled in 1801 ms (e34880693b5d2da8)
+√ Index html generation complete.
+- Generating service worker...
+√ Service worker generation complete.
+
+
+
+12 unchanged chunks
+
+Build at: 2025-11-16T10:20:04.448Z - Hash: e34880693b5d2da8 - Time: 1884ms
+    [webpack.cache.PackFileCacheStrategy] Pack got invalid because of write to: ResolverCachePlugin|normal|default|dependencyType=|esm|path=|c:\Project\PantryPal|request=|c:\Project\PantryPal\src\styles.scss?ngGlobalStyle
+    [webpack.cache.PackFileCacheStrategy] Storing pack...
+    [webpack.cache.PackFileCacheStrategy] 85 fresh items in cache put into pack 1
+    [webpack.cache.PackFileCacheStrategy] starting to unpack cache content 0 (78.5 MiB) because it's outdated and need to be serialized
+    [webpack.cache.PackFileCacheStrategy] Deserialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\core.mjs': 1.5541 ms
+    [webpack.cache.PackFileCacheStrategy] Deserialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\debug_node.mjs': 3.1075 ms
+<t> [webpack.cache.PackFileCacheStrategy] unpack cache content 0 (78.5 MiB): 149.7553 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\core.mjs': 2.6341 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\material\fesm2022\tabs.mjs': 2.1649 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\core\fesm2022\debug_node.mjs': 8.0699 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|javascript/esm|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@angular\material\fesm2022\list.mjs': 1.0539 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\rxjs\dist\esm\internal\observable\onErrorResumeNext.js': 1.0933 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'ResolverCachePlugin|normal|default|fullySpecified=|false|dependencyType=|esm|path=|c:\Project\PantryPal\node_modules\rxjs\dist\esm\internal\observable|request=|../scheduled/scheduled': 2.4598 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@zxing\library\esm\core\qrcode\QRCodeWriter.js': 1.7656 ms
+    [webpack.cache.PackFileCacheStrategy] Serialization of 'Compilation/modules|c:\Project\PantryPal\node_modules\@angular-devkit\build-angular\src\tools\babel\webpack-loader.js??ruleSet[1].rules[2].use[0]!c:\Project\PantryPal\node_modules\@zxing\library\esm\core\qrcode\decoder\Version.js': 1.1649 ms
+<t> [webpack.cache.PackFileCacheStrategy] store pack: 297.5241 ms
+    [webpack.cache.PackFileCacheStrategy] Stored pack (2726 items, 2 files, 79 MiB)
+^C

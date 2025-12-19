@@ -1,6 +1,8 @@
-<h2 mat-dialog-title style="margin-bottom: 5px;">{{ model?.id ? "Edit" : "Add" }} Item</h2>
+<h2 mat-dialog-title style="margin-bottom: 5px">
+  {{ model?.id ? "Edit" : "Add" }} Item
+</h2>
 
-<div mat-dialog-content class="form">
+<div mat-dialog-content flex="column" style="padding: 5px; margin: 5px">
   <mat-form-field appearance="outline"
     ><mat-label>Ingredient ID</mat-label>
     <input matInput [(ngModel)]="model.ingredientId" />
@@ -30,23 +32,32 @@
     ><mat-label>Expiry (YYYY-MM-DD)</mat-label>
     <input matInput [(ngModel)]="model.expiry" />
   </mat-form-field>
-</div>
 
-<div class="extras" style="padding: 0px 12px;">
-  <button mat-stroked-button (click)="scanBarcode()">
-    <mat-icon>qr_code_scanner</mat-icon>&nbsp;Scan barcode
-  </button>
+  <div flex="row">
+    <button mat-stroked-button (click)="scanBarcode()">
+      <mat-icon>qr_code_scanner</mat-icon>&nbsp;Scan barcode
+    </button>
 
-  <input type="file" (change)="onFile($event)" accept="image/*" />
+    <button mat-stroked-button (click)="image_input.click()">
+      <mat-icon>upload</mat-icon>&nbsp;UploadFile
+    </button>
 
-  <button
-    mat-stroked-button
-    (click)="fetchProduct()"
-    [disabled]="!model.barcode"
-  >
-    Fetch product
-  </button>
+    <input
+      [hidden]="true"
+      #image_input
+      type="file"
+      (change)="onFile($event)"
+      accept="image/*"
+    />
 
+    <button
+      mat-stroked-button
+      (click)="fetchProduct()"
+      [disabled]="!model.barcode"
+    >
+      Fetch product
+    </button>
+  </div>
 </div>
 
 <div mat-dialog-actions>

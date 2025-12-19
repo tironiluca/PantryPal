@@ -3,6 +3,8 @@ import { DbService } from './db.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
+  private pollHandle: ReturnType<typeof setInterval> | null = null;
+
   constructor(private db: DbService) {}
 
   async requestPermission() {
@@ -31,5 +33,12 @@ export class NotificationsService {
         }
       }
     }
+  }
+
+  startPolling(intervalMs = 60 * 60 * 1000) {
+    if (this.pollHandle !== null) return;
+    this.pollHandle = setInterval(() => {
+      void this.checkAndNotify();
+    }, intervalMs);
   }
 }

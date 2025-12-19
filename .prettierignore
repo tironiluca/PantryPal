@@ -1,0 +1,7 @@
+dist
+.angular
+node_modules
+coverage
+package-lock.json
+src/assets/**
+**/*.wasm

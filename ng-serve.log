@@ -1,0 +1,4 @@
+Node.js version v25.1.0 detected.
+Odd numbered Node.js versions will not enter LTS status and should not be used for production. For more information, please see https://nodejs.org/en/about/previous-releases/.
+ [1mPort 4200 is already in use.
+Would you like to use a different port?[22m [2m(Y/n)[22m[47G

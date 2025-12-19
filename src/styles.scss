@@ -26,3 +26,48 @@ body {
     height: 100%;
     margin: 0;
 }
+
+
+[flex="column"] {
+    display: inline-flex !important;
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    & * {
+        margin-bottom: 4px;
+    }
+
+    & *:last-child {
+        margin-bottom: 0px;
+    }
+}
+
+
+[flex="row"] {
+    display: inline-flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+
+    & * {
+        margin-right: 4px;
+    }
+
+    & *:last-child {
+        margin-right: 0px;
+    }
+}
+
+
+//#region add entry button
+
+.container {
+    padding: 1rem;
+}
+
+.fab {
+    position: fixed !important;
+    right: 1.5rem;
+    bottom: calc(48px + 1.5rem);
+}
+
+//#endregion

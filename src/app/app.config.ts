@@ -17,6 +17,7 @@ function initAppFactory() {
       await notif.requestPermission();
       await notif.checkAndNotify();
     } catch {}
+    notif.startPolling();
   };
 }
 

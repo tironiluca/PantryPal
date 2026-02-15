@@ -21,6 +21,7 @@
               "src/manifest.webmanifest"
             ],
             "serviceWorker": true,
+            "extractLicenses": false,
             "ngswConfigPath": "ngsw-config.json",
             "styles": [
               "src/styles.scss"

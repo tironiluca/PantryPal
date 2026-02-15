@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,9 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DbService } from '../../core/services/db.service';
 import { RecipeEditDialog } from './recipe-edit.dialog';
 import { RouterModule } from '@angular/router';
+import { ErrorHandlerService } from '../../core/services/error-handler.service';
+import { SnackbarService } from '../../core/services/snackbar.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   standalone: true,
@@ -42,15 +45,52 @@ import { RouterModule } from '@angular/router';
 export class RecipeListComponent {
   private db = inject(DbService);
   private dialog = inject(MatDialog);
+  private errorHandler = inject(ErrorHandlerService);
+  private snackbar = inject(SnackbarService);
+  private destroyRef = inject(DestroyRef);
+
   rows: any[] = [];
   cols = ['name', 'actions'];
-  constructor() { this.refresh(); }
-  refresh() { this.rows = this.db.query<any>('SELECT id, name FROM recipes'); }
-  add() { this.dialog.open(RecipeEditDialog, { data: null }).afterClosed().subscribe(ok => ok && this.refresh()); }
-  edit(r: any) { this.dialog.open(RecipeEditDialog, { data: r }).afterClosed().subscribe(ok => ok && this.refresh()); }
-  remove(r: any) {
-    this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
-    this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
+
+  constructor() {
     this.refresh();
+  }
+
+  refresh() {
+    try {
+      this.rows = this.db.query<any>('SELECT id, name FROM recipes');
+    } catch (error) {
+      this.errorHandler.handle(error, 'Failed to load recipes');
+      this.rows = [];
+    }
+  }
+
+  add() {
+    this.dialog
+      .open(RecipeEditDialog, { data: null })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ok => ok && this.refresh());
+  }
+
+  edit(r: any) {
+    this.dialog
+      .open(RecipeEditDialog, { data: r })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ok => ok && this.refresh());
+  }
+
+  remove(r: any) {
+    try {
+      if (confirm(`Are you sure you want to delete recipe "${r.name}"?`)) {
+        this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
+        this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
+        this.snackbar.success('Recipe deleted successfully');
+        this.refresh();
+      }
+    } catch (error) {
+      this.errorHandler.handle(error, 'Failed to delete recipe');
+    }
   }
 }

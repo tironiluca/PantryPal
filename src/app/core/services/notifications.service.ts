@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { DbService } from './db.service';
 
 @Injectable({ providedIn: 'root' })
-export class NotificationsService {
+export class NotificationsService implements OnDestroy {
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor(private db: DbService) {}
@@ -40,5 +40,16 @@ export class NotificationsService {
     this.pollHandle = setInterval(() => {
       void this.checkAndNotify();
     }, intervalMs);
+  }
+
+  stopPolling() {
+    if (this.pollHandle !== null) {
+      clearInterval(this.pollHandle);
+      this.pollHandle = null;
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopPolling();
   }
 }

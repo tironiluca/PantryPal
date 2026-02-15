@@ -46,6 +46,22 @@ export class DbService {
         unit TEXT NOT NULL, minRestock REAL NOT NULL, expiry TEXT, location TEXT, barcode TEXT,
         createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS recipes (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        steps TEXT,
+        createdAt TEXT,
+        updatedAt TEXT
+      );
+      CREATE TABLE IF NOT EXISTS recipe_ingredients (
+        recipeId TEXT NOT NULL,
+        ingredientId TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        unit TEXT NOT NULL,
+        PRIMARY KEY (recipeId, ingredientId),
+        FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE,
+        FOREIGN KEY (ingredientId) REFERENCES ingredients(id) ON DELETE RESTRICT
+      );
     `);
   }
 
@@ -121,6 +137,111 @@ export class DbService {
     stmt.step();
     stmt.free();
     return this.persist();
+  }
+
+  /**
+   * Execute multiple SQL statements in a transaction
+   * @param statements Array of SQL statements with their parameters
+   * @returns Promise that resolves when all statements are executed and persisted
+   */
+  execBatch(statements: Array<{ sql: string; params: any[] }>): Promise<void> {
+    if (!this.db) {
+      this.memOnly = true;
+    }
+
+    if (this.memOnly) {
+      // Execute each statement individually in memory mode
+      statements.forEach(stmt => this.exec(stmt.sql, stmt.params));
+      return Promise.resolve();
+    }
+
+    try {
+      // Start transaction
+      this.db.run('BEGIN TRANSACTION');
+
+      // Execute all statements
+      for (const stmt of statements) {
+        const prepared = this.db.prepare(stmt.sql);
+        prepared.bind(stmt.params);
+        prepared.step();
+        prepared.free();
+      }
+
+      // Commit transaction
+      this.db.run('COMMIT');
+
+      // Persist once at the end
+      return this.persist();
+    } catch (error) {
+      // Rollback on error
+      if (this.db) {
+        try {
+          this.db.run('ROLLBACK');
+        } catch (rollbackError) {
+          console.error('Failed to rollback transaction:', rollbackError);
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk insert rows into a table
+   * @param table Table name
+   * @param rows Array of row objects
+   * @param columns Array of column names
+   * @returns Promise that resolves when all rows are inserted
+   */
+  bulkInsert(table: string, rows: any[], columns: string[]): Promise<void> {
+    const statements = rows.map(row => {
+      const placeholders = columns.map(() => '?').join(',');
+      const values = columns.map(col => row[col] ?? null);
+
+      return {
+        sql: `INSERT INTO ${table} (${columns.join(',')}) VALUES (${placeholders})`,
+        params: values
+      };
+    });
+
+    return this.execBatch(statements);
+  }
+
+  /**
+   * Bulk update rows in a table
+   * @param table Table name
+   * @param rows Array of row objects with id property
+   * @param columns Array of column names to update (excluding id)
+   * @param idColumn Name of the ID column (default: 'id')
+   * @returns Promise that resolves when all rows are updated
+   */
+  bulkUpdate(table: string, rows: any[], columns: string[], idColumn = 'id'): Promise<void> {
+    const statements = rows.map(row => {
+      const setClause = columns.map(col => `${col}=?`).join(',');
+      const values = [...columns.map(col => row[col] ?? null), row[idColumn]];
+
+      return {
+        sql: `UPDATE ${table} SET ${setClause} WHERE ${idColumn}=?`,
+        params: values
+      };
+    });
+
+    return this.execBatch(statements);
+  }
+
+  /**
+   * Bulk delete rows from a table
+   * @param table Table name
+   * @param ids Array of IDs to delete
+   * @param idColumn Name of the ID column (default: 'id')
+   * @returns Promise that resolves when all rows are deleted
+   */
+  bulkDelete(table: string, ids: string[], idColumn = 'id'): Promise<void> {
+    const statements = ids.map(id => ({
+      sql: `DELETE FROM ${table} WHERE ${idColumn}=?`,
+      params: [id]
+    }));
+
+    return this.execBatch(statements);
   }
 
   async persist() {

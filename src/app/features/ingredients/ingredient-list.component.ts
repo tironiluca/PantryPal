@@ -28,6 +28,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatInputModule,
   ],
   templateUrl: './ingredient-list.component.html',
+  styleUrls: ['./ingredient-list.component.scss']
 })
 export class IngredientListComponent {
 

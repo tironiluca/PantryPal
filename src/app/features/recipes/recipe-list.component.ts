@@ -40,7 +40,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     </div>
   </div>
   `,
-  styles: [`.container{padding:1rem}.fab{position:fixed;right:1rem;bottom:1rem}.actions{margin-top:8px}`]
+  styleUrls: ['./recipe-list.component.scss']
 })
 export class RecipeListComponent {
   private db = inject(DbService);

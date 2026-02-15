@@ -48,15 +48,44 @@ html {
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  // Color variables
+  // Color variables - Light Theme
   --color-success: #4caf50;
   --color-warning: #ff9800;
   --color-error: #f44336;
   --color-info: #2196f3;
+  --color-surface: #fafafa;
+  --color-surface-variant: #f5f5f5;
+  --color-on-surface: #1a1a1a;
+  --color-on-surface-variant: #616161;
+  --color-primary: #43a047;
+  --color-primary-variant: #66bb6a;
+
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
 }
 
 html.dark-theme {
   @include mat.all-component-colors($dark-theme);
+
+  // Dark theme color overrides
+  --color-success: #66bb6a;
+  --color-warning: #ffa726;
+  --color-error: #ef5350;
+  --color-info: #42a5f5;
+  --color-surface: #121212;
+  --color-surface-variant: #1e1e1e;
+  --color-on-surface: #e0e0e0;
+  --color-on-surface-variant: #9e9e9e;
+  --color-primary: #66bb6a;
+  --color-primary-variant: #81c784;
+
+  // Rich dark gradient background
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #121212 100%);
+
+  // Darker shadows for dark theme
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.6);
+  --shadow-md: 0 3px 6px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5);
+  --shadow-lg: 0 10px 20px rgba(0,0,0,0.7), 0 3px 6px rgba(0,0,0,0.6);
+  --shadow-xl: 0 14px 28px rgba(0,0,0,0.8), 0 10px 10px rgba(0,0,0,0.7);
 }
 
 // ============================================================================
@@ -78,7 +107,9 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--mat-sys-surface, #fafafa);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  transition: background var(--transition-slow), color var(--transition-slow);
 }
 
 // ============================================================================

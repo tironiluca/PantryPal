@@ -1,0 +1,144 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>
+        <div class="auth-header">
+          <mat-icon class="auth-icon">restaurant</mat-icon>
+          <h1>Create Your Account</h1>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>Join PantryPal to manage your pantry across all your devices</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+        <!-- Display Name Field (Optional) -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Display Name (Optional)</mat-label>
+          <input
+            matInput
+            type="text"
+            name="displayName"
+            [(ngModel)]="displayName"
+            placeholder="John Doe"
+            autocomplete="name"
+          />
+          <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+
+        <!-- Email Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            placeholder="your@email.com"
+            autocomplete="email"
+          />
+          <mat-icon matPrefix>email</mat-icon>
+        </mat-form-field>
+
+        <!-- Password Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            placeholder="••••••••"
+            autocomplete="new-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'Toggle password visibility'"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          <mat-hint>
+            @if (!password) {
+              At least 6 characters
+            } @else if (isPasswordStrong()) {
+              <span class="password-strong">Strong password ✓</span>
+            } @else if (password.length >= 6) {
+              <span class="password-weak">Weak password</span>
+            } @else {
+              <span class="password-weak">Too short</span>
+            }
+          </mat-hint>
+        </mat-form-field>
+
+        <!-- Confirm Password Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm Password</mat-label>
+          <input
+            matInput
+            [type]="hideConfirmPassword() ? 'password' : 'text'"
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            required
+            minlength="6"
+            placeholder="••••••••"
+            autocomplete="new-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="toggleConfirmPasswordVisibility()"
+            [attr.aria-label]="'Toggle password visibility'"
+          >
+            <mat-icon>{{ hideConfirmPassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          @if (confirmPassword && !passwordsMatch()) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Terms and Conditions Checkbox -->
+        <div class="terms-checkbox">
+          <mat-checkbox name="acceptTerms" [(ngModel)]="acceptTerms" required>
+            I agree to the
+            <a href="/terms" target="_blank">Terms of Service</a>
+            and
+            <a href="/privacy" target="_blank">Privacy Policy</a>
+          </mat-checkbox>
+        </div>
+
+        <!-- Sign Up Button -->
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width auth-button"
+          [disabled]="!isFormValid() || loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Create Account
+          }
+        </button>
+      </form>
+
+      <!-- Sign In Link -->
+      <div class="signin-link">
+        <p>
+          Already have an account?
+          <a routerLink="/auth/login">Sign in</a>
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

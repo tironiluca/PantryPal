@@ -29,7 +29,8 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatInputModule,
     MatSelectModule,
   ],
-  templateUrl: './inventory-list.component.html'
+  templateUrl: './inventory-list.component.html',
+  styleUrls: ['./inventory-list.component.scss']
 })
 export class InventoryListComponent {
   private db = inject(DbService);

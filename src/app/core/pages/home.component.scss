@@ -1,57 +1,232 @@
-    :host {
-        display: flex;
-        flex-direction: column;
-        min-height: calc(100vh - 64px);
-        // background: var(--mat-sys-surface, #fafafa);
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+}
+
+.home-shell {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+// Modern navigation bar with glassmorphism effect
+nav[mat-tab-nav-bar] {
+  position: sticky;
+  bottom: 0;
+  padding: 8px 12px;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(67, 160, 71, 0.3) 50%,
+      transparent 100%
+    );
+  }
+}
+
+// Dark theme navigation styling
+:host-context(.dark-theme) nav[mat-tab-nav-bar] {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+
+  &::before {
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(102, 187, 106, 0.3) 50%,
+      transparent 100%
+    );
+  }
+}
+
+// Tab links styling
+nav[mat-tab-nav-bar] a[mat-tab-link] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-transform: none;
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  min-width: 72px;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(67, 160, 71, 0.1), rgba(102, 187, 106, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    background: rgba(67, 160, 71, 0.08);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
     }
 
-    .home-shell {
-        flex: 1 1 auto;
-        display: flex;
-        flex-direction: column;
-        height: 100%;        
-        padding: 3px
+    mat-icon {
+      transform: scale(1.1);
+      color: #43a047;
+    }
+  }
+
+  // Active state
+  &.mdc-tab--active,
+  &[active="true"] {
+    background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+
+    &::before {
+      opacity: 0;
     }
 
-    nav[mat-tab-nav-bar] {
-        padding: 0 1rem;
-        border: 1px;
-        border-radius: 5px;
-        border-color: #3f3f3f;
-        border-style: solid; 
-        margin: 3px;
+    mat-icon {
+      color: white;
+      transform: scale(1.15);
     }
 
-    nav[mat-tab-nav-bar] a[mat-tab-link] {
-        gap: .65rem;
-        text-transform: none;
-        font-size: .95rem;
-        padding: .5rem 1rem;
+    .labels .primary {
+      font-weight: 700;
+      color: white;
     }
+  }
+}
 
-    nav[mat-tab-nav-bar] mat-icon {
-        font-size: 1.25rem;
-    }
+// Dark theme tab links
+:host-context(.dark-theme) nav[mat-tab-nav-bar] a[mat-tab-link] {
+  &:hover {
+    background: rgba(102, 187, 106, 0.15);
 
-    nav[mat-tab-nav-bar] .labels {
-        display: flex;
-        flex-direction: column;
-        line-height: 1.2;
-        text-align: left;
+    mat-icon {
+      color: #66bb6a;
     }
+  }
 
-    nav[mat-tab-nav-bar] .primary {
-        font-weight: 600;
-    }
+  &.mdc-tab--active,
+  &[active="true"] {
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+    box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+  }
+}
 
-    nav[mat-tab-nav-bar] .secondary {
-        font-size: .75rem;
-        opacity: .72;
-    }
+// Icon styling
+nav[mat-tab-nav-bar] mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: rgba(0, 0, 0, 0.7);
+}
 
-    mat-tab-nav-panel {
-        flex: 1;
-        height: 100%;
-        padding: 1rem;
-        overflow: auto;
+:host-context(.dark-theme) nav[mat-tab-nav-bar] mat-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+// Label styling
+nav[mat-tab-nav-bar] .labels {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  text-align: center;
+  width: 100%;
+}
+
+nav[mat-tab-nav-bar] .primary {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+}
+
+nav[mat-tab-nav-bar] .secondary {
+  font-size: 0.65rem;
+  opacity: 0.72;
+}
+
+// Content panel styling
+mat-tab-nav-panel {
+  flex: 1;
+  height: 100%;
+  padding: 1rem;
+  padding-bottom: 0;
+  overflow: auto;
+
+  // Smooth scroll behavior
+  scroll-behavior: smooth;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
     }
+  }
+}
+
+:host-context(.dark-theme) mat-tab-nav-panel {
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  nav[mat-tab-nav-bar] a[mat-tab-link] {
+    min-width: 64px;
+    padding: 6px 8px;
+  }
+
+  nav[mat-tab-nav-bar] mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  nav[mat-tab-nav-bar] .primary {
+    font-size: 0.7rem;
+  }
+}

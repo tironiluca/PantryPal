@@ -1,0 +1,126 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>
+        <div class="auth-header">
+          <mat-icon class="auth-icon">restaurant</mat-icon>
+          <h1>Welcome to PantryPal</h1>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>Sign in to sync your pantry across devices</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <!-- Email Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            placeholder="your@email.com"
+            autocomplete="email"
+          />
+          <mat-icon matPrefix>email</mat-icon>
+        </mat-form-field>
+
+        <!-- Password Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'Toggle password visibility'"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- Forgot Password Link -->
+        <div class="forgot-password">
+          <a routerLink="/auth/forgot-password">Forgot password?</a>
+        </div>
+
+        <!-- Sign In Button -->
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width auth-button"
+          [disabled]="!loginForm.form.valid || loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Sign In
+          }
+        </button>
+      </form>
+
+      <mat-divider class="divider">
+        <span class="divider-text">OR</span>
+      </mat-divider>
+
+      <!-- OAuth Buttons -->
+      <div class="oauth-buttons">
+        <button
+          mat-stroked-button
+          class="full-width oauth-button"
+          (click)="signInWithGoogle()"
+          [disabled]="loading()"
+        >
+          <mat-icon svgIcon="google"></mat-icon>
+          Continue with Google
+        </button>
+
+        <button
+          mat-stroked-button
+          class="full-width oauth-button"
+          (click)="signInWithGitHub()"
+          [disabled]="loading()"
+        >
+          <mat-icon>code</mat-icon>
+          Continue with GitHub
+        </button>
+      </div>
+
+      <mat-divider class="divider"></mat-divider>
+
+      <!-- Guest Mode Button -->
+      <button
+        mat-button
+        class="full-width guest-button"
+        (click)="continueAsGuest()"
+        [disabled]="loading()"
+      >
+        <mat-icon>person_outline</mat-icon>
+        Continue as Guest (No Sync)
+      </button>
+
+      <!-- Sign Up Link -->
+      <div class="signup-link">
+        <p>
+          Don't have an account?
+          <a routerLink="/auth/register">Sign up</a>
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

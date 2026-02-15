@@ -1,73 +1,450 @@
 @use '@angular/material' as mat;
 
-$light-theme: mat.define-theme((color: (theme-type: light)));
-$dark-theme: mat.define-theme((color: (theme-type: dark)));
+// ============================================================================
+// PANTRYPAL MATERIAL 3 THEME
+// ============================================================================
 
+// Light theme with custom green primary color
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$green-palette,
+    tertiary: mat.$orange-palette,
+  )
+));
+
+// Dark theme with custom green primary color
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$green-palette,
+    tertiary: mat.$orange-palette,
+  )
+));
+
+// Apply themes
 html {
-    @include mat.all-component-themes($light-theme);
+  @include mat.all-component-themes($light-theme);
+
+  // Custom CSS variables for spacing, shadows, transitions
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --shadow-md: 0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+  --shadow-lg: 0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+  --shadow-xl: 0 14px 28px rgba(0,0,0,0.20), 0 10px 10px rgba(0,0,0,0.15);
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Color variables
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-error: #f44336;
+  --color-info: #2196f3;
 }
 
 html.dark-theme {
-    @include mat.all-component-colors($dark-theme);
+  @include mat.all-component-colors($dark-theme);
 }
 
-.mat-typography {
-    background-color: #ddd;
+// ============================================================================
+// RESET & BASE STYLES
+// ============================================================================
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-.dark-theme {
-    .mat-typography {
-        background-color: #333;
-    }
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-html,
 body {
-    height: 100%;
-    margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--mat-sys-surface, #fafafa);
 }
 
-
-[flex="column"] {
-    display: inline-flex !important;
-    flex-direction: column;
-    flex-wrap: nowrap;
-
-    & * {
-        margin-bottom: 4px;
-    }
-
-    & *:last-child {
-        margin-bottom: 0px;
-    }
-}
-
-
-[flex="row"] {
-    display: inline-flex !important;
-    flex-direction: row;
-    flex-wrap: nowrap;
-
-    & * {
-        margin-right: 4px;
-    }
-
-    & *:last-child {
-        margin-right: 0px;
-    }
-}
-
-
-//#region add entry button
+// ============================================================================
+// UTILITY CLASSES
+// ============================================================================
 
 .container {
-    padding: 1rem;
+  padding: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
+.card {
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// FAB positioning
 .fab {
-    position: fixed !important;
-    right: 1.5rem;
-    bottom: calc(48px + 1.5rem);
+  position: fixed !important;
+  right: var(--spacing-lg);
+  bottom: calc(56px + var(--spacing-lg)); // Account for bottom nav
+  z-index: 10;
+  box-shadow: var(--shadow-lg);
+
+  @media (max-width: 599px) {
+    right: var(--spacing-md);
+    bottom: calc(56px + var(--spacing-md));
+  }
 }
 
-//#endregion
+// Header styles
+.header {
+  margin-bottom: var(--spacing-lg);
+
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .stats {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+
+    .stat {
+      padding: var(--spacing-xs) var(--spacing-md);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      background: rgba(0, 0, 0, 0.05);
+
+      &.warning {
+        background-color: rgba(255, 152, 0, 0.15);
+        color: var(--color-warning);
+      }
+
+      &.success {
+        background-color: rgba(76, 175, 80, 0.15);
+        color: var(--color-success);
+      }
+    }
+  }
+}
+
+// Filter controls
+.filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  align-items: flex-start;
+
+  .search-field {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  mat-form-field {
+    min-width: 150px;
+  }
+}
+
+// Empty state
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+
+  mat-icon {
+    font-size: 96px;
+    width: 96px;
+    height: 96px;
+    color: rgba(0, 0, 0, 0.2);
+    opacity: 0.5;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 var(--spacing-lg) 0;
+  }
+}
+
+// ============================================================================
+// MATERIAL COMPONENT OVERRIDES
+// ============================================================================
+
+// Snackbar custom styles
+.success-snackbar {
+  --mdc-snackbar-container-color: var(--color-success);
+  --mat-snack-bar-button-color: white;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: var(--color-error);
+  --mat-snack-bar-button-color: white;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+.warning-snackbar {
+  --mdc-snackbar-container-color: var(--color-warning);
+  --mat-snack-bar-button-color: white;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+// Table improvements
+.mat-mdc-table {
+  width: 100%;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+
+  .mat-mdc-header-cell {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: rgba(0, 0, 0, 0.02);
+
+    button {
+      text-transform: none;
+      font-weight: 600;
+    }
+  }
+
+  .mat-mdc-row {
+    transition: background-color var(--transition-fast);
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+  }
+
+  .expired {
+    color: var(--color-error);
+    font-weight: 500;
+  }
+}
+
+// Form field improvements
+.mat-mdc-form-field {
+  width: 100%;
+
+  &.mat-form-field-appearance-outline {
+    .mat-mdc-text-field-wrapper {
+      border-radius: var(--border-radius-md);
+    }
+  }
+}
+
+// Dialog improvements
+.mat-mdc-dialog-container {
+  border-radius: var(--border-radius-lg) !important;
+  padding: 0 !important;
+
+  .mat-mdc-dialog-title {
+    margin: 0;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .mat-mdc-dialog-content {
+    padding: var(--spacing-lg);
+    margin: 0;
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    min-height: auto;
+  }
+}
+
+// Card improvements
+.mat-mdc-card {
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// Chip improvements
+.mat-mdc-chip {
+  border-radius: 16px;
+}
+
+// Button improvements
+.mat-mdc-button, .mat-mdc-raised-button, .mat-mdc-outlined-button {
+  border-radius: var(--border-radius-md);
+}
+
+.mat-mdc-fab {
+  box-shadow: var(--shadow-lg) !important;
+
+  &:hover {
+    box-shadow: var(--shadow-xl) !important;
+  }
+}
+
+// ============================================================================
+// ANIMATIONS
+// ============================================================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeIn var(--transition-normal);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp var(--transition-slow);
+}
+
+// ============================================================================
+// DARK THEME ADJUSTMENTS
+// ============================================================================
+
+.dark-theme {
+  .mat-mdc-table {
+    .mat-mdc-header-cell {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .mat-mdc-row:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .mat-mdc-dialog-container {
+    .mat-mdc-dialog-title {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .mat-mdc-dialog-actions {
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .header .stats .stat {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .empty-state mat-icon {
+    color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// ============================================================================
+// RESPONSIVE
+// ============================================================================
+
+@media (max-width: 599px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+
+  .filters {
+    flex-direction: column;
+
+    .search-field, mat-form-field {
+      width: 100%;
+    }
+  }
+
+  .header h2 {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 959px) {
+  .filters {
+    .search-field {
+      flex-basis: 100%;
+    }
+  }
+}
+
+// ============================================================================
+// LEGACY FLEX UTILITIES (Keep for compatibility)
+// ============================================================================
+
+[flex="column"] {
+  display: inline-flex !important;
+  flex-direction: column;
+  flex-wrap: nowrap;
+
+  & * {
+    margin-bottom: 4px;
+  }
+
+  & *:last-child {
+    margin-bottom: 0px;
+  }
+}
+
+[flex="row"] {
+  display: inline-flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+
+  & * {
+    margin-right: 4px;
+  }
+
+  & *:last-child {
+    margin-right: 0px;
+  }
+}

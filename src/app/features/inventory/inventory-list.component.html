@@ -1,34 +1,131 @@
 <div class="container">
-  @if (rows.length) {
-  <table mat-table [dataSource]="rows" class="mat-elevation-z1">
-    <ng-container matColumnDef="ingredientId">
-      <th mat-header-cell *matHeaderCellDef>Ingredient</th>
-      <td mat-cell *matCellDef="let r">{{ r.ingredientId }}</td>
-    </ng-container>
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef>Qty</th>
-      <td mat-cell *matCellDef="let r">{{ r.quantity }} {{ r.unit }}</td>
-    </ng-container>
-    <ng-container matColumnDef="expiry">
-      <th mat-header-cell *matHeaderCellDef>Expiry</th>
-      <td mat-cell *matCellDef="let r">{{ r.expiry || "-" }}</td>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button (click)="edit(r)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="remove(r)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-    <tr mat-header-row *matHeaderRowDef="cols"></tr>
-    <tr mat-row *matRowDef="let row; columns: cols"></tr>
-  </table>
+  <!-- Header with stats -->
+  <div class="header">
+    <h2>Inventory</h2>
+    <div class="stats">
+      <span class="stat">{{ rows.length }} items</span>
+      @if (expiringCount > 0) {
+        <span class="stat warning">{{ expiringCount }} expiring soon</span>
+      }
+    </div>
+  </div>
+
+  <!-- Filter controls -->
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Search by ingredient or barcode">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Location</mat-label>
+      <mat-select [(ngModel)]="locationFilter" (ngModelChange)="applyFilters()">
+        <mat-option [value]="null">All</mat-option>
+        <mat-option value="fridge">Fridge</mat-option>
+        <mat-option value="freezer">Freezer</mat-option>
+        <mat-option value="pantry">Pantry</mat-option>
+        <mat-option value="other">Other</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Expiration</mat-label>
+      <mat-select [(ngModel)]="expiringFilter" (ngModelChange)="applyFilters()">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="expired">Expired</mat-option>
+        <mat-option value="week">Expiring this week</mat-option>
+        <mat-option value="month">Expiring this month</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (activeFilterCount > 0) {
+      <button mat-stroked-button (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    }
+  </div>
+
+  <!-- Table -->
+  @if (filteredRows.length > 0) {
+    <table mat-table [dataSource]="filteredRows" class="mat-elevation-z1">
+      <ng-container matColumnDef="ingredientId">
+        <th mat-header-cell *matHeaderCellDef>
+          <button mat-button (click)="onSortChange('ingredientId')">
+            Ingredient
+            @if (sortColumn === 'ingredientId') {
+              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let r">{{ r.ingredientId }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="quantity">
+        <th mat-header-cell *matHeaderCellDef>
+          <button mat-button (click)="onSortChange('quantity')">
+            Quantity
+            @if (sortColumn === 'quantity') {
+              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let r">{{ r.quantity }} {{ r.unit }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="location">
+        <th mat-header-cell *matHeaderCellDef>
+          <button mat-button (click)="onSortChange('location')">
+            Location
+            @if (sortColumn === 'location') {
+              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let r">{{ r.location || '-' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="expiry">
+        <th mat-header-cell *matHeaderCellDef>
+          <button mat-button (click)="onSortChange('expiry')">
+            Expiry
+            @if (sortColumn === 'expiry') {
+              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let r" [class.expired]="isExpired(r.expiry)">
+          {{ r.expiry || "-" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let r">
+          <button mat-icon-button (click)="edit(r)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="remove(r)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="cols"></tr>
+      <tr mat-row *matRowDef="let row; columns: cols"></tr>
+    </table>
   } @else {
-  <p>No items yet.</p>
+    <div class="empty-state">
+      <mat-icon>inventory_2</mat-icon>
+      @if (rows.length === 0) {
+        <h3>No items yet</h3>
+        <p>Start by adding your first pantry item</p>
+      } @else {
+        <h3>No items match your filters</h3>
+        <p>Try adjusting your search or filters</p>
+      }
+    </div>
   }
 
   <button mat-fab color="primary" class="fab" (click)="add()">

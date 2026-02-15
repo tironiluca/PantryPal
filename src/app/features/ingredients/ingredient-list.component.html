@@ -1,40 +1,56 @@
 <div class="container">
-  @if (rows.length) {
-  <table mat-table [dataSource]="rows" class="mat-elevation-z1">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let r">{{ r.name }}</td>
-    </ng-container>
+  <h2>Ingredients</h2>
 
-    <ng-container matColumnDef="categoryId">
-      <th mat-header-cell *matHeaderCellDef>Category</th>
-      <td mat-cell *matCellDef="let r">{{ r.categoryId || "-" }}</td>
-    </ng-container>
+  <!-- Search -->
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Search by name or category">
+    <mat-icon matPrefix>search</mat-icon>
+  </mat-form-field>
 
-    <ng-container matColumnDef="notify">
-      <th mat-header-cell *matHeaderCellDef>Notify</th>
-      <td mat-cell *matCellDef="let r">
-        start: {{ r.notifyStartDays ?? 3 }}d, repeat:
-        {{ r.notifyRepeatDays ?? 1 }}d
-      </td>
-    </ng-container>
+  @if (filteredRows.length > 0) {
+    <table mat-table [dataSource]="filteredRows" class="mat-elevation-z1">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>
+          <button mat-button (click)="onSortChange('name')">
+            Name
+            @if (sortColumn === 'name') {
+              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button (click)="edit(r)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="remove(r)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-    <tr mat-header-row *matHeaderRowDef="cols"></tr>
-    <tr mat-row *matRowDef="let row; columns: cols"></tr>
-  </table>
+      <ng-container matColumnDef="categoryId">
+        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <td mat-cell *matCellDef="let r">{{ r.categoryId || "-" }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="notify">
+        <th mat-header-cell *matHeaderCellDef>Notify</th>
+        <td mat-cell *matCellDef="let r">
+          start: {{ r.notifyStartDays ?? 3 }}d, repeat: {{ r.notifyRepeatDays ?? 1 }}d
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let r">
+          <button mat-icon-button (click)="edit(r)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="remove(r)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="cols"></tr>
+      <tr mat-row *matRowDef="let row; columns: cols"></tr>
+    </table>
   } @else {
-  <p>No ingredients yet.</p>
+    <p>@if (rows.length === 0) { No ingredients yet. } @else { No ingredients match your search. }</p>
   }
 
   <button mat-fab color="primary" class="fab" (click)="add()">

@@ -1,8 +1,11 @@
 import { Component, inject, DestroyRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { MatTableModule } from "@angular/material/table";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { DbService } from "../../core/services/db.service";
 import { Ingredient } from "../../core/models/ingredient.model";
@@ -16,10 +19,13 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   selector: "pp-ingredient-list",
   imports: [
     CommonModule,
+    FormsModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './ingredient-list.component.html',
 })
@@ -32,7 +38,12 @@ export class IngredientListComponent {
   private destroyRef = inject(DestroyRef);
 
   rows: Ingredient[] = [];
+  filteredRows: Ingredient[] = [];
   cols = ["name", "categoryId", "notify", "actions"];
+
+  searchTerm = '';
+  sortColumn = 'name';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   constructor() {
     this.refresh();
@@ -41,10 +52,50 @@ export class IngredientListComponent {
   refresh() {
     try {
       this.rows = this.db.query<Ingredient>("SELECT * FROM ingredients");
+      this.applyFilters();
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load ingredients');
       this.rows = [];
+      this.filteredRows = [];
     }
+  }
+
+  applyFilters() {
+    let filtered = [...this.rows];
+
+    // Search filter
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.name.toLowerCase().includes(term) ||
+        item.categoryId?.toLowerCase().includes(term)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aVal: any = a[this.sortColumn as keyof Ingredient];
+      let bVal: any = b[this.sortColumn as keyof Ingredient];
+
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    this.filteredRows = filtered;
+  }
+
+  onSortChange(column: string) {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.applyFilters();
   }
 
   add() {

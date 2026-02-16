@@ -1,45 +1,58 @@
-<h2 mat-dialog-title style="margin-bottom: 5px">
-  {{ model?.id ? "Edit" : "Add" }} Item
+<h2 mat-dialog-title>
+  {{ model?.id ? "Edit" : "Add" }} Inventory Item
 </h2>
 
-<div mat-dialog-content flex="column" style="padding: 5px; margin: 5px">
-  <mat-form-field appearance="outline"
-    ><mat-label>Ingredient ID</mat-label>
+<div mat-dialog-content class="inventory-form">
+  <mat-form-field appearance="outline">
+    <mat-label>Ingredient ID</mat-label>
     <input matInput [(ngModel)]="model.ingredientId" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline"
-    ><mat-label>Quantity</mat-label>
-    <input matInput type="number" [(ngModel)]="model.quantity" />
-  </mat-form-field>
+  <div class="quantity-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Quantity</mat-label>
+      <input matInput type="number" [(ngModel)]="model.quantity" />
+    </mat-form-field>
 
-  <mat-form-field appearance="outline"
-    ><mat-label>Unit</mat-label>
-    <input matInput [(ngModel)]="model.unit" />
-  </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Unit</mat-label>
+      <input matInput [(ngModel)]="model.unit" />
+    </mat-form-field>
+  </div>
 
-  <mat-form-field appearance="outline"
-    ><mat-label>Min Restock</mat-label>
+  <mat-form-field appearance="outline">
+    <mat-label>Min Restock</mat-label>
     <input matInput type="number" [(ngModel)]="model.minRestock" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline"
-    ><mat-label>Barcode</mat-label>
+  <mat-form-field appearance="outline">
+    <mat-label>Barcode</mat-label>
     <input matInput [(ngModel)]="model.barcode" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline"
-    ><mat-label>Expiry (YYYY-MM-DD)</mat-label>
+  <mat-form-field appearance="outline">
+    <mat-label>Expiry (YYYY-MM-DD)</mat-label>
     <input matInput [(ngModel)]="model.expiry" />
   </mat-form-field>
 
-  <div flex="row">
+  <div class="action-buttons">
     <button mat-stroked-button (click)="scanBarcode()">
-      <mat-icon>qr_code_scanner</mat-icon>&nbsp;Scan barcode
+      <mat-icon>qr_code_scanner</mat-icon>
+      Scan Barcode
     </button>
 
     <button mat-stroked-button (click)="image_input.click()">
-      <mat-icon>upload</mat-icon>&nbsp;UploadFile
+      <mat-icon>upload</mat-icon>
+      Upload Image
+    </button>
+
+    <button
+      mat-stroked-button
+      (click)="fetchProduct()"
+      [disabled]="!model.barcode"
+    >
+      <mat-icon>cloud_download</mat-icon>
+      Fetch Product
     </button>
 
     <input
@@ -49,18 +62,16 @@
       (change)="onFile($event)"
       accept="image/*"
     />
-
-    <button
-      mat-stroked-button
-      (click)="fetchProduct()"
-      [disabled]="!model.barcode"
-    >
-      Fetch product
-    </button>
   </div>
 </div>
 
 <div mat-dialog-actions>
-  <button mat-button (click)="close()">Cancel</button>
-  <button mat-flat-button color="primary" (click)="save()">Save</button>
+  <button mat-button (click)="close()">
+    <mat-icon>close</mat-icon>
+    Cancel
+  </button>
+  <button mat-flat-button color="primary" (click)="save()">
+    <mat-icon>save</mat-icon>
+    Save
+  </button>
 </div>

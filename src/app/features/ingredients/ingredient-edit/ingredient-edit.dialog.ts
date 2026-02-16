@@ -15,19 +15,24 @@ import { Ingredient } from '../../../core/models/ingredient.model';
   template: `
   <h2 mat-dialog-title>{{model?.id ? 'Edit' : 'Add'}} Ingredient</h2>
   <div mat-dialog-content class="form">
-    <mat-form-field appearance="outline"><mat-label>Name</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
       <input matInput [(ngModel)]="model.name">
     </mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Category ID</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-label>Category ID</mat-label>
       <input matInput [(ngModel)]="model.categoryId">
     </mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Default Shelf Life (days)</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-label>Default Shelf Life (days)</mat-label>
       <input matInput type="number" [(ngModel)]="model.defaultShelfLifeDays">
     </mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Notify Start (days before)</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-label>Notify Start (days before)</mat-label>
       <input matInput type="number" [(ngModel)]="model.notifyStartDays">
     </mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Notify Repeat (days)</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-label>Notify Repeat (days)</mat-label>
       <input matInput type="number" [(ngModel)]="model.notifyRepeatDays">
     </mat-form-field>
   </div>
@@ -36,7 +41,30 @@ import { Ingredient } from '../../../core/models/ingredient.model';
     <button mat-flat-button color="primary" (click)="save()">Save</button>
   </div>
   `,
-  styles: [`.form{display:grid;gap:12px;min-width:280px}`]
+  styles: [`
+    mat-dialog-content {
+      width: 90vw;
+      max-width: 450px;
+      padding: var(--spacing-md);
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
+    }
+  `]
 })
 export class IngredientEditDialog {
   private db = inject(DbService);

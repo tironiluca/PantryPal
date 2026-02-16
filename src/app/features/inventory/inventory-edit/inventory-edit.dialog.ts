@@ -32,7 +32,74 @@ import { catchError, of } from "rxjs";
     MatButtonModule,
     MatIconModule,
   ],
-  templateUrl: './inventory-edit.dialog.html'
+  templateUrl: './inventory-edit.dialog.html',
+  styles: [`
+    mat-dialog-content {
+      width: 90vw;
+      max-width: 500px;
+      padding: var(--spacing-md);
+    }
+
+    .inventory-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .quantity-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+
+      button {
+        flex: 1 1 auto;
+        min-width: 120px;
+
+        mat-icon {
+          margin-right: var(--spacing-xs);
+        }
+      }
+    }
+
+    mat-dialog-actions {
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--divider-color);
+
+      button {
+        margin-left: var(--spacing-sm);
+
+        mat-icon {
+          margin-right: var(--spacing-xs);
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
+
+      .quantity-row {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons button {
+        flex: 1 1 100%;
+      }
+    }
+  `]
 })
 export class InventoryEditDialog {
 

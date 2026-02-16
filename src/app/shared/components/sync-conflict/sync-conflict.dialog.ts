@@ -115,6 +115,12 @@ export type ConflictResolution = 'keep-local' | 'keep-remote' | 'merge';
     </mat-dialog-actions>
   `,
   styles: [`
+    mat-dialog-content {
+      width: 90vw;
+      max-width: 700px;
+      padding: var(--spacing-md);
+    }
+
     .conflict-icon {
       color: #ff9800;
       vertical-align: middle;
@@ -230,6 +236,11 @@ export type ConflictResolution = 'keep-local' | 'keep-remote' | 'merge';
     }
 
     @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
+
       .versions-container {
         grid-template-columns: 1fr;
       }

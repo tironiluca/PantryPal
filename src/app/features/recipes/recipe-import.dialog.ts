@@ -238,9 +238,8 @@ interface IngredientMapping {
   `,
   styles: [`
     mat-dialog-content {
-      min-width: 600px;
-      max-width: 800px;
-      min-height: 400px;
+      width: 90vw;
+      max-width: 650px;
       padding: 0;
     }
 
@@ -367,8 +366,7 @@ interface IngredientMapping {
         padding: var(--spacing-md);
         background-color: var(--surface-color);
         border-radius: 8px;
-        max-height: 300px;
-        overflow-y: auto;
+        line-height: 1.6;
       }
     }
 
@@ -450,8 +448,8 @@ interface IngredientMapping {
 
     @media (max-width: 768px) {
       mat-dialog-content {
-        min-width: unset;
-        width: 100%;
+        width: 95vw;
+        max-width: 95vw;
       }
     }
   `],

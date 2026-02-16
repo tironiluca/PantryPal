@@ -236,11 +236,9 @@ interface Ingredient {
   `,
   styles: [`
     mat-dialog-content {
-      min-width: 700px;
-      max-width: 900px;
-      max-height: 80vh;
-      overflow-y: auto;
-      padding: var(--spacing-lg);
+      width: 90vw;
+      max-width: 600px;
+      padding: var(--spacing-md);
     }
 
     h2 {
@@ -295,7 +293,7 @@ interface Ingredient {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-md);
-      padding: var(--spacing-md);
+      padding: var(--spacing-sm);
       background-color: var(--surface-color);
       border-radius: 8px;
     }

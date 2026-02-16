@@ -185,12 +185,17 @@ interface Recipe {
     </mat-dialog-actions>
   `,
   styles: [`
+    mat-dialog-content {
+      width: 90vw;
+      max-width: 500px;
+      padding: var(--spacing-md);
+    }
+
     .meal-plan-form {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-md);
-      min-width: 400px;
-      padding: var(--spacing-md) 0;
+      padding: var(--spacing-sm) 0;
     }
 
     mat-form-field {
@@ -234,8 +239,7 @@ interface Recipe {
         color: var(--text-secondary);
         margin: 0;
         white-space: pre-wrap;
-        max-height: 100px;
-        overflow-y: auto;
+        line-height: 1.6;
       }
     }
 
@@ -253,6 +257,13 @@ interface Recipe {
 
     mat-checkbox {
       margin-top: var(--spacing-sm);
+    }
+
+    @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
     }
   `],
 })

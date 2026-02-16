@@ -238,9 +238,16 @@ interface IngredientMapping {
   `,
   styles: [`
     mat-dialog-content {
-      width: 90vw;
+      width: 100%;
       max-width: 650px;
       padding: 0;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    mat-stepper {
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .url-form {
@@ -248,9 +255,11 @@ interface IngredientMapping {
       flex-direction: column;
       gap: var(--spacing-md);
       padding: var(--spacing-md);
+      box-sizing: border-box;
 
       mat-form-field {
         width: 100%;
+        box-sizing: border-box;
       }
     }
 
@@ -448,8 +457,16 @@ interface IngredientMapping {
 
     @media (max-width: 768px) {
       mat-dialog-content {
-        width: 95vw;
-        max-width: 95vw;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .recipe-preview {
+        padding: var(--spacing-sm);
+      }
+
+      .ingredient-mapping {
+        padding: var(--spacing-sm);
       }
     }
   `],

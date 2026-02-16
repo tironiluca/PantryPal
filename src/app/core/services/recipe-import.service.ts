@@ -37,11 +37,8 @@ export class RecipeImportService {
    */
   async importFromUrl(url: string): Promise<ImportedRecipe> {
     try {
-      // In a production app, you would use a backend proxy to avoid CORS issues
-      // For now, we'll use a CORS proxy service
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-
-      const html = await firstValueFrom(this.http.get(proxyUrl, { responseType: 'text' }));
+      // Try multiple CORS proxies with timeout
+      const html = await this.fetchWithFallback(url);
 
       const recipe = this.parseRecipeFromHtml(html, url);
 
@@ -319,6 +316,57 @@ export class RecipeImportService {
     } catch {
       return 'Unknown Source';
     }
+  }
+
+  /**
+   * Fetch URL with multiple CORS proxy fallbacks
+   */
+  private async fetchWithFallback(url: string): Promise<string> {
+    // List of CORS proxies to try in order
+    const proxies = [
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      `https://cors-anywhere.herokuapp.com/${url}`,
+    ];
+
+    let lastError: any = null;
+
+    for (const proxyUrl of proxies) {
+      try {
+        console.log(`Trying to fetch recipe from: ${proxyUrl}`);
+
+        const html = await firstValueFrom(
+          this.http.get(proxyUrl, {
+            responseType: 'text',
+            headers: {
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            },
+          })
+        );
+
+        if (html && html.length > 0) {
+          console.log('Successfully fetched recipe HTML');
+          return html;
+        }
+      } catch (error: any) {
+        console.warn(`CORS proxy ${proxyUrl} failed:`, error.message);
+        lastError = error;
+        // Continue to next proxy
+      }
+    }
+
+    // All proxies failed
+    throw new Error(
+      `Failed to fetch recipe from all CORS proxies. This may be due to:\n` +
+      `1. The website blocking automated requests\n` +
+      `2. CORS proxy services being temporarily unavailable\n` +
+      `3. Invalid or inaccessible URL\n\n` +
+      `Please try:\n` +
+      `- A different recipe website\n` +
+      `- Copying the recipe manually\n` +
+      `- Trying again later\n\n` +
+      `Last error: ${lastError?.message || 'Unknown error'}`
+    );
   }
 
   /**

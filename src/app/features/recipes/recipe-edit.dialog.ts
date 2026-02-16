@@ -236,9 +236,11 @@ interface Ingredient {
   `,
   styles: [`
     mat-dialog-content {
-      width: 90vw;
+      width: 100%;
       max-width: 600px;
       padding: var(--spacing-md);
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     h2 {
@@ -255,12 +257,19 @@ interface Ingredient {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-md);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    mat-form-field {
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .details-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: var(--spacing-md);
+      gap: var(--spacing-sm);
     }
 
     .section-header {

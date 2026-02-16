@@ -28,10 +28,14 @@ export class UserProfileService {
         .from('users')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;
+      }
+
+      if (!data) {
+        return null;
       }
 
       return {

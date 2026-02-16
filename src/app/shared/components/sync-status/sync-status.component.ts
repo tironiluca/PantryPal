@@ -47,16 +47,6 @@ import { SyncService } from '../../../core/services/sync.service';
             </mat-icon>
           }
         </button>
-
-        <!-- User Profile Button -->
-        <button
-          mat-icon-button
-          [matTooltip]="'Profile'"
-          routerLink="/auth/profile"
-          class="profile-button"
-        >
-          <mat-icon>account_circle</mat-icon>
-        </button>
       } @else {
         <!-- Sign In Button -->
         <button
@@ -106,7 +96,6 @@ import { SyncService } from '../../../core/services/sync.service';
       }
     }
 
-    .profile-button,
     .signin-button {
       mat-icon {
         color: var(--text-secondary);

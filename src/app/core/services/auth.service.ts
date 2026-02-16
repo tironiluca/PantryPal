@@ -160,7 +160,9 @@ export class AuthService {
         throw error;
       }
 
-      if (data.session) {
+      if (data.session && data.user) {
+        // Ensure user profile exists (may be missing if created before profile table)
+        await this.ensureUserProfile(data.user);
         return { success: true };
       }
 
@@ -274,6 +276,25 @@ export class AuthService {
    */
   getSupabaseClient(): SupabaseClient {
     return this.supabase;
+  }
+
+  /**
+   * Ensure user profile exists in public.users table (creates if missing)
+   */
+  private async ensureUserProfile(user: User): Promise<void> {
+    try {
+      const { data } = await this.supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!data) {
+        await this.createUserProfile(user);
+      }
+    } catch (error) {
+      console.error('Failed to ensure user profile:', error);
+    }
   }
 
   /**

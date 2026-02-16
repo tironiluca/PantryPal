@@ -52,8 +52,9 @@ export class RegisterComponent {
     return strongRegex.test(this.password);
   }
 
+  
   isFormValid(): boolean {
-    return (
+    return !!(
       this.email &&
       this.password &&
       this.confirmPassword &&

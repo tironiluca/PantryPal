@@ -68,7 +68,4 @@ export class LoginComponent {
     this.hidePassword.set(!this.hidePassword());
   }
 
-  continueAsGuest(): void {
-    this.router.navigate(['/home']);
-  }
 }

@@ -24,6 +24,7 @@ export class AuthService {
   private errorHandler = inject(ErrorHandlerService);
 
   private supabase: SupabaseClient;
+  private initialized = false;
 
   // Reactive state using signals
   private currentUserSignal = signal<User | null>(null);
@@ -79,11 +80,16 @@ export class AuthService {
         this.currentSessionSignal.set(session);
         this.currentUserSignal.set(session?.user ?? null);
 
-        // Handle different auth events
+        // Skip navigation during initial session restoration — let guards handle it
+        if (!this.initialized) {
+          return;
+        }
+
+        // Handle auth events only after initialization
         switch (event) {
           case 'SIGNED_IN':
             this.snackbar.success('Signed in successfully');
-            await this.router.navigate(['/home']);
+            // Navigation is handled by the calling component (LoginComponent, OAuth redirect)
             break;
           case 'SIGNED_OUT':
             this.snackbar.info('Signed out');
@@ -101,6 +107,7 @@ export class AuthService {
       this.errorHandler.handle(error, 'Failed to initialize authentication');
     } finally {
       this.loadingSignal.set(false);
+      this.initialized = true;
     }
   }
 

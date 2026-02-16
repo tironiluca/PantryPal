@@ -1,0 +1,164 @@
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.profile-card {
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+
+  h2 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) 0;
+}
+
+.avatar-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 48px;
+  font-weight: 500;
+}
+
+.avatar-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.section-divider {
+  margin: var(--spacing-lg) 0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.save-button {
+  height: 48px;
+  margin-top: var(--spacing-sm);
+
+  mat-icon {
+    margin-right: var(--spacing-xs);
+  }
+
+  mat-spinner {
+    margin: 0 auto;
+  }
+}
+
+.account-info {
+  padding: var(--spacing-md) 0;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.info-value {
+  color: var(--text-primary);
+}
+
+.account-actions {
+  padding: var(--spacing-md) 0;
+
+  .action-button {
+    height: 48px;
+    margin-bottom: var(--spacing-sm);
+
+    mat-icon {
+      margin-right: var(--spacing-xs);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .profile-container {
+    padding: var(--spacing-md);
+  }
+
+  .avatar-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .avatar-placeholder {
+    font-size: 40px;
+  }
+
+  .avatar-actions {
+    flex-direction: column;
+    width: 100%;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+}

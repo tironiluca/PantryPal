@@ -166,6 +166,38 @@ export class DbService {
 
       CREATE INDEX IF NOT EXISTS idx_nutrition_logs_user_date ON nutrition_logs(userId, date);
 
+      CREATE TABLE IF NOT EXISTS voice_settings (
+        userId TEXT PRIMARY KEY,
+        enabled INTEGER DEFAULT 1,
+        language TEXT DEFAULT 'en-US',
+        continuousMode INTEGER DEFAULT 0,
+        updatedAt TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS voice_command_log (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        transcript TEXT NOT NULL,
+        command TEXT,
+        success INTEGER,
+        timestamp TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_voice_command_log_user ON voice_command_log(userId);
+
+      CREATE TABLE IF NOT EXISTS image_recognition_log (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        imagePath TEXT,
+        predictions TEXT,
+        selectedLabel TEXT,
+        confidence REAL,
+        userCorrected INTEGER DEFAULT 0,
+        timestamp TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_image_recognition_log_user ON image_recognition_log(userId);
+
       CREATE TABLE IF NOT EXISTS sync_log (
         id TEXT PRIMARY KEY,
         tableName TEXT NOT NULL,

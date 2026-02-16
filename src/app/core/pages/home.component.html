@@ -6,8 +6,21 @@
       PantryPal
     </span>
     <span class="spacer"></span>
+    @if (voiceSupported) {
+      <button
+        mat-icon-button
+        (click)="toggleVoiceControl()"
+        matTooltip="Voice commands"
+        class="voice-button"
+      >
+        <mat-icon>mic</mat-icon>
+      </button>
+    }
     <pp-sync-status></pp-sync-status>
   </mat-toolbar>
+
+  <!-- Voice Control Overlay -->
+  <pp-voice-control-overlay></pp-voice-control-overlay>
 
   <mat-tab-nav-panel #featurePanel>
     <router-outlet></router-outlet>

@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DbService } from '../../core/services/db.service';
 import { RecipeEditDialog } from './recipe-edit.dialog';
+import { RecipeImportDialog } from './recipe-import.dialog';
 import { RouterModule } from '@angular/router';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -36,6 +37,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     <p *ngIf="rows.length===0">No recipes yet.</p>
     <div class="actions">
       <button mat-stroked-button [routerLink]="['/recipes/meal']">Meal of the Day</button>
+      <button mat-stroked-button (click)="importRecipe()">
+        <mat-icon>download</mat-icon>
+        Import Recipe
+      </button>
       <button mat-fab color="primary" class="fab" (click)="add()"><mat-icon>add</mat-icon></button>
     </div>
   </div>
@@ -71,6 +76,18 @@ export class RecipeListComponent {
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ok => ok && this.refresh());
+  }
+
+  importRecipe() {
+    this.dialog
+      .open(RecipeImportDialog, { width: '800px', maxHeight: '90vh' })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(recipeId => {
+        if (recipeId) {
+          this.refresh();
+        }
+      });
   }
 
   edit(r: any) {

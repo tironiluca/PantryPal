@@ -11,6 +11,7 @@ export class DbService {
   private SQL!: any;
   private db!: any;
   private memOnly = false;
+  private initialized = false;
 
   private mem: Record<string, any[]> = {
     ingredient_categories: [],
@@ -19,6 +20,8 @@ export class DbService {
   };
 
   async init(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
     try {
       this.SQL = await initSqlJs({ locateFile: (file: string) => new URL(`assets/${file}`, document.baseURI).toString() });
       // this.SQL = await initSqlJs({ locateFile: (file: string) => `assets/${file}` });
@@ -111,6 +114,58 @@ export class DbService {
         FOREIGN KEY (ingredientId) REFERENCES ingredients(id) ON DELETE RESTRICT
       );
 
+      CREATE TABLE IF NOT EXISTS meal_plans (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        date TEXT NOT NULL,
+        mealType TEXT NOT NULL,
+        recipeId TEXT,
+        servings INTEGER DEFAULT 1,
+        notes TEXT,
+        completed INTEGER DEFAULT 0,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT,
+        FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_meal_plans_date ON meal_plans(date);
+      CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON meal_plans(userId, date);
+
+      CREATE TABLE IF NOT EXISTS nutrition_goals (
+        userId TEXT PRIMARY KEY,
+        dailyKcalGoal REAL,
+        proteinGoal REAL,
+        carbsGoal REAL,
+        fatGoal REAL,
+        fiberGoal REAL,
+        sugarGoal REAL,
+        sodiumGoal REAL,
+        updatedAt TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS nutrition_logs (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        date TEXT NOT NULL,
+        recipeId TEXT,
+        mealType TEXT,
+        servings REAL DEFAULT 1,
+        totalKcal REAL,
+        totalProtein REAL,
+        totalCarbs REAL,
+        totalFat REAL,
+        totalFiber REAL,
+        totalSugar REAL,
+        totalSodium REAL,
+        notes TEXT,
+        createdAt TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_nutrition_logs_user_date ON nutrition_logs(userId, date);
+
       CREATE TABLE IF NOT EXISTS sync_log (
         id TEXT PRIMARY KEY,
         tableName TEXT NOT NULL,
@@ -136,6 +191,15 @@ export class DbService {
     this.addColumnIfNotExists('ingredients', 'isDeleted', 'INTEGER DEFAULT 0');
     this.addColumnIfNotExists('ingredients', 'createdAt', 'TEXT');
     this.addColumnIfNotExists('ingredients', 'updatedAt', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'barcode', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'nutritionData', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'energyKcal', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'proteinG', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'carbsG', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'fatG', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'fiberG', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'sugarG', 'REAL');
+    this.addColumnIfNotExists('ingredients', 'sodiumMg', 'REAL');
 
     this.addColumnIfNotExists('inventory', 'userId', 'TEXT');
     this.addColumnIfNotExists('inventory', 'syncedAt', 'TEXT');
@@ -146,6 +210,14 @@ export class DbService {
     this.addColumnIfNotExists('recipes', 'syncedAt', 'TEXT');
     this.addColumnIfNotExists('recipes', 'version', 'INTEGER DEFAULT 1');
     this.addColumnIfNotExists('recipes', 'isDeleted', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('recipes', 'sourceUrl', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'sourceName', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'importedAt', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'imageUrl', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'prepTime', 'INTEGER');
+    this.addColumnIfNotExists('recipes', 'cookTime', 'INTEGER');
+    this.addColumnIfNotExists('recipes', 'servings', 'INTEGER');
+    this.addColumnIfNotExists('recipes', 'notes', 'TEXT');
 
     this.addColumnIfNotExists('recipe_ingredients', 'userId', 'TEXT');
     this.addColumnIfNotExists('recipe_ingredients', 'syncedAt', 'TEXT');
@@ -153,6 +225,13 @@ export class DbService {
     this.addColumnIfNotExists('recipe_ingredients', 'isDeleted', 'INTEGER DEFAULT 0');
     this.addColumnIfNotExists('recipe_ingredients', 'createdAt', 'TEXT');
     this.addColumnIfNotExists('recipe_ingredients', 'updatedAt', 'TEXT');
+
+    this.addColumnIfNotExists('meal_plans', 'userId', 'TEXT');
+    this.addColumnIfNotExists('meal_plans', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('meal_plans', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('meal_plans', 'isDeleted', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('meal_plans', 'createdAt', 'TEXT');
+    this.addColumnIfNotExists('meal_plans', 'updatedAt', 'TEXT');
   }
 
   /**
@@ -505,7 +584,7 @@ export class DbService {
    * @param userId User ID to assign
    */
   migrateLocalDataToUser(userId: string): void {
-    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients'];
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients', 'meal_plans'];
 
     const statements = tables.flatMap(table => {
       // Update records with NULL userId to the new userId
@@ -537,7 +616,7 @@ export class DbService {
       };
     }
 
-    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'meal_plans'];
     const stats: Record<string, { total: number; unsynced: number; deleted: number }> = {};
     let totalUnsynced = 0;
 
@@ -571,8 +650,10 @@ export class DbService {
         SELECT syncedAt FROM inventory WHERE userId = ? AND syncedAt IS NOT NULL
         UNION ALL
         SELECT syncedAt FROM recipes WHERE userId = ? AND syncedAt IS NOT NULL
+        UNION ALL
+        SELECT syncedAt FROM meal_plans WHERE userId = ? AND syncedAt IS NOT NULL
       )`,
-      [userId, userId, userId, userId]
+      [userId, userId, userId, userId, userId]
     );
 
     return {

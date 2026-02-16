@@ -64,6 +64,18 @@ export class HomeComponent implements OnInit {
       description: 'Discover meals and plan cooking.',
     },
     {
+      label: 'Meal Plan',
+      route: 'meal-plan',
+      icon: 'event',
+      description: 'Plan meals on a calendar and generate shopping lists.',
+    },
+    {
+      label: 'Nutrition',
+      route: 'nutrition',
+      icon: 'restaurant',
+      description: 'Track daily nutrition and macronutrient goals.',
+    },
+    {
       label: 'Cart',
       route: 'cart',
       icon: 'shopping_cart',

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, effect } from '@angular/core';
+import { Component, inject, effect } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
@@ -8,7 +8,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { MigrationService } from './core/services/migration.service';
-import { DbService } from './core/services/db.service';
 
 @Component({
   selector: 'pp-root',
@@ -132,10 +131,9 @@ import { DbService } from './core/services/db.service';
     }
   `]
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   theme = inject(ThemeService);
   auth = inject(AuthService);
-  private db = inject(DbService);
   private migration = inject(MigrationService);
 
   constructor() {
@@ -154,16 +152,6 @@ export class AppComponent implements OnInit {
         this.migration.checkAndMigrate();
       }
     });
-  }
-
-  async ngOnInit(): Promise<void> {
-    // Initialize database
-    await this.db.init();
-
-    // Check and migrate if user is already authenticated
-    if (this.auth.isAuthenticated()) {
-      await this.migration.checkAndMigrate();
-    }
   }
 
   toggleTheme() {

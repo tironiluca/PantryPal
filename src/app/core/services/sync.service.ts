@@ -44,6 +44,7 @@ export class SyncService {
     'inventory',
     'recipes',
     'recipe_ingredients',
+    'meal_plans',
   ];
 
   /**

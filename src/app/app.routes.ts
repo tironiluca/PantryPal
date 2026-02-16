@@ -17,6 +17,8 @@ export const routes: Routes = [
       { path: 'inventory', loadChildren: () => import('./features/inventory/inventory.routes').then(m => m.INVENTORY_ROUTES) },
       { path: 'ingredients', loadChildren: () => import('./features/ingredients/ingredients.routes').then(m => m.INGREDIENT_ROUTES) },
       { path: 'recipes', loadChildren: () => import('./features/recipes/recipes.routes').then(m => m.RECIPE_ROUTES) },
+      { path: 'meal-plan', loadChildren: () => import('./features/meal-plan/meal-plan.routes').then(m => m.MEAL_PLAN_ROUTES) },
+      { path: 'nutrition', loadChildren: () => import('./features/nutrition/nutrition.routes').then(m => m.NUTRITION_ROUTES) },
       { path: 'cart', loadChildren: () => import('./features/cart/cart.routes').then(m => m.CART_ROUTES) },
       { path: 'settings', loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES) },
     ]

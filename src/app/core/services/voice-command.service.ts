@@ -279,7 +279,7 @@ export class VoiceCommandService {
   }
 
   private async executeSearch(target: string, params?: Record<string, any>): Promise<boolean> {
-    const query = params?.query || '';
+    const query: string = String(params?.['query'] ?? '');
 
     await this.executeNavigation(target);
 

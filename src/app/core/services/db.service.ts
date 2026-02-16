@@ -1,10 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import initSqlJs from 'sql.js/dist/sql-wasm.js';
+import { AuthService } from './auth.service';
 
 const DB_FILE = 'pantrypal.db';
 
 @Injectable({ providedIn: 'root' })
 export class DbService {
+  private auth = inject(AuthService);
+
   private SQL!: any;
   private db!: any;
   private memOnly = false;
@@ -35,34 +38,136 @@ export class DbService {
   }
 
   private migrate() {
+    // Create tables with sync metadata columns
     this.db.run(`
-      CREATE TABLE IF NOT EXISTS ingredient_categories (id TEXT PRIMARY KEY, name TEXT);
+      CREATE TABLE IF NOT EXISTS ingredient_categories (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        userId TEXT,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT
+      );
+
       CREATE TABLE IF NOT EXISTS ingredients (
-        id TEXT PRIMARY KEY, name TEXT NOT NULL, categoryId TEXT,
-        defaultShelfLifeDays INTEGER, notifyStartDays INTEGER, notifyRepeatDays INTEGER
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        categoryId TEXT,
+        defaultShelfLifeDays INTEGER,
+        notifyStartDays INTEGER,
+        notifyRepeatDays INTEGER,
+        userId TEXT,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT
       );
+
       CREATE TABLE IF NOT EXISTS inventory (
-        id TEXT PRIMARY KEY, ingredientId TEXT NOT NULL, quantity REAL NOT NULL,
-        unit TEXT NOT NULL, minRestock REAL NOT NULL, expiry TEXT, location TEXT, barcode TEXT,
-        createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL
+        id TEXT PRIMARY KEY,
+        ingredientId TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        unit TEXT NOT NULL,
+        minRestock REAL NOT NULL,
+        expiry TEXT,
+        location TEXT,
+        barcode TEXT,
+        userId TEXT,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
       );
+
       CREATE TABLE IF NOT EXISTS recipes (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         steps TEXT,
+        userId TEXT,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
         createdAt TEXT,
         updatedAt TEXT
       );
+
       CREATE TABLE IF NOT EXISTS recipe_ingredients (
         recipeId TEXT NOT NULL,
         ingredientId TEXT NOT NULL,
         quantity REAL NOT NULL,
         unit TEXT NOT NULL,
+        syncedAt TEXT,
+        version INTEGER DEFAULT 1,
+        isDeleted INTEGER DEFAULT 0,
         PRIMARY KEY (recipeId, ingredientId),
         FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE,
         FOREIGN KEY (ingredientId) REFERENCES ingredients(id) ON DELETE RESTRICT
       );
+
+      CREATE TABLE IF NOT EXISTS sync_log (
+        id TEXT PRIMARY KEY,
+        tableName TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        recordId TEXT,
+        timestamp TEXT,
+        success INTEGER,
+        errorMessage TEXT
+      );
     `);
+
+    // Add sync columns to existing tables if they don't exist (migration)
+    this.addColumnIfNotExists('ingredient_categories', 'userId', 'TEXT');
+    this.addColumnIfNotExists('ingredient_categories', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('ingredient_categories', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('ingredient_categories', 'isDeleted', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('ingredient_categories', 'createdAt', 'TEXT');
+    this.addColumnIfNotExists('ingredient_categories', 'updatedAt', 'TEXT');
+
+    this.addColumnIfNotExists('ingredients', 'userId', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('ingredients', 'isDeleted', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('ingredients', 'createdAt', 'TEXT');
+    this.addColumnIfNotExists('ingredients', 'updatedAt', 'TEXT');
+
+    this.addColumnIfNotExists('inventory', 'userId', 'TEXT');
+    this.addColumnIfNotExists('inventory', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('inventory', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('inventory', 'isDeleted', 'INTEGER DEFAULT 0');
+
+    this.addColumnIfNotExists('recipes', 'userId', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('recipes', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('recipes', 'isDeleted', 'INTEGER DEFAULT 0');
+
+    this.addColumnIfNotExists('recipe_ingredients', 'syncedAt', 'TEXT');
+    this.addColumnIfNotExists('recipe_ingredients', 'version', 'INTEGER DEFAULT 1');
+    this.addColumnIfNotExists('recipe_ingredients', 'isDeleted', 'INTEGER DEFAULT 0');
+  }
+
+  /**
+   * Add a column to a table if it doesn't already exist
+   */
+  private addColumnIfNotExists(table: string, column: string, type: string): void {
+    try {
+      // Check if column exists
+      const result = this.db.exec(`PRAGMA table_info(${table})`);
+
+      if (result.length > 0 && result[0].values) {
+        const columns = result[0].values.map((row: any[]) => row[1]); // column name is at index 1
+
+        if (!columns.includes(column)) {
+          this.db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+          console.log(`Added column ${column} to ${table}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to add column ${column} to ${table}:`, error);
+    }
   }
 
   query<T = any>(sql: string, params: any[] = []): T[] {
@@ -279,5 +384,210 @@ export class DbService {
       // Fallback: localStorage (very small, last resort)
       localStorage.setItem('pp-db', btoa(String.fromCharCode(...data)));
     }
+  }
+
+  // ============ Multi-User & Sync Helper Methods ============
+
+  /**
+   * Get current user ID from auth service
+   */
+  getCurrentUserId(): string | null {
+    return this.auth.getCurrentUserId();
+  }
+
+  /**
+   * Query records for the current user (filters by userId automatically)
+   * @param table Table name
+   * @param whereClause Optional WHERE clause (without userId filter)
+   * @param params Query parameters
+   * @param includeDeleted Include soft-deleted records (default: false)
+   */
+  queryByUser<T = any>(
+    table: string,
+    whereClause: string = '',
+    params: any[] = [],
+    includeDeleted = false
+  ): T[] {
+    const userId = this.getCurrentUserId();
+
+    // If no user is logged in, return guest data (userId IS NULL)
+    const userFilter = userId ? `userId = ?` : `userId IS NULL`;
+    const deletedFilter = includeDeleted ? '' : ` AND (isDeleted IS NULL OR isDeleted = 0)`;
+
+    const where = whereClause
+      ? `WHERE ${userFilter} AND ${whereClause}${deletedFilter}`
+      : `WHERE ${userFilter}${deletedFilter}`;
+
+    const sql = `SELECT * FROM ${table} ${where}`;
+    const finalParams = userId ? [userId, ...params] : params;
+
+    return this.query<T>(sql, finalParams);
+  }
+
+  /**
+   * Get records that have changed since last sync
+   * @param table Table name
+   * @param lastSyncTime ISO timestamp of last successful sync
+   */
+  getChangedRecords<T = any>(table: string, lastSyncTime: string): T[] {
+    const userId = this.getCurrentUserId();
+
+    if (!userId) {
+      return [];
+    }
+
+    const sql = `
+      SELECT * FROM ${table}
+      WHERE userId = ?
+      AND (
+        syncedAt IS NULL
+        OR updatedAt > ?
+        OR (isDeleted = 1 AND updatedAt > ?)
+      )
+    `;
+
+    return this.query<T>(sql, [userId, lastSyncTime, lastSyncTime]);
+  }
+
+  /**
+   * Mark records as synced
+   * @param table Table name
+   * @param ids Record IDs to mark as synced
+   * @param syncTime ISO timestamp of sync
+   */
+  markAsSynced(table: string, ids: string[], syncTime: string): void {
+    if (ids.length === 0) return;
+
+    const placeholders = ids.map(() => '?').join(',');
+    const sql = `
+      UPDATE ${table}
+      SET syncedAt = ?, version = version + 1
+      WHERE id IN (${placeholders})
+    `;
+
+    this.exec(sql, [syncTime, ...ids]);
+  }
+
+  /**
+   * Soft delete a record (sets isDeleted = 1)
+   * @param table Table name
+   * @param id Record ID
+   */
+  softDelete(table: string, id: string): void {
+    const now = new Date().toISOString();
+    const sql = `
+      UPDATE ${table}
+      SET isDeleted = 1, updatedAt = ?, version = version + 1
+      WHERE id = ?
+    `;
+
+    this.exec(sql, [now, id]);
+  }
+
+  /**
+   * Hard delete a record (permanently removes from database)
+   * @param table Table name
+   * @param id Record ID
+   */
+  hardDelete(table: string, id: string): void {
+    const sql = `DELETE FROM ${table} WHERE id = ?`;
+    this.exec(sql, [id]);
+  }
+
+  /**
+   * Update userId for all existing local records (for migration when user first signs in)
+   * @param userId User ID to assign
+   */
+  migrateLocalDataToUser(userId: string): void {
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+
+    const statements = tables.flatMap(table => {
+      // Update records with NULL userId to the new userId
+      return [{
+        sql: `UPDATE ${table} SET userId = ? WHERE userId IS NULL OR userId = ''`,
+        params: [userId]
+      }];
+    });
+
+    this.execBatch(statements);
+    console.log(`Migrated local data to user ${userId}`);
+  }
+
+  /**
+   * Get sync statistics for monitoring
+   */
+  getSyncStats(): {
+    unsyncedCount: number;
+    lastSyncTime: string | null;
+    tables: Record<string, { total: number; unsynced: number; deleted: number }>;
+  } {
+    const userId = this.getCurrentUserId();
+
+    if (!userId) {
+      return {
+        unsyncedCount: 0,
+        lastSyncTime: null,
+        tables: {}
+      };
+    }
+
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+    const stats: Record<string, { total: number; unsynced: number; deleted: number }> = {};
+    let totalUnsynced = 0;
+
+    for (const table of tables) {
+      const total = this.query<any>(
+        `SELECT COUNT(*) as count FROM ${table} WHERE userId = ? AND (isDeleted IS NULL OR isDeleted = 0)`,
+        [userId]
+      )[0]?.count || 0;
+
+      const unsynced = this.query<any>(
+        `SELECT COUNT(*) as count FROM ${table} WHERE userId = ? AND (syncedAt IS NULL OR updatedAt > syncedAt)`,
+        [userId]
+      )[0]?.count || 0;
+
+      const deleted = this.query<any>(
+        `SELECT COUNT(*) as count FROM ${table} WHERE userId = ? AND isDeleted = 1`,
+        [userId]
+      )[0]?.count || 0;
+
+      stats[table] = { total, unsynced, deleted };
+      totalUnsynced += unsynced;
+    }
+
+    // Get last sync time from most recent syncedAt
+    const lastSyncResult = this.query<any>(
+      `SELECT MAX(syncedAt) as lastSync FROM (
+        SELECT syncedAt FROM ingredient_categories WHERE userId = ? AND syncedAt IS NOT NULL
+        UNION ALL
+        SELECT syncedAt FROM ingredients WHERE userId = ? AND syncedAt IS NOT NULL
+        UNION ALL
+        SELECT syncedAt FROM inventory WHERE userId = ? AND syncedAt IS NOT NULL
+        UNION ALL
+        SELECT syncedAt FROM recipes WHERE userId = ? AND syncedAt IS NOT NULL
+      )`,
+      [userId, userId, userId, userId]
+    );
+
+    return {
+      unsyncedCount: totalUnsynced,
+      lastSyncTime: lastSyncResult[0]?.lastSync || null,
+      tables: stats
+    };
+  }
+
+  /**
+   * Log sync operation for debugging
+   */
+  logSync(tableName: string, operation: 'push' | 'pull' | 'conflict', recordId: string, success: boolean, errorMessage?: string): void {
+    const id = `sync-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    const timestamp = new Date().toISOString();
+
+    const sql = `
+      INSERT INTO sync_log (id, tableName, operation, recordId, timestamp, success, errorMessage)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    this.exec(sql, [id, tableName, operation, recordId, timestamp, success ? 1 : 0, errorMessage || null]);
   }
 }

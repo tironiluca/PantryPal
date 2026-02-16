@@ -100,9 +100,12 @@ export class DbService {
         ingredientId TEXT NOT NULL,
         quantity REAL NOT NULL,
         unit TEXT NOT NULL,
+        userId TEXT,
         syncedAt TEXT,
         version INTEGER DEFAULT 1,
         isDeleted INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT,
         PRIMARY KEY (recipeId, ingredientId),
         FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE,
         FOREIGN KEY (ingredientId) REFERENCES ingredients(id) ON DELETE RESTRICT
@@ -144,9 +147,12 @@ export class DbService {
     this.addColumnIfNotExists('recipes', 'version', 'INTEGER DEFAULT 1');
     this.addColumnIfNotExists('recipes', 'isDeleted', 'INTEGER DEFAULT 0');
 
+    this.addColumnIfNotExists('recipe_ingredients', 'userId', 'TEXT');
     this.addColumnIfNotExists('recipe_ingredients', 'syncedAt', 'TEXT');
     this.addColumnIfNotExists('recipe_ingredients', 'version', 'INTEGER DEFAULT 1');
     this.addColumnIfNotExists('recipe_ingredients', 'isDeleted', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('recipe_ingredients', 'createdAt', 'TEXT');
+    this.addColumnIfNotExists('recipe_ingredients', 'updatedAt', 'TEXT');
   }
 
   /**
@@ -499,7 +505,7 @@ export class DbService {
    * @param userId User ID to assign
    */
   migrateLocalDataToUser(userId: string): void {
-    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients'];
 
     const statements = tables.flatMap(table => {
       // Update records with NULL userId to the new userId

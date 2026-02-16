@@ -134,6 +134,24 @@ export class SyncService {
   }
 
   /**
+   * Get the primary key config for a table
+   */
+  private getTableKeyConfig(table: string): { columns: string[]; onConflict: string } {
+    if (table === 'recipe_ingredients') {
+      return { columns: ['recipeId', 'ingredientId'], onConflict: 'recipe_id,ingredient_id' };
+    }
+    return { columns: ['id'], onConflict: 'id' };
+  }
+
+  /**
+   * Get the record identifier string for logging
+   */
+  private getRecordId(record: any, table: string): string {
+    const config = this.getTableKeyConfig(table);
+    return config.columns.map(col => record[col]).join(':');
+  }
+
+  /**
    * Push local changes to Supabase
    */
   private async pushChanges(
@@ -152,6 +170,8 @@ export class SyncService {
           continue;
         }
 
+        const keyConfig = this.getTableKeyConfig(table);
+
         // Convert local records to Supabase format
         const records = changes.map((record: any) => {
           const { syncedAt, ...rest } = record; // Remove syncedAt as we'll update it after successful sync
@@ -164,7 +184,7 @@ export class SyncService {
 
         // Upsert to Supabase (insert or update)
         const { error } = await this.supabase.from(table).upsert(records, {
-          onConflict: 'id',
+          onConflict: keyConfig.onConflict,
           ignoreDuplicates: false,
         });
 
@@ -173,12 +193,22 @@ export class SyncService {
         }
 
         // Mark records as synced in local DB
-        const ids = changes.map((r: any) => r.id);
         const syncTime = new Date().toISOString();
-        this.db.markAsSynced(table, ids, syncTime);
+        if (table === 'recipe_ingredients') {
+          // Composite key: mark synced by recipeId + ingredientId
+          for (const change of changes) {
+            this.db.exec(
+              `UPDATE recipe_ingredients SET syncedAt = ?, version = version + 1 WHERE recipeId = ? AND ingredientId = ?`,
+              [syncTime, change.recipeId, change.ingredientId]
+            );
+          }
+        } else {
+          const ids = changes.map((r: any) => r.id);
+          this.db.markAsSynced(table, ids, syncTime);
+        }
 
         // Log success
-        ids.forEach((id) => this.db.logSync(table, 'push', id, true));
+        changes.forEach((r: any) => this.db.logSync(table, 'push', this.getRecordId(r, table), true));
 
         count += changes.length;
         console.log(`Pushed ${changes.length} changes to ${table}`);
@@ -235,15 +265,23 @@ export class SyncService {
           };
         });
 
+        const isCompositeKey = table === 'recipe_ingredients';
+
+        // Build WHERE clause for finding existing records
+        const findExistingQuery = isCompositeKey
+          ? `SELECT * FROM ${table} WHERE recipeId = ? AND ingredientId = ?`
+          : `SELECT * FROM ${table} WHERE id = ?`;
+
+        const getFindParams = (record: any) => isCompositeKey
+          ? [record.recipeId, record.ingredientId]
+          : [record.id];
+
         // Check for conflicts (local changes that differ from remote)
         const conflictingRecords: any[] = [];
         const safeRecords: any[] = [];
 
         for (const remoteRecord of records) {
-          const localRecords = this.db.query(
-            `SELECT * FROM ${table} WHERE id = ?`,
-            [remoteRecord.id]
-          );
+          const localRecords = this.db.query(findExistingQuery, getFindParams(remoteRecord));
 
           if (localRecords.length > 0) {
             const localRecord = localRecords[0];
@@ -271,24 +309,27 @@ export class SyncService {
         if (safeRecords.length > 0) {
           const columns = Object.keys(safeRecords[0]);
 
-          // Use upsert pattern: delete then insert (or update)
           for (const record of safeRecords) {
             const placeholders = columns.map(() => '?').join(',');
             const values = columns.map((col) => record[col]);
 
             // Check if exists
-            const existing = this.db.query(
-              `SELECT id FROM ${table} WHERE id = ?`,
-              [record.id]
-            );
+            const existing = this.db.query(findExistingQuery, getFindParams(record));
 
             if (existing.length > 0) {
               // Update
               const setClause = columns.map((col) => `${col}=?`).join(',');
-              this.db.exec(
-                `UPDATE ${table} SET ${setClause} WHERE id=?`,
-                [...values, record.id]
-              );
+              if (isCompositeKey) {
+                this.db.exec(
+                  `UPDATE ${table} SET ${setClause} WHERE recipeId=? AND ingredientId=?`,
+                  [...values, record.recipeId, record.ingredientId]
+                );
+              } else {
+                this.db.exec(
+                  `UPDATE ${table} SET ${setClause} WHERE id=?`,
+                  [...values, record.id]
+                );
+              }
             } else {
               // Insert
               this.db.exec(
@@ -309,12 +350,12 @@ export class SyncService {
             conflictingRecords
           );
           conflictingRecords.forEach(({ remote }) =>
-            this.db.logSync(table, 'conflict', remote.id, false, 'Version conflict')
+            this.db.logSync(table, 'conflict', this.getRecordId(remote, table), false, 'Version conflict')
           );
         }
 
         // Log success
-        safeRecords.forEach((r) => this.db.logSync(table, 'pull', r.id, true));
+        safeRecords.forEach((r) => this.db.logSync(table, 'pull', this.getRecordId(r, table), true));
       } catch (error) {
         const errorMsg = `Failed to pull ${table}: ${error}`;
         errors.push(errorMsg);

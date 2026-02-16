@@ -52,7 +52,7 @@ export class MigrationService {
    * Check if there's local data that hasn't been migrated
    */
   private hasUnmigratedData(): boolean {
-    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients'];
 
     for (const table of tables) {
       const records = this.db.query<any>(
@@ -122,7 +122,7 @@ export class MigrationService {
    * Get count of unmigrated records per table
    */
   private getRecordCounts(): Record<string, number> {
-    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes'];
+    const tables = ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients'];
     const counts: Record<string, number> = {};
 
     for (const table of tables) {

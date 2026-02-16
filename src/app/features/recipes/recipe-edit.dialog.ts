@@ -48,17 +48,19 @@ export class RecipeEditDialog {
   }
 
   save() {
+    const now = new Date().toISOString();
+    const userId = this.db.getCurrentUserId();
     if (!this.model.id) {
       this.model.id = `rec-${crypto.randomUUID()}`;
-      this.db.exec('INSERT INTO recipes (id, name, steps) VALUES (?,?,?)', [this.model.id, this.model.name, JSON.stringify(this.stepsText.split('\n').filter(Boolean))]);
+      this.db.exec('INSERT INTO recipes (id, name, steps, userId, createdAt, updatedAt) VALUES (?,?,?,?,?,?)', [this.model.id, this.model.name, JSON.stringify(this.stepsText.split('\n').filter(Boolean)), userId, now, now]);
     } else {
-      this.db.exec('UPDATE recipes SET name=?, steps=? WHERE id=?', [this.model.name, JSON.stringify(this.stepsText.split('\n').filter(Boolean)), this.model.id]);
+      this.db.exec('UPDATE recipes SET name=?, steps=?, updatedAt=? WHERE id=?', [this.model.name, JSON.stringify(this.stepsText.split('\n').filter(Boolean)), now, this.model.id]);
       this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [this.model.id]);
     }
     const lines = this.ingsText.split('\n').map(l=>l.trim()).filter(Boolean);
     for (const l of lines) {
       const [ingredientId, q, u] = l.split(':');
-      this.db.exec('INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit) VALUES (?,?,?,?)', [this.model.id, ingredientId, Number(q||1), u||'pcs']);
+      this.db.exec('INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?)', [this.model.id, ingredientId, Number(q||1), u||'pcs', userId, now, now]);
     }
     this.ref.close(true);
   }

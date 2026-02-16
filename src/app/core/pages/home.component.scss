@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
 }
 
 .home-shell {
@@ -10,6 +10,42 @@
   flex-direction: column;
   height: 100%;
   position: relative;
+}
+
+// Top toolbar styling
+.top-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  color: white;
+  padding: 0 16px;
+  min-height: 64px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  .app-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+
+    .app-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+:host-context(.dark-theme) .top-toolbar {
+  background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 // Modern navigation bar with glassmorphism effect

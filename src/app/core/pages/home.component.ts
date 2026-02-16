@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { SyncStatusComponent } from '../../shared/components/sync-status/sync-status.component';
+import { SyncService } from '../services/sync.service';
+import { AuthService } from '../services/auth.service';
 
 type FeatureTab = {
   label: string;
@@ -15,12 +19,31 @@ type FeatureTab = {
 @Component({
   selector: 'pp-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, MatTabsModule, MatTooltipModule, MatIconModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    MatTabsModule,
+    MatTooltipModule,
+    MatIconModule,
+    MatToolbarModule,
+    SyncStatusComponent,
+  ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
+  private syncService = inject(SyncService);
+  private auth = inject(AuthService);
+
+  ngOnInit(): void {
+    // Start auto-sync if user is authenticated
+    if (this.auth.isAuthenticated()) {
+      this.syncService.startAutoSync(5); // Sync every 5 minutes
+    }
+  }
   readonly tabs: FeatureTab[] = [
     {
       label: 'Inventory',

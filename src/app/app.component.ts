@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ThemeService } from './core/services/theme.service';
 
+//TODO add a way to logout and also a way to chcek user profile
 @Component({
   selector: 'pp-root',
   standalone: true,

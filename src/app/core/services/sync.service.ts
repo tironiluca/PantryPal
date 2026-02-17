@@ -139,17 +139,62 @@ export class SyncService {
    */
   private getTableKeyConfig(table: string): { columns: string[]; onConflict: string } {
     if (table === 'recipe_ingredients') {
-      return { columns: ['recipeId', 'ingredientId'], onConflict: 'recipe_id,ingredient_id' };
+      return { columns: ['recipe_id', 'ingredient_id'], onConflict: 'recipe_id,ingredient_id' };
     }
     return { columns: ['id'], onConflict: 'id' };
   }
 
   /**
+   * Tables that reference ownership via their parent (no direct user_id column)
+   */
+  private readonly CHILD_TABLES = new Set(['recipe_ingredients']);
+
+  /**
    * Get the record identifier string for logging
    */
   private getRecordId(record: any, table: string): string {
-    const config = this.getTableKeyConfig(table);
-    return config.columns.map(col => record[col]).join(':');
+    if (table === 'recipe_ingredients') {
+      return `${record.recipe_id ?? record.recipeId}:${record.ingredient_id ?? record.ingredientId}`;
+    }
+    return record.id ?? '';
+  }
+
+  /**
+   * Convert a camelCase key to snake_case
+   */
+  private toSnake(str: string): string {
+    return str.replace(/([A-Z])/g, (m) => `_${m.toLowerCase()}`);
+  }
+
+  /**
+   * Convert all keys in a local record to snake_case for Supabase, removing local-only fields
+   */
+  private localToRemote(record: any, userId: string, isChildTable = false): any {
+    const result: any = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (key === 'syncedAt') continue; // local-only tracking field
+      result[this.toSnake(key)] = value;
+    }
+    if (!isChildTable) {
+      result['user_id'] = userId;
+    }
+    result['updated_at'] = new Date().toISOString();
+    // Remove camelCase duplicates that were just converted
+    delete result['user_id_id']; // safety
+    return result;
+  }
+
+  /**
+   * Convert snake_case Supabase record back to camelCase for local storage
+   */
+  private remoteToLocal(record: any): any {
+    const result: any = {};
+    for (const [key, value] of Object.entries(record)) {
+      const camel = key.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+      result[camel] = value;
+    }
+    result['syncedAt'] = new Date().toISOString();
+    return result;
   }
 
   /**
@@ -172,16 +217,10 @@ export class SyncService {
         }
 
         const keyConfig = this.getTableKeyConfig(table);
+        const isChild = this.CHILD_TABLES.has(table);
 
-        // Convert local records to Supabase format
-        const records = changes.map((record: any) => {
-          const { syncedAt, ...rest } = record; // Remove syncedAt as we'll update it after successful sync
-          return {
-            ...rest,
-            user_id: userId,
-            updated_at: new Date().toISOString(),
-          };
-        });
+        // Convert local camelCase records to snake_case Supabase format
+        const records = changes.map((record: any) => this.localToRemote(record, userId, isChild));
 
         // Upsert to Supabase (insert or update)
         const { error } = await this.supabase.from(table).upsert(records, {
@@ -195,8 +234,7 @@ export class SyncService {
 
         // Mark records as synced in local DB
         const syncTime = new Date().toISOString();
-        if (table === 'recipe_ingredients') {
-          // Composite key: mark synced by recipeId + ingredientId
+        if (isChild) {
           for (const change of changes) {
             this.db.exec(
               `UPDATE recipe_ingredients SET syncedAt = ?, version = version + 1 WHERE recipeId = ? AND ingredientId = ?`,
@@ -239,12 +277,21 @@ export class SyncService {
 
     for (const table of this.SYNC_TABLES) {
       try {
+        const isChild = this.CHILD_TABLES.has(table);
+
         // Fetch remote changes since last sync
-        const { data, error } = await this.supabase
-          .from(table)
-          .select('*')
-          .eq('user_id', userId)
-          .gt('updated_at', lastSyncTime);
+        let query = this.supabase.from(table).select('*').gt('updated_at', lastSyncTime);
+        if (!isChild) {
+          query = query.eq('user_id', userId);
+        } else {
+          // For child tables (recipe_ingredients), filter indirectly via parent records
+          const localRecipeIds = this.db.query<{id: string}>('SELECT id FROM recipes WHERE userId = ?', [userId])
+            .map(r => r.id);
+          if (localRecipeIds.length === 0) continue;
+          query = query.in('recipe_id', localRecipeIds);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           throw error;
@@ -254,19 +301,10 @@ export class SyncService {
           continue;
         }
 
-        // Convert Supabase format to local format
-        const records = data.map((record: any) => {
-          const { user_id, created_at, updated_at, synced_at, ...rest } = record;
-          return {
-            ...rest,
-            userId: user_id,
-            createdAt: created_at,
-            updatedAt: updated_at,
-            syncedAt: new Date().toISOString(),
-          };
-        });
+        // Convert snake_case Supabase records to camelCase for local storage
+        const records = data.map((record: any) => this.remoteToLocal(record));
 
-        const isCompositeKey = table === 'recipe_ingredients';
+        const isCompositeKey = isChild;
 
         // Build WHERE clause for finding existing records
         const findExistingQuery = isCompositeKey

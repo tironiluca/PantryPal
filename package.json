@@ -5,7 +5,7 @@
   "scripts": {
     "start": "ng serve",
     "start:stable": "ng serve --configuration stable-live",
-    "build": "node --max-old-space-size=4096 node_modules/@angular/cli/bin/ng.js build --configuration production",
+    "build": "ng build --configuration production",
     "test": "ng test",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",

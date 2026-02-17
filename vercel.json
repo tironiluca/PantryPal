@@ -4,6 +4,11 @@
   "outputDirectory": "dist/pantrypal",
   "installCommand": "npm install --include=dev",
   "framework": null,
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    }
+  },
   "routes": [
     {
       "src": "/ngsw-worker.js",

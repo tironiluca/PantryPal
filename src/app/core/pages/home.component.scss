@@ -214,7 +214,7 @@ mat-tab-nav-panel {
   flex: 1;
   height: 100%;
   padding: 1rem;
-  padding-bottom: 0;
+  padding-bottom: 96px; // Clear the sticky bottom nav (~72px) + extra breathing room
   overflow: auto;
 
   // Smooth scroll behavior
@@ -251,9 +251,20 @@ mat-tab-nav-panel {
 
 // Responsive adjustments
 @media (max-width: 600px) {
+  nav[mat-tab-nav-bar] {
+    padding: 6px 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    // Hide scrollbar but allow touch scroll
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
   nav[mat-tab-nav-bar] a[mat-tab-link] {
-    min-width: 64px;
-    padding: 6px 8px;
+    min-width: 56px;
+    flex: 1 0 56px;
+    padding: 5px 6px;
+    border-radius: 10px;
   }
 
   nav[mat-tab-nav-bar] mat-icon {
@@ -263,6 +274,11 @@ mat-tab-nav-panel {
   }
 
   nav[mat-tab-nav-bar] .primary {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0;
+  }
+
+  nav[mat-tab-nav-bar] .secondary {
+    display: none; // Hide sub-label on very small screens
   }
 }

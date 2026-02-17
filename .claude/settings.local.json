@@ -4,7 +4,10 @@
       "Bash(npm run build:*)",
       "Bash(git commit:*)",
       "Bash(npm audit:*)",
-      "Bash(npx ng build)"
+      "Bash(npx ng build)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(npx ng build:*)"
     ]
   }
 }

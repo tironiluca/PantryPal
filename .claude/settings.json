@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:pantry-1nlj25h5i-lucas-projects-b6512ded.vercel.app)"
+    ]
+  }
+}

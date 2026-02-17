@@ -1,5 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,8 +9,83 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { NutritionService, DailyNutritionSummary, NutritionGoals } from '../../core/services/nutrition.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+
+// ── Nutrition Goals Dialog ────────────────────────────────────────────────────
+@Component({
+  selector: 'pp-nutrition-goals-dialog',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
+  template: `
+    <h2 mat-dialog-title>
+      <mat-icon>tune</mat-icon>
+      {{ data.isEdit ? 'Update' : 'Set' }} Nutrition Goals
+    </h2>
+    <mat-dialog-content>
+      <div class="goals-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Daily Calories (kcal)</mat-label>
+          <input matInput type="number" [(ngModel)]="goals.dailyKcalGoal" min="500" max="10000" />
+          <mat-icon matSuffix>local_fire_department</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Protein (g)</mat-label>
+          <input matInput type="number" [(ngModel)]="goals.proteinGoal" min="0" max="500" />
+          <mat-icon matSuffix>fitness_center</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Carbohydrates (g)</mat-label>
+          <input matInput type="number" [(ngModel)]="goals.carbsGoal" min="0" max="1000" />
+          <mat-icon matSuffix>grain</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fat (g)</mat-label>
+          <input matInput type="number" [(ngModel)]="goals.fatGoal" min="0" max="500" />
+          <mat-icon matSuffix>opacity</mat-icon>
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>Cancel</button>
+      <button mat-raised-button color="primary" (click)="save()">
+        <mat-icon>save</mat-icon>
+        Save Goals
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: [`
+    .goals-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) 0;
+      min-width: 300px;
+    }
+    mat-form-field { width: 100%; }
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+  `]
+})
+export class NutritionGoalsDialog {
+  private dialogRef = inject(MatDialogRef<NutritionGoalsDialog>);
+  goals: any;
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { goals: any; isEdit: boolean }) {
+    this.goals = { ...data.goals };
+  }
+
+  save() {
+    this.dialogRef.close(this.goals);
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'pp-nutrition-dashboard',
@@ -24,6 +100,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
     MatListModule,
     MatDividerModule,
     MatTooltipModule,
+    MatDialogModule,
   ],
   template: `
     <div class="nutrition-container">
@@ -235,7 +312,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
   `,
   styles: [`
     .nutrition-container {
-      padding: var(--spacing-lg);
+      padding: 0;
       max-width: 1200px;
       margin: 0 auto;
       display: flex;
@@ -474,7 +551,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 
     @media (max-width: 768px) {
       .nutrition-container {
-        padding: var(--spacing-sm);
+        padding: 0;
       }
 
       .stats-grid {
@@ -491,6 +568,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 export class NutritionDashboardComponent implements OnInit {
   private nutritionService = inject(NutritionService);
   private snackbar = inject(SnackbarService);
+  private dialog = inject(MatDialog);
 
   summary = signal<DailyNutritionSummary | null>(null);
   hasGoals = signal(false);
@@ -511,20 +589,19 @@ export class NutritionDashboardComponent implements OnInit {
     const defaultGoals = this.nutritionService.getDefaultGoals();
     const goals = currentGoals || defaultGoals;
 
-    // For now, use default values - in a full implementation, open a dialog
-    const confirmed = confirm(
-      `Set nutrition goals?\n\n` +
-      `Daily Calories: ${goals.dailyKcalGoal} kcal\n` +
-      `Protein: ${goals.proteinGoal}g\n` +
-      `Carbs: ${goals.carbsGoal}g\n` +
-      `Fat: ${goals.fatGoal}g`
-    );
+    const ref = this.dialog.open(NutritionGoalsDialog, {
+      data: { goals, isEdit: !!currentGoals },
+      width: '380px',
+      maxWidth: '95vw',
+    });
 
-    if (confirmed) {
-      this.nutritionService.setGoals(goals);
-      this.loadTodayNutrition();
-      this.snackbar.success('Nutrition goals set successfully!');
-    }
+    ref.afterClosed().subscribe(result => {
+      if (result) {
+        this.nutritionService.setGoals(result);
+        this.loadTodayNutrition();
+        this.snackbar.success('Nutrition goals saved!');
+      }
+    });
   }
 
   getProgressColor(percent: number): 'primary' | 'accent' | 'warn' {

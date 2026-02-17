@@ -65,6 +65,13 @@ html {
   --color-primary: #e64a19;          // paprika / terracotta
   --color-primary-variant: #ff7043;  // lighter tomato
 
+  // Semantic aliases used across components
+  --text-primary: var(--color-on-surface);
+  --text-secondary: var(--color-on-surface-variant);
+  --surface-color: var(--color-surface);
+  --primary-color: var(--color-primary);
+  --divider-color: rgba(0, 0, 0, 0.08);
+
   // Warm parchment background
   background: linear-gradient(145deg, #fdf6ec 0%, #fae8cc 100%);
 }
@@ -83,6 +90,13 @@ html.dark-theme {
   --color-on-surface-variant: #c4a882; // muted caramel
   --color-primary: #ff7043;          // warm terracotta (lighter for dark)
   --color-primary-variant: #ffab91;  // blush / light peach
+
+  // Semantic aliases — dark theme overrides
+  --text-primary: var(--color-on-surface);
+  --text-secondary: var(--color-on-surface-variant);
+  --surface-color: var(--color-surface);
+  --primary-color: var(--color-primary);
+  --divider-color: rgba(255, 255, 255, 0.08);
 
   // Deep espresso / charred wood background
   background: linear-gradient(145deg, #150b02 0%, #241407 50%, #1a0e05 100%);

@@ -604,3 +604,12 @@ This comprehensive plan addresses all identified issues and provides a clear roa
 **Impact:** High (addresses critical bugs, adds valuable features, dramatically improves UX)
 
 Ready to proceed with implementation! 🚀
+
+## Next Step after next step
+add share of db from 2 user in a family.
+fix scan barcode not working on mobile. it seems to load something but the cam screen do not show up
+add internationalization, add as user setting the default language, provide at least italian and english
+add nutrition target by user, let the user pick what he wants as target, add report by day/week overall.
+address tab bar icon hidden by text.
+add alghoritm to propose a diet in nutriction tab as advice section based on desired target
+add the capability to get nutritional info for each ingredient from the web or as manual input.

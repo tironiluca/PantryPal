@@ -177,9 +177,10 @@ export class SyncService {
     }
     if (!isChildTable) {
       result['user_id'] = userId;
+    } else {
+      delete result['user_id']; // child tables inherit ownership via parent; no user_id column
     }
     result['updated_at'] = new Date().toISOString();
-    // Remove camelCase duplicates that were just converted
     delete result['user_id_id']; // safety
     return result;
   }

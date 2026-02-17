@@ -1,14 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=4096 ng build --configuration production",
   "outputDirectory": "dist/pantrypal",
   "installCommand": "npm install --include=dev",
   "framework": null,
-  "build": {
-    "env": {
-      "NODE_OPTIONS": "--max-old-space-size=4096"
-    }
-  },
   "routes": [
     {
       "src": "/ngsw-worker.js",

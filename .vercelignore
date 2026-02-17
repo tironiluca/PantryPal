@@ -1,9 +1,4 @@
-node_modules
 .angular
 .git
 *.log
-src
 *.md
-tsconfig.json
-angular.json
-package-lock.json

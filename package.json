@@ -41,7 +41,7 @@
     "zone.js": "^0.15.1"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^20.0.0",

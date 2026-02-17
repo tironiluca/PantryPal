@@ -50,8 +50,8 @@ import { MigrationService } from './core/services/migration.service';
   `,
   styles: [`
     .app-toolbar {
-      background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%) !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%) !important;
+      box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
       height: 64px;
       position: sticky;
       top: 0;
@@ -59,9 +59,9 @@ import { MigrationService } from './core/services/migration.service';
     }
 
     :host-context(.dark-theme) .app-toolbar {
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+      background: linear-gradient(135deg, #2d1105 0%, #4a1e0a 100%) !important;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 150, 100, 0.12);
     }
 
     .toolbar-content {

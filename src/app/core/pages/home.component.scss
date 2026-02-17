@@ -17,11 +17,11 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
   color: white;
   padding: 0 16px;
   min-height: 64px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
 
   .app-title {
     display: flex;
@@ -44,7 +44,7 @@
 }
 
 :host-context(.dark-theme) .top-toolbar {
-  background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+  background: linear-gradient(135deg, #2d1105 0%, #4a1e0a 100%);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -71,7 +71,7 @@ nav[mat-tab-nav-bar] {
     height: 1px;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(67, 160, 71, 0.3) 50%,
+      rgba(230, 74, 25, 0.25) 50%,
       transparent 100%
     );
   }
@@ -88,7 +88,7 @@ nav[mat-tab-nav-bar] {
   &::before {
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(102, 187, 106, 0.3) 50%,
+      rgba(255, 112, 67, 0.25) 50%,
       transparent 100%
     );
   }
@@ -116,13 +116,13 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(67, 160, 71, 0.1), rgba(102, 187, 106, 0.1));
+    background: linear-gradient(135deg, rgba(230, 74, 25, 0.08), rgba(255, 112, 67, 0.08));
     opacity: 0;
     transition: opacity 0.3s ease;
   }
 
   &:hover {
-    background: rgba(67, 160, 71, 0.08);
+    background: rgba(230, 74, 25, 0.07);
     transform: translateY(-2px);
 
     &::before {
@@ -131,16 +131,16 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
 
     mat-icon {
       transform: scale(1.1);
-      color: #43a047;
+      color: #e64a19;
     }
   }
 
   // Active state
   &.mdc-tab--active,
   &[active="true"] {
-    background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+    background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+    box-shadow: 0 4px 12px rgba(230, 74, 25, 0.4);
 
     &::before {
       opacity: 0;
@@ -161,17 +161,17 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
 // Dark theme tab links
 :host-context(.dark-theme) nav[mat-tab-nav-bar] a[mat-tab-link] {
   &:hover {
-    background: rgba(102, 187, 106, 0.15);
+    background: rgba(255, 112, 67, 0.12);
 
     mat-icon {
-      color: #66bb6a;
+      color: #ff7043;
     }
   }
 
   &.mdc-tab--active,
   &[active="true"] {
-    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
-    box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+    background: linear-gradient(135deg, #b03a14 0%, #d4542a 100%);
+    box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
   }
 }
 

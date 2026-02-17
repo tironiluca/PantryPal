@@ -9,19 +9,19 @@ h2 {
   padding-bottom: 1rem;
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  background: linear-gradient(135deg, #e64a19 0%, #ff7043 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  border-bottom: 2px solid rgba(67, 160, 71, 0.2);
+  border-bottom: 2px solid rgba(230, 74, 25, 0.2);
 }
 
 :host-context(.dark-theme) h2 {
-  background: linear-gradient(135deg, #66bb6a 0%, #81c784 100%);
+  background: linear-gradient(135deg, #ff7043 0%, #ff8a65 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  border-bottom: 2px solid rgba(102, 187, 106, 0.3);
+  border-bottom: 2px solid rgba(255, 112, 67, 0.3);
 }
 
 // Table styling
@@ -53,7 +53,7 @@ table {
   }
 
   tr:hover {
-    background: rgba(67, 160, 71, 0.04);
+    background: rgba(230, 74, 25, 0.04);
   }
 
   mat-icon {
@@ -67,7 +67,7 @@ table {
       transform: scale(1.1);
 
       mat-icon {
-        color: #43a047;
+        color: #e64a19;
       }
 
       &[color="warn"]:hover mat-icon {
@@ -91,11 +91,11 @@ table {
   }
 
   tr:hover {
-    background: rgba(102, 187, 106, 0.08);
+    background: rgba(255, 112, 67, 0.08);
   }
 
   button[mat-icon-button]:hover mat-icon {
-    color: #66bb6a;
+    color: #ff7043;
   }
 
   button[mat-icon-button][color="warn"]:hover mat-icon {
@@ -127,26 +127,26 @@ p {
     height: 40px;
     border-radius: 20px;
     font-weight: 600;
-    border: 2px solid #43a047;
-    color: #43a047;
+    border: 2px solid #e64a19;
+    color: #e64a19;
     transition: all 0.3s ease;
 
     &:hover {
-      background: rgba(67, 160, 71, 0.1);
+      background: rgba(230, 74, 25, 0.1);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
+      box-shadow: 0 4px 12px rgba(230, 74, 25, 0.3);
     }
   }
 }
 
 :host-context(.dark-theme) .actions {
   button[mat-stroked-button] {
-    border-color: #66bb6a;
-    color: #66bb6a;
+    border-color: #ff7043;
+    color: #ff7043;
 
     &:hover {
-      background: rgba(102, 187, 106, 0.15);
-      box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+      background: rgba(255, 112, 67, 0.15);
+      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
     }
   }
 }
@@ -157,12 +157,12 @@ p {
   bottom: 88px; // Above navigation bar (nav height ~72px + spacing)
   right: 24px;
   z-index: 15; // Higher than navigation bar (z-index: 10)
-  box-shadow: 0 6px 20px rgba(67, 160, 71, 0.4);
+  box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 8px 28px rgba(67, 160, 71, 0.5);
+    box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
   }
 
   &:active {
@@ -171,10 +171,10 @@ p {
 }
 
 :host-context(.dark-theme) .fab {
-  box-shadow: 0 6px 20px rgba(102, 187, 106, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
 
   &:hover {
-    box-shadow: 0 8px 28px rgba(102, 187, 106, 0.5);
+    box-shadow: 0 8px 28px rgba(255, 112, 67, 0.5);
   }
 }
 

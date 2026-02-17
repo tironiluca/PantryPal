@@ -2,6 +2,18 @@
 -- Run this in your Supabase SQL Editor to create all required tables.
 -- All column names use snake_case to match PostgreSQL conventions.
 -- The app's sync service converts camelCase local columns to snake_case automatically.
+--
+-- NOTE: user_id is TEXT (not UUID FK) because the local SQLite stores UUIDs as strings.
+-- RLS policies enforce data isolation — no FK to auth.users needed.
+
+DROP TABLE IF EXISTS nutrition_goals CASCADE;
+DROP TABLE IF EXISTS nutrition_logs CASCADE;
+DROP TABLE IF EXISTS meal_plans CASCADE;
+DROP TABLE IF EXISTS recipe_ingredients CASCADE;
+DROP TABLE IF EXISTS recipes CASCADE;
+DROP TABLE IF EXISTS inventory CASCADE;
+DROP TABLE IF EXISTS ingredients CASCADE;
+DROP TABLE IF EXISTS ingredient_categories CASCADE;
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- INGREDIENT CATEGORIES
@@ -9,7 +21,7 @@
 CREATE TABLE IF NOT EXISTS ingredient_categories (
   id          TEXT PRIMARY KEY,
   name        TEXT,
-  user_id     TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id     TEXT,
   version     INTEGER DEFAULT 1,
   is_deleted  INTEGER DEFAULT 0,
   created_at  TEXT,
@@ -40,7 +52,7 @@ CREATE TABLE IF NOT EXISTS ingredients (
   fiber_g                 REAL,
   sugar_g                 REAL,
   sodium_mg               REAL,
-  user_id                 TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id                 TEXT,
   version                 INTEGER DEFAULT 1,
   is_deleted              INTEGER DEFAULT 0,
   created_at              TEXT,
@@ -64,7 +76,7 @@ CREATE TABLE IF NOT EXISTS inventory (
   expiry        TEXT,
   location      TEXT,
   barcode       TEXT,
-  user_id       TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id       TEXT,
   version       INTEGER DEFAULT 1,
   is_deleted    INTEGER DEFAULT 0,
   created_at    TEXT,
@@ -91,7 +103,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   cook_time   INTEGER,
   servings    INTEGER,
   notes       TEXT,
-  user_id     TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id     TEXT,
   version     INTEGER DEFAULT 1,
   is_deleted  INTEGER DEFAULT 0,
   created_at  TEXT,
@@ -107,8 +119,8 @@ CREATE POLICY "Users manage own recipes"
 -- RECIPE INGREDIENTS
 -- ────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS recipe_ingredients (
-  recipe_id     TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
-  ingredient_id TEXT NOT NULL REFERENCES ingredients(id) ON DELETE RESTRICT,
+  recipe_id     TEXT NOT NULL,
+  ingredient_id TEXT NOT NULL,
   quantity      REAL NOT NULL,
   unit          TEXT NOT NULL,
   version       INTEGER DEFAULT 1,
@@ -138,11 +150,11 @@ CREATE TABLE IF NOT EXISTS meal_plans (
   id          TEXT PRIMARY KEY,
   date        TEXT NOT NULL,
   meal_type   TEXT NOT NULL,
-  recipe_id   TEXT REFERENCES recipes(id) ON DELETE SET NULL,
+  recipe_id   TEXT,
   servings    INTEGER DEFAULT 1,
   notes       TEXT,
   completed   INTEGER DEFAULT 0,
-  user_id     TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id     TEXT,
   version     INTEGER DEFAULT 1,
   is_deleted  INTEGER DEFAULT 0,
   created_at  TEXT,
@@ -162,7 +174,7 @@ CREATE POLICY "Users manage own meal plans"
 CREATE TABLE IF NOT EXISTS nutrition_logs (
   id            TEXT PRIMARY KEY,
   date          TEXT NOT NULL,
-  recipe_id     TEXT REFERENCES recipes(id) ON DELETE SET NULL,
+  recipe_id     TEXT,
   meal_type     TEXT,
   servings      REAL DEFAULT 1,
   total_kcal    REAL,
@@ -173,7 +185,7 @@ CREATE TABLE IF NOT EXISTS nutrition_logs (
   total_sugar   REAL,
   total_sodium  REAL,
   notes         TEXT,
-  user_id       TEXT REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id       TEXT,
   created_at    TEXT,
   updated_at    TEXT
 );
@@ -189,7 +201,7 @@ CREATE POLICY "Users manage own nutrition logs"
 -- NUTRITION GOALS
 -- ────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS nutrition_goals (
-  user_id          TEXT PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id          TEXT PRIMARY KEY,
   daily_kcal_goal  REAL,
   protein_goal     REAL,
   carbs_goal       REAL,

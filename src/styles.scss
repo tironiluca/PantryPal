@@ -3,16 +3,16 @@
 // ============================================================================
 // PANTRYPAL MATERIAL 3 THEME — Food-Inspired Palette
 //
-// Light: warm parchment background, terracotta/paprika primary, herb-green tertiary
+// Light: warm parchment background, terracotta/paprika primary, soft-rose tertiary
 // Dark:  espresso/charred-wood background, same primary warmed slightly
 // ============================================================================
 
-// Light theme — terracotta primary, fresh-herb tertiary
+// Light theme — terracotta primary, soft rose tertiary (strawberry / rosewater)
 $light-theme: mat.define-theme((
   color: (
     theme-type: light,
     primary: mat.$orange-palette,
-    tertiary: mat.$green-palette,
+    tertiary: mat.$rose-palette,
   )
 ));
 
@@ -21,7 +21,7 @@ $dark-theme: mat.define-theme((
   color: (
     theme-type: dark,
     primary: mat.$orange-palette,
-    tertiary: mat.$green-palette,
+    tertiary: mat.$rose-palette,
   )
 ));
 

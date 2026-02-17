@@ -11,6 +11,7 @@ import { RouterModule } from '@angular/router';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DataEventsService } from '../../core/services/data-events.service';
 
 @Component({
   standalone: true,
@@ -19,22 +20,25 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   template: `
   <div class="container">
     <h2>Recipes</h2>
-    <table mat-table [dataSource]="rows" class="mat-elevation-z1" *ngIf="rows">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let r">{{r.name}}</td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let r">
-          <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="cols"></tr>
-      <tr mat-row *matRowDef="let row; columns: cols;"></tr>
-    </table>
-    <p *ngIf="rows.length===0">No recipes yet.</p>
+    @if (rows.length > 0) {
+      <table mat-table [dataSource]="rows" class="mat-elevation-z1">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let r">{{r.name}}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: cols;"></tr>
+      </table>
+    } @else {
+      <p>No recipes yet.</p>
+    }
     <div class="actions">
       <button mat-stroked-button [routerLink]="['/recipes/meal']">Meal of the Day</button>
       <button mat-stroked-button (click)="importRecipe()">
@@ -53,12 +57,16 @@ export class RecipeListComponent {
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
+  private dataEvents = inject(DataEventsService);
 
   rows: any[] = [];
   cols = ['name', 'actions'];
 
   constructor() {
     this.refresh();
+    this.dataEvents.on('recipes', 'recipe_ingredients')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refresh());
   }
 
   refresh() {
@@ -80,7 +88,7 @@ export class RecipeListComponent {
 
   importRecipe() {
     this.dialog
-      .open(RecipeImportDialog, { width: '800px', maxHeight: '90vh' })
+      .open(RecipeImportDialog, { maxWidth: '600px', width: '95vw', maxHeight: '90vh' })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(recipeId => {
@@ -103,6 +111,7 @@ export class RecipeListComponent {
       if (confirm(`Are you sure you want to delete recipe "${r.name}"?`)) {
         this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
         this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
+        this.dataEvents.emit('recipes', 'delete', r.id);
         this.snackbar.success('Recipe deleted successfully');
         this.refresh();
       }

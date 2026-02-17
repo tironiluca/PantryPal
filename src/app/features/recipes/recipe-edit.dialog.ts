@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { DbService } from '../../core/services/db.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { DataEventsService } from '../../core/services/data-events.service';
 
 interface Ingredient {
   id: string;
@@ -425,6 +426,7 @@ export class RecipeEditDialog implements OnInit {
   private db = inject(DbService);
   private snackbar = inject(SnackbarService);
   private dialogRef = inject(MatDialogRef<RecipeEditDialog>);
+  private dataEvents = inject(DataEventsService);
 
   recipeForm!: FormGroup;
   saving = signal(false);
@@ -624,6 +626,8 @@ export class RecipeEditDialog implements OnInit {
       this.snackbar.success(
         `Recipe "${formValue.name}" ${this.isEditMode() ? 'updated' : 'created'} successfully!`
       );
+      this.dataEvents.emit('recipes', this.isEditMode() ? 'update' : 'create', recipeId);
+      this.dataEvents.emit('recipe_ingredients', this.isEditMode() ? 'update' : 'create');
       this.dialogRef.close(recipeId);
     } catch (error) {
       console.error('Failed to save recipe:', error);

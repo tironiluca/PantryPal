@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -9,9 +9,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MealPlanService, MealPlanWithRecipe } from '../../core/services/meal-plan.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { DataEventsService } from '../../core/services/data-events.service';
 import { MealPlanAddDialog } from './meal-plan-add.dialog';
 
 interface CalendarDay {
@@ -459,6 +461,8 @@ export class MealPlanCalendarComponent implements OnInit {
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackbar = inject(SnackbarService);
+  private dataEvents = inject(DataEventsService);
+  private destroyRef = inject(DestroyRef);
 
   weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   mealTypes: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'> = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -512,6 +516,9 @@ export class MealPlanCalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMealPlans();
+    this.dataEvents.on('meal_plans', 'recipes')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadMealPlans());
   }
 
   loadMealPlans(): void {
@@ -538,44 +545,41 @@ export class MealPlanCalendarComponent implements OnInit {
   }
 
   openAddDialog(): void {
-    const dialogRef = this.dialog.open(MealPlanAddDialog, {
-      width: '600px',
+    this.dialog.open(MealPlanAddDialog, {
+      maxWidth: '500px',
+      width: '95vw',
       data: { date: this.formatDate(new Date()) },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadMealPlans();
-        this.snackbar.success('Meal added to plan!');
-      }
+    })
+    .afterClosed()
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(result => {
+      if (result) this.snackbar.success('Meal added to plan!');
     });
   }
 
   addMealToSlot(dateString: string, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'): void {
-    const dialogRef = this.dialog.open(MealPlanAddDialog, {
-      width: '600px',
+    this.dialog.open(MealPlanAddDialog, {
+      maxWidth: '500px',
+      width: '95vw',
       data: { date: dateString, mealType },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadMealPlans();
-        this.snackbar.success('Meal added to plan!');
-      }
+    })
+    .afterClosed()
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(result => {
+      if (result) this.snackbar.success('Meal added to plan!');
     });
   }
 
   editMeal(meal: MealPlanWithRecipe): void {
-    const dialogRef = this.dialog.open(MealPlanAddDialog, {
-      width: '600px',
+    this.dialog.open(MealPlanAddDialog, {
+      maxWidth: '500px',
+      width: '95vw',
       data: { mealPlan: meal },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadMealPlans();
-        this.snackbar.success('Meal updated!');
-      }
+    })
+    .afterClosed()
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(result => {
+      if (result) this.snackbar.success('Meal updated!');
     });
   }
 
@@ -588,6 +592,7 @@ export class MealPlanCalendarComponent implements OnInit {
   deleteMeal(meal: MealPlanWithRecipe): void {
     if (confirm(`Delete ${meal.recipeName} from your meal plan?`)) {
       this.mealPlanService.removeMeal(meal.id);
+      this.dataEvents.emit('meal_plans', 'delete', meal.id);
       this.loadMealPlans();
       this.snackbar.success('Meal removed from plan');
     }

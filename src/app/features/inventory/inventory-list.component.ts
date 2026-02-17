@@ -14,6 +14,7 @@ import { InventoryEditDialog } from "./inventory-edit/inventory-edit.dialog";
 import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { DataEventsService } from "../../core/services/data-events.service";
 
 @Component({
   selector:'pp-inventory-list',
@@ -38,6 +39,7 @@ export class InventoryListComponent {
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
+  private dataEvents = inject(DataEventsService);
 
   rows: InventoryItem[] = [];
   filteredRows: InventoryItem[] = [];
@@ -53,6 +55,9 @@ export class InventoryListComponent {
 
   constructor() {
     this.refresh();
+    this.dataEvents.on('inventory', 'ingredients')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refresh());
   }
 
   refresh() {
@@ -182,6 +187,7 @@ export class InventoryListComponent {
     try {
       if (confirm(`Are you sure you want to delete this inventory item?`)) {
         this.db.exec("DELETE FROM inventory WHERE id = ?", [row.id]);
+        this.dataEvents.emit('inventory', 'delete', row.id);
         this.snackbar.success('Inventory item deleted successfully');
         this.refresh();
       }

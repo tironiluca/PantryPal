@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MealPlanService, MealPlanWithRecipe } from '../../core/services/meal-plan.service';
 import { DbService } from '../../core/services/db.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { DataEventsService } from '../../core/services/data-events.service';
 
 export interface MealPlanDialogData {
   date?: string;
@@ -61,35 +62,23 @@ interface Recipe {
           />
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
-          <mat-error *ngIf="form.get('date')?.hasError('required')">
-            Date is required
-          </mat-error>
+          @if (form.get('date')?.hasError('required')) {
+            <mat-error>Date is required</mat-error>
+          }
         </mat-form-field>
 
         <!-- Meal Type -->
         <mat-form-field appearance="outline">
           <mat-label>Meal Type</mat-label>
           <mat-select formControlName="mealType" required>
-            <mat-option value="breakfast">
-              <mat-icon>free_breakfast</mat-icon>
-              Breakfast
-            </mat-option>
-            <mat-option value="lunch">
-              <mat-icon>lunch_dining</mat-icon>
-              Lunch
-            </mat-option>
-            <mat-option value="dinner">
-              <mat-icon>dinner_dining</mat-icon>
-              Dinner
-            </mat-option>
-            <mat-option value="snack">
-              <mat-icon>cookie</mat-icon>
-              Snack
-            </mat-option>
+            <mat-option value="breakfast">Breakfast</mat-option>
+            <mat-option value="lunch">Lunch</mat-option>
+            <mat-option value="dinner">Dinner</mat-option>
+            <mat-option value="snack">Snack</mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('mealType')?.hasError('required')">
-            Meal type is required
-          </mat-error>
+          @if (form.get('mealType')?.hasError('required')) {
+            <mat-error>Meal type is required</mat-error>
+          }
         </mat-form-field>
 
         <!-- Recipe -->
@@ -97,44 +86,33 @@ interface Recipe {
           <mat-label>Recipe</mat-label>
           <mat-select formControlName="recipeId" required>
             @if (recipes().length === 0) {
-              <mat-option disabled>
-                No recipes available. Create recipes first.
-              </mat-option>
+              <mat-option disabled>No recipes available. Create recipes first.</mat-option>
             } @else {
               @for (recipe of recipes(); track recipe.id) {
-                <mat-option [value]="recipe.id">
-                  {{ recipe.name }}
-                </mat-option>
+                <mat-option [value]="recipe.id">{{ recipe.name }}</mat-option>
               }
             }
           </mat-select>
           <mat-hint>Select a recipe for this meal</mat-hint>
-          <mat-error *ngIf="form.get('recipeId')?.hasError('required')">
-            Recipe is required
-          </mat-error>
+          @if (form.get('recipeId')?.hasError('required')) {
+            <mat-error>Recipe is required</mat-error>
+          }
         </mat-form-field>
 
         <!-- Servings -->
         <mat-form-field appearance="outline">
           <mat-label>Servings</mat-label>
-          <input
-            matInput
-            type="number"
-            formControlName="servings"
-            min="1"
-            max="20"
-            required
-          />
+          <input matInput type="number" formControlName="servings" min="1" max="20" required />
           <mat-hint>Number of servings</mat-hint>
-          <mat-error *ngIf="form.get('servings')?.hasError('required')">
-            Servings is required
-          </mat-error>
-          <mat-error *ngIf="form.get('servings')?.hasError('min')">
-            Minimum 1 serving
-          </mat-error>
-          <mat-error *ngIf="form.get('servings')?.hasError('max')">
-            Maximum 20 servings
-          </mat-error>
+          @if (form.get('servings')?.hasError('required')) {
+            <mat-error>Servings is required</mat-error>
+          }
+          @if (form.get('servings')?.hasError('min')) {
+            <mat-error>Minimum 1 serving</mat-error>
+          }
+          @if (form.get('servings')?.hasError('max')) {
+            <mat-error>Maximum 20 servings</mat-error>
+          }
         </mat-form-field>
 
         <!-- Notes -->
@@ -273,6 +251,7 @@ export class MealPlanAddDialog implements OnInit {
   private db = inject(DbService);
   private snackbar = inject(SnackbarService);
   private dialogRef = inject(MatDialogRef<MealPlanAddDialog>);
+  private dataEvents = inject(DataEventsService);
 
   form!: FormGroup;
   isEditMode = false;
@@ -351,6 +330,7 @@ export class MealPlanAddDialog implements OnInit {
         );
       }
 
+      this.dataEvents.emit('meal_plans', this.isEditMode ? 'update' : 'create');
       this.dialogRef.close(true);
     } catch (error) {
       console.error('Failed to save meal plan:', error);

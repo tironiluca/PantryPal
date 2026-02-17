@@ -10,6 +10,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatButtonModule } from "@angular/material/button";
 import { DbService } from "../../../core/services/db.service";
+import { DataEventsService } from "../../../core/services/data-events.service";
 import { OcrService } from "../../../core/services/ocr.service";
 import { BarcodeService } from "../../../core/services/barcode.service";
 import { ProductsService } from "../../../core/services/products.service";
@@ -107,6 +108,7 @@ export class InventoryEditDialog {
   private barcode = inject(BarcodeService);
   private products = inject(ProductsService);
   private db = inject(DbService);
+  private dataEvents = inject(DataEventsService);
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
@@ -178,6 +180,7 @@ export class InventoryEditDialog {
           ]
         );
         this.snackbar.success('Item added successfully');
+      this.dataEvents.emit('inventory', 'create', this.model.id);
       } else {
         this.db.exec(
           "UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?",
@@ -194,6 +197,7 @@ export class InventoryEditDialog {
           ]
         );
         this.snackbar.success('Item updated successfully');
+        this.dataEvents.emit('inventory', 'update', this.model.id);
       }
       this.ref.close(true);
     } catch (error) {

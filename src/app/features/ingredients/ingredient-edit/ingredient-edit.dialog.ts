@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { DbService } from '../../../core/services/db.service';
 import { Ingredient } from '../../../core/models/ingredient.model';
+import { DataEventsService } from '../../../core/services/data-events.service';
 
 @Component({
   standalone: true,
@@ -68,12 +69,14 @@ import { Ingredient } from '../../../core/models/ingredient.model';
 })
 export class IngredientEditDialog {
   private db = inject(DbService);
+  private dataEvents = inject(DataEventsService);
   model: any = { id:'', name:'', categoryId:'', defaultShelfLifeDays: null, notifyStartDays: 3, notifyRepeatDays: 1 };
   constructor(@Inject(MAT_DIALOG_DATA) public data: Ingredient | null, private ref: MatDialogRef<IngredientEditDialog>) {
     if (data) this.model = { ...data };
   }
   save(){
-    if (!this.model.id) {
+    const isNew = !this.model.id;
+    if (isNew) {
       this.model.id = `ing-${crypto.randomUUID()}`;
       this.db.exec('INSERT INTO ingredients (id, name, categoryId, defaultShelfLifeDays, notifyStartDays, notifyRepeatDays) VALUES (?,?,?,?,?,?)',
         [this.model.id, this.model.name, this.model.categoryId || null, this.model.defaultShelfLifeDays ?? null, this.model.notifyStartDays ?? null, this.model.notifyRepeatDays ?? null]);
@@ -81,6 +84,7 @@ export class IngredientEditDialog {
       this.db.exec('UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=? WHERE id=?',
         [this.model.name, this.model.categoryId || null, this.model.defaultShelfLifeDays ?? null, this.model.notifyStartDays ?? null, this.model.notifyRepeatDays ?? null, this.model.id]);
     }
+    this.dataEvents.emit('ingredients', isNew ? 'create' : 'update', this.model.id);
     this.ref.close(true);
   }
   close(){ this.ref.close(false); }

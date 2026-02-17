@@ -13,6 +13,7 @@ import { IngredientEditDialog } from "./ingredient-edit/ingredient-edit.dialog";
 import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { DataEventsService } from "../../core/services/data-events.service";
 
 @Component({
   standalone: true,
@@ -37,6 +38,7 @@ export class IngredientListComponent {
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
+  private dataEvents = inject(DataEventsService);
 
   rows: Ingredient[] = [];
   filteredRows: Ingredient[] = [];
@@ -48,6 +50,9 @@ export class IngredientListComponent {
 
   constructor() {
     this.refresh();
+    this.dataEvents.on('ingredients')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refresh());
   }
 
   refresh() {
@@ -119,6 +124,7 @@ export class IngredientListComponent {
     try {
       if (confirm(`Are you sure you want to delete "${row.name}"?`)) {
         this.db.exec("DELETE FROM ingredients WHERE id = ?", [row.id]);
+        this.dataEvents.emit('ingredients', 'delete', row.id);
         this.snackbar.success('Ingredient deleted successfully');
         this.refresh();
       }

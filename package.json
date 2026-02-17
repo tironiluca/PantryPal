@@ -5,7 +5,7 @@
   "scripts": {
     "start": "ng serve",
     "start:stable": "ng serve --configuration stable-live",
-    "build": "node --max-old-space-size=4096 node_modules/@angular/cli/bin/ng.js build --configuration production",
+    "build": "echo 'Node version:' && node -v && echo 'Starting Angular build...' && node --max-old-space-size=4096 node_modules/@angular/cli/bin/ng.js build --configuration production",
     "test": "ng test",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
@@ -39,6 +39,9 @@
     "tesseract.js": "^4.1.1",
     "tslib": "^2.6.2",
     "zone.js": "^0.15.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^20.0.0",

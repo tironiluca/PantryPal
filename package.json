@@ -5,11 +5,11 @@
   "scripts": {
     "start": "ng serve",
     "start:stable": "ng serve --configuration stable-live",
-    "build": "echo 'Node version:' && node -v && echo 'Starting Angular build...' && node --max-old-space-size=4096 node_modules/@angular/cli/bin/ng.js build --configuration production",
+    "build": "node --max-old-space-size=4096 node_modules/@angular/cli/bin/ng.js build --configuration production",
     "test": "ng test",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
-    "postinstall": "cpy node_modules/sql.js/dist/sql-wasm.wasm src/assets/"
+    "postinstall": "node -e \"require('fs').cpSync('node_modules/sql.js/dist/sql-wasm.wasm','src/assets/sql-wasm.wasm')\""
   },
   "dependencies": {
     "@angular/animations": "^20.3.16",

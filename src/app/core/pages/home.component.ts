@@ -105,11 +105,5 @@ export class HomeComponent implements OnInit {
       icon: 'shopping_cart',
       description: 'Build shopping lists from shortages.',
     },
-    {
-      label: 'Settings',
-      route: 'settings',
-      icon: 'tune',
-      description: 'Configure notifications and defaults.',
-    },
   ];
 }

@@ -124,6 +124,24 @@
 
         <mat-divider class="section-divider"></mat-divider>
 
+        <!-- App Settings -->
+        <div class="app-settings">
+          <h2>App Settings</h2>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <mat-icon>dark_mode</mat-icon>
+              <span>Dark Theme</span>
+            </div>
+            <mat-slide-toggle
+              [checked]="theme.mode() === 'dark'"
+              (change)="theme.set($event.checked ? 'dark' : 'light')"
+            ></mat-slide-toggle>
+          </div>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
         <!-- Account Actions -->
         <div class="account-actions">
           <h2>Account Actions</h2>

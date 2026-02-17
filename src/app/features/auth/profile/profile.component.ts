@@ -10,9 +10,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AuthService, UserProfile } from '../../../core/services/auth.service';
 import { UserProfileService } from '../../../core/services/user-profile.service';
 import { SnackbarService } from '../../../core/services/snackbar.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'pp-profile',
@@ -28,6 +30,7 @@ import { SnackbarService } from '../../../core/services/snackbar.service';
     MatDividerModule,
     MatProgressSpinnerModule,
     MatDialogModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
@@ -38,6 +41,8 @@ export class ProfileComponent implements OnInit {
   private router = inject(Router);
   private snackbar = inject(SnackbarService);
   private dialog = inject(MatDialog);
+
+  theme = inject(ThemeService);
 
   profile = signal<UserProfile | null>(null);
   loading = signal(true);

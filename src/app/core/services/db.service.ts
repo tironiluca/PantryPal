@@ -264,6 +264,21 @@ export class DbService {
     this.addColumnIfNotExists('meal_plans', 'isDeleted', 'INTEGER DEFAULT 0');
     this.addColumnIfNotExists('meal_plans', 'createdAt', 'TEXT');
     this.addColumnIfNotExists('meal_plans', 'updatedAt', 'TEXT');
+
+    // User settings for language preferences
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        userId TEXT PRIMARY KEY,
+        language TEXT DEFAULT 'en',
+        updatedAt TEXT
+      );
+    `);
+
+    // Nutrition goals extended columns
+    this.addColumnIfNotExists('nutrition_goals', 'trackFiber', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('nutrition_goals', 'trackSugar', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('nutrition_goals', 'trackSodium', 'INTEGER DEFAULT 0');
+    this.addColumnIfNotExists('nutrition_goals', 'goalType', "TEXT DEFAULT 'custom'");
   }
 
   /**

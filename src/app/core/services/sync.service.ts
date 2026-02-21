@@ -4,6 +4,7 @@ import { DbService } from './db.service';
 import { UserProfileService } from './user-profile.service';
 import { SnackbarService } from './snackbar.service';
 import { ErrorHandlerService } from './error-handler.service';
+import { HouseholdService } from './household.service';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'offline';
 
@@ -24,6 +25,7 @@ export class SyncService {
   private profileService = inject(UserProfileService);
   private snackbar = inject(SnackbarService);
   private errorHandler = inject(ErrorHandlerService);
+  private householdService = inject(HouseholdService);
 
   private supabase = this.auth.getSupabaseClient();
 
@@ -276,6 +278,10 @@ export class SyncService {
     let conflicts = 0;
     const errors: string[] = [];
 
+    // Get all user IDs in the household (includes self)
+    const householdUserIds = await this.householdService.getHouseholdUserIds();
+    const pullUserIds = householdUserIds.length > 1 ? householdUserIds : [userId];
+
     for (const table of this.SYNC_TABLES) {
       try {
         const isChild = this.CHILD_TABLES.has(table);
@@ -283,7 +289,7 @@ export class SyncService {
         // Fetch remote changes since last sync
         let query = this.supabase.from(table).select('*').gt('updated_at', lastSyncTime);
         if (!isChild) {
-          query = query.eq('user_id', userId);
+          query = query.in('user_id', pullUserIds);
         } else {
           // For child tables (recipe_ingredients), filter indirectly via parent records
           const localRecipeIds = this.db.query<{id: string}>('SELECT id FROM recipes WHERE userId = ?', [userId])

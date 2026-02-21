@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslocoModule } from '@jsverse/transloco';
 import { SyncStatusComponent } from '../../shared/components/sync-status/sync-status.component';
 import { VoiceControlOverlayComponent } from '../../features/voice/voice-control-overlay.component';
 import { SyncService } from '../services/sync.service';
@@ -14,17 +14,16 @@ import { VoiceService } from '../services/voice.service';
 import { SnackbarService } from '../services/snackbar.service';
 
 type FeatureTab = {
-  label: string;
+  labelKey: string;
+  descKey: string;
   route: string;
   icon: string;
-  description: string;
 };
 
 @Component({
   selector: 'pp-home',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -33,6 +32,7 @@ type FeatureTab = {
     MatIconModule,
     MatToolbarModule,
     MatButtonModule,
+    TranslocoModule,
     SyncStatusComponent,
     VoiceControlOverlayComponent,
   ],
@@ -49,9 +49,8 @@ export class HomeComponent implements OnInit {
   voiceSupported = this.voiceService.isSupported();
 
   ngOnInit(): void {
-    // Start auto-sync if user is authenticated
     if (this.auth.isAuthenticated()) {
-      this.syncService.startAutoSync(5); // Sync every 5 minutes
+      this.syncService.startAutoSync(5);
     }
   }
 
@@ -68,42 +67,43 @@ export class HomeComponent implements OnInit {
       this.snackbar.error('Failed to start voice control');
     }
   }
+
   readonly tabs: FeatureTab[] = [
     {
-      label: 'Inventory',
+      labelKey: 'home.inventory',
       route: 'inventory',
       icon: 'inventory_2',
-      description: 'Track pantry items and expirations.',
+      descKey: 'home.inventoryDesc',
     },
     {
-      label: 'Ingredients',
+      labelKey: 'home.ingredients',
       route: 'ingredients',
       icon: 'category',
-      description: 'Manage ingredients and metadata.',
+      descKey: 'home.ingredientsDesc',
     },
     {
-      label: 'Recipes',
+      labelKey: 'home.recipes',
       route: 'recipes',
       icon: 'restaurant_menu',
-      description: 'Discover meals and plan cooking.',
+      descKey: 'home.recipesDesc',
     },
     {
-      label: 'Meal Plan',
+      labelKey: 'home.mealPlan',
       route: 'meal-plan',
       icon: 'event',
-      description: 'Plan meals on a calendar and generate shopping lists.',
+      descKey: 'home.mealPlanDesc',
     },
     {
-      label: 'Nutrition',
+      labelKey: 'home.nutrition',
       route: 'nutrition',
       icon: 'restaurant',
-      description: 'Track daily nutrition and macronutrient goals.',
+      descKey: 'home.nutritionDesc',
     },
     {
-      label: 'Cart',
+      labelKey: 'home.cart',
       route: 'cart',
       icon: 'shopping_cart',
-      description: 'Build shopping lists from shortages.',
+      descKey: 'home.cartDesc',
     },
   ];
 }

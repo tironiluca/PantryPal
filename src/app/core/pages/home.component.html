@@ -1,4 +1,4 @@
-<section class="home-shell">
+<section class="home-shell" *transloco="let t">
   <!-- Top Toolbar with Sync Status -->
   <mat-toolbar class="top-toolbar">
     <span class="app-title">
@@ -10,7 +10,7 @@
       <button
         mat-icon-button
         (click)="toggleVoiceControl()"
-        matTooltip="Voice commands"
+        [matTooltip]="t('voice.voiceCommands')"
         class="voice-button"
       >
         <mat-icon>mic</mat-icon>
@@ -27,20 +27,18 @@
   </mat-tab-nav-panel>
 
   <nav mat-tab-nav-bar mat-stretch-tabs [tabPanel]="featurePanel">
-
-    @for (tab of tabs; track $index) {}
-    <a
-      mat-tab-link
-      *ngFor="let tab of tabs"
-      [routerLink]="['/home', tab.route]"
-      routerLinkActive
-      #rla="routerLinkActive"
-      [routerLinkActiveOptions]="{ exact: true }"
-      [active]="rla.isActive">
-      <mat-icon aria-hidden="true" style="margin: 3px;;">{{ tab.icon }}</mat-icon>
-      <span class="labels" [matTooltip]="tab.description">
-        <span class="primary">{{ tab.label }}</span>
-      </span>
-    </a>
+    @for (tab of tabs; track tab.route) {
+      <a
+        mat-tab-link
+        [routerLink]="['/home', tab.route]"
+        routerLinkActive
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [active]="rla.isActive"
+        [matTooltip]="t(tab.descKey)">
+        <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>
+        <span class="tab-label">{{ t(tab.labelKey) }}</span>
+      </a>
+    }
   </nav>
 </section>

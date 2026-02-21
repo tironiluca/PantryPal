@@ -1,6 +1,7 @@
 import { Component, Inject, inject, DestroyRef } from "@angular/core";
 import {
   MAT_DIALOG_DATA,
+  MatDialog,
   MatDialogModule,
   MatDialogRef,
 } from "@angular/material/dialog";
@@ -12,7 +13,6 @@ import { MatButtonModule } from "@angular/material/button";
 import { DbService } from "../../../core/services/db.service";
 import { DataEventsService } from "../../../core/services/data-events.service";
 import { OcrService } from "../../../core/services/ocr.service";
-import { BarcodeService } from "../../../core/services/barcode.service";
 import { ProductsService } from "../../../core/services/products.service";
 import { ErrorHandlerService } from "../../../core/services/error-handler.service";
 import { SnackbarService } from "../../../core/services/snackbar.service";
@@ -20,6 +20,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { InventoryItem } from "../../../core/models/inventory.model";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { catchError, of } from "rxjs";
+import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
 
 @Component({
   standalone: true,
@@ -105,7 +106,7 @@ import { catchError, of } from "rxjs";
 export class InventoryEditDialog {
 
   private ocr = inject(OcrService);
-  private barcode = inject(BarcodeService);
+  private dialog = inject(MatDialog);
   private products = inject(ProductsService);
   private db = inject(DbService);
   private dataEvents = inject(DataEventsService);
@@ -232,21 +233,18 @@ export class InventoryEditDialog {
     }
   }
 
-  async scanBarcode() {
-    try {
-      const v = document.createElement("video");
-      this.snackbar.info('Starting barcode scanner...');
-      const code = await this.barcode.scan(v);
+  scanBarcode() {
+    const ref = this.dialog.open(BarcodeScannerDialog, {
+      width: '95vw',
+      maxWidth: '450px',
+    });
 
+    ref.afterClosed().subscribe(code => {
       if (code) {
         this.model.barcode = code;
         this.snackbar.success(`Barcode scanned: ${code}`);
-      } else {
-        this.snackbar.info('No barcode detected. Please try again.');
       }
-    } catch (error) {
-      this.errorHandler.handle(error, 'Barcode scan');
-    }
+    });
   }
 
   async fetchProduct() {

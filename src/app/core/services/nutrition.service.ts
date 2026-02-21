@@ -23,12 +23,16 @@ export interface NutritionGoals {
   fiberGoal?: number;
   sugarGoal?: number;
   sodiumGoal?: number;
+  trackFiber?: boolean;
+  trackSugar?: boolean;
+  trackSodium?: boolean;
+  goalType?: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'custom';
 }
 
 export interface NutritionLog {
   id: string;
   userId: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   recipeId?: string;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   servings: number;
@@ -59,6 +63,18 @@ export interface DailyNutritionSummary {
   percentFat?: number;
 }
 
+export interface WeeklyNutritionReport {
+  startDate: string;
+  endDate: string;
+  dailySummaries: DailyNutritionSummary[];
+  avgKcal: number;
+  avgProtein: number;
+  avgCarbs: number;
+  avgFat: number;
+  daysTracked: number;
+  goalAdherencePercent: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -67,16 +83,12 @@ export class NutritionService {
   private products = inject(ProductsService);
   private auth = inject(AuthService);
 
-  /**
-   * Get or fetch nutrition data for an ingredient by barcode
-   */
   async getNutritionByBarcode(barcode: string): Promise<NutritionData | null> {
     try {
       const response = await firstValueFrom(this.products.byBarcode(barcode));
       if (!response || response.status !== 1 || !response.product || !response.product.nutriments) {
         return null;
       }
-
       return this.extractNutritionFromProduct(response.product);
     } catch (error) {
       console.error('Failed to fetch nutrition data:', error);
@@ -84,21 +96,25 @@ export class NutritionService {
     }
   }
 
-  /**
-   * Get or fetch nutrition data for an ingredient by name
-   * TODO: Implement when ProductsService adds search by name functionality
-   */
-  async getNutritionByName(name: string): Promise<NutritionData | null> {
-    console.warn('Search by name not yet implemented in ProductsService');
-    return null;
+  async getNutritionByName(name: string): Promise<NutritionData[] | null> {
+    try {
+      const response = await firstValueFrom(this.products.searchByName(name));
+      if (!response?.products?.length) return null;
+
+      return response.products
+        .filter((p: any) => p.nutriments)
+        .map((p: any) => ({
+          ...this.extractNutritionFromProduct(p),
+          productName: p.product_name || p.generic_name || name,
+        }));
+    } catch (error) {
+      console.error('Failed to search nutrition data:', error);
+      return null;
+    }
   }
 
-  /**
-   * Extract nutrition data from Open Food Facts product
-   */
   private extractNutritionFromProduct(product: any): NutritionData {
     const nutriments = product.nutriments || {};
-
     return {
       energyKcal: nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0,
       proteinG: nutriments.proteins_100g || nutriments.proteins || 0,
@@ -106,13 +122,10 @@ export class NutritionService {
       fatG: nutriments.fat_100g || nutriments.fat || 0,
       fiberG: nutriments.fiber_100g || nutriments.fiber,
       sugarG: nutriments.sugars_100g || nutriments.sugars,
-      sodiumMg: (nutriments.sodium_100g || nutriments.sodium || 0) * 1000, // Convert g to mg
+      sodiumMg: (nutriments.sodium_100g || nutriments.sodium || 0) * 1000,
     };
   }
 
-  /**
-   * Update nutrition data for an ingredient
-   */
   updateIngredientNutrition(ingredientId: string, nutrition: NutritionData): void {
     const now = new Date().toISOString();
     this.db.exec(
@@ -135,9 +148,6 @@ export class NutritionService {
     );
   }
 
-  /**
-   * Get nutrition data for a recipe based on its ingredients
-   */
   getRecipeNutrition(recipeId: string): NutritionData | null {
     const ingredients = this.db.query<any>(
       `SELECT ri.quantity, ri.unit, i.energyKcal, i.proteinG, i.carbsG, i.fatG, i.fiberG, i.sugarG, i.sodiumMg
@@ -147,23 +157,13 @@ export class NutritionService {
       [recipeId]
     );
 
-    if (ingredients.length === 0) {
-      return null;
-    }
+    if (ingredients.length === 0) return null;
 
-    let totalKcal = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
-    let totalFiber = 0;
-    let totalSugar = 0;
-    let totalSodium = 0;
+    let totalKcal = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+    let totalFiber = 0, totalSugar = 0, totalSodium = 0;
 
     for (const ing of ingredients) {
-      // Nutrition data is typically per 100g, so scale by quantity
-      // This is a simplification - ideally we'd have unit conversion
       const scaleFactor = ing.quantity / 100;
-
       totalKcal += (ing.energyKcal || 0) * scaleFactor;
       totalProtein += (ing.proteinG || 0) * scaleFactor;
       totalCarbs += (ing.carbsG || 0) * scaleFactor;
@@ -184,9 +184,6 @@ export class NutritionService {
     };
   }
 
-  /**
-   * Log a meal for nutrition tracking
-   */
   logMeal(
     date: string,
     mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
@@ -195,14 +192,10 @@ export class NutritionService {
     notes?: string
   ): string {
     const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      throw new Error('User must be authenticated to log meals');
-    }
+    if (!userId) throw new Error('User must be authenticated to log meals');
 
     const nutrition = this.getRecipeNutrition(recipeId);
-    if (!nutrition) {
-      throw new Error('Could not calculate nutrition for this recipe');
-    }
+    if (!nutrition) throw new Error('Could not calculate nutrition for this recipe');
 
     const id = `log-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const now = new Date().toISOString();
@@ -211,12 +204,7 @@ export class NutritionService {
       `INSERT INTO nutrition_logs (id, userId, date, recipeId, mealType, servings, totalKcal, totalProtein, totalCarbs, totalFat, totalFiber, totalSugar, totalSodium, notes, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        userId,
-        date,
-        recipeId,
-        mealType,
-        servings,
+        id, userId, date, recipeId, mealType, servings,
         nutrition.energyKcal * servings,
         nutrition.proteinG * servings,
         nutrition.carbsG * servings,
@@ -224,22 +212,16 @@ export class NutritionService {
         (nutrition.fiberG || 0) * servings,
         (nutrition.sugarG || 0) * servings,
         (nutrition.sodiumMg || 0) * servings,
-        notes || null,
-        now,
+        notes || null, now,
       ]
     );
 
     return id;
   }
 
-  /**
-   * Get daily nutrition summary
-   */
   getDailyNutrition(date: string): DailyNutritionSummary {
     const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      return this.getEmptySummary(date);
-    }
+    if (!userId) return this.getEmptySummary(date);
 
     const logs = this.db.query<NutritionLog>(
       'SELECT * FROM nutrition_logs WHERE userId = ? AND date = ?',
@@ -248,13 +230,8 @@ export class NutritionService {
 
     const summary: DailyNutritionSummary = {
       date,
-      totalKcal: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      totalFiber: 0,
-      totalSugar: 0,
-      totalSodium: 0,
+      totalKcal: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0,
+      totalFiber: 0, totalSugar: 0, totalSodium: 0,
     };
 
     for (const log of logs) {
@@ -267,7 +244,6 @@ export class NutritionService {
       summary.totalSodium += log.totalSodium || 0;
     }
 
-    // Get goals and calculate percentages
     const goals = this.getGoals();
     if (goals) {
       summary.goals = goals;
@@ -280,101 +256,120 @@ export class NutritionService {
     return summary;
   }
 
-  /**
-   * Get nutrition goals for current user
-   */
-  getGoals(): NutritionGoals | null {
-    const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      return null;
+  getWeeklySummary(startDate: string): WeeklyNutritionReport {
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    const endDate = this.formatDate(end);
+
+    const dailySummaries: DailyNutritionSummary[] = [];
+    const current = new Date(start);
+
+    for (let i = 0; i < 7; i++) {
+      dailySummaries.push(this.getDailyNutrition(this.formatDate(current)));
+      current.setDate(current.getDate() + 1);
     }
 
-    const goals = this.db.query<NutritionGoals>(
+    const tracked = dailySummaries.filter(d => d.totalKcal > 0);
+    const daysTracked = tracked.length;
+
+    const avgKcal = daysTracked > 0 ? tracked.reduce((s, d) => s + d.totalKcal, 0) / daysTracked : 0;
+    const avgProtein = daysTracked > 0 ? tracked.reduce((s, d) => s + d.totalProtein, 0) / daysTracked : 0;
+    const avgCarbs = daysTracked > 0 ? tracked.reduce((s, d) => s + d.totalCarbs, 0) / daysTracked : 0;
+    const avgFat = daysTracked > 0 ? tracked.reduce((s, d) => s + d.totalFat, 0) / daysTracked : 0;
+
+    const goals = this.getGoals();
+    let goalAdherencePercent = 0;
+    if (goals && daysTracked > 0) {
+      const metGoalDays = tracked.filter(d => {
+        const kcalOk = !goals.dailyKcalGoal || (d.totalKcal >= goals.dailyKcalGoal * 0.8 && d.totalKcal <= goals.dailyKcalGoal * 1.2);
+        return kcalOk;
+      }).length;
+      goalAdherencePercent = Math.round((metGoalDays / daysTracked) * 100);
+    }
+
+    return {
+      startDate,
+      endDate,
+      dailySummaries,
+      avgKcal: Math.round(avgKcal),
+      avgProtein: Math.round(avgProtein * 10) / 10,
+      avgCarbs: Math.round(avgCarbs * 10) / 10,
+      avgFat: Math.round(avgFat * 10) / 10,
+      daysTracked,
+      goalAdherencePercent,
+    };
+  }
+
+  getGoals(): NutritionGoals | null {
+    const userId = this.auth.getCurrentUserId();
+    if (!userId) return null;
+
+    const goals = this.db.query<any>(
       'SELECT * FROM nutrition_goals WHERE userId = ?',
       [userId]
     );
 
-    return goals.length > 0 ? goals[0] : null;
+    if (goals.length === 0) return null;
+
+    const g = goals[0];
+    return {
+      ...g,
+      trackFiber: !!g.trackFiber,
+      trackSugar: !!g.trackSugar,
+      trackSodium: !!g.trackSodium,
+    };
   }
 
-  /**
-   * Set nutrition goals for current user
-   */
   setGoals(goals: Omit<NutritionGoals, 'userId'>): void {
     const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      throw new Error('User must be authenticated to set goals');
-    }
+    if (!userId) throw new Error('User must be authenticated to set goals');
 
     const now = new Date().toISOString();
-
-    // Check if goals exist
     const existing = this.getGoals();
 
     if (existing) {
-      // Update
       this.db.exec(
         `UPDATE nutrition_goals
          SET dailyKcalGoal = ?, proteinGoal = ?, carbsGoal = ?, fatGoal = ?,
-             fiberGoal = ?, sugarGoal = ?, sodiumGoal = ?, updatedAt = ?
+             fiberGoal = ?, sugarGoal = ?, sodiumGoal = ?,
+             trackFiber = ?, trackSugar = ?, trackSodium = ?, goalType = ?,
+             updatedAt = ?
          WHERE userId = ?`,
         [
-          goals.dailyKcalGoal,
-          goals.proteinGoal,
-          goals.carbsGoal,
-          goals.fatGoal,
-          goals.fiberGoal || null,
-          goals.sugarGoal || null,
-          goals.sodiumGoal || null,
-          now,
-          userId,
+          goals.dailyKcalGoal, goals.proteinGoal, goals.carbsGoal, goals.fatGoal,
+          goals.fiberGoal || null, goals.sugarGoal || null, goals.sodiumGoal || null,
+          goals.trackFiber ? 1 : 0, goals.trackSugar ? 1 : 0, goals.trackSodium ? 1 : 0,
+          goals.goalType || 'custom', now, userId,
         ]
       );
     } else {
-      // Insert
       this.db.exec(
-        `INSERT INTO nutrition_goals (userId, dailyKcalGoal, proteinGoal, carbsGoal, fatGoal, fiberGoal, sugarGoal, sodiumGoal, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO nutrition_goals (userId, dailyKcalGoal, proteinGoal, carbsGoal, fatGoal, fiberGoal, sugarGoal, sodiumGoal, trackFiber, trackSugar, trackSodium, goalType, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          userId,
-          goals.dailyKcalGoal,
-          goals.proteinGoal,
-          goals.carbsGoal,
-          goals.fatGoal,
-          goals.fiberGoal || null,
-          goals.sugarGoal || null,
-          goals.sodiumGoal || null,
-          now,
+          userId, goals.dailyKcalGoal, goals.proteinGoal, goals.carbsGoal, goals.fatGoal,
+          goals.fiberGoal || null, goals.sugarGoal || null, goals.sodiumGoal || null,
+          goals.trackFiber ? 1 : 0, goals.trackSugar ? 1 : 0, goals.trackSodium ? 1 : 0,
+          goals.goalType || 'custom', now,
         ]
       );
     }
   }
 
-  /**
-   * Get nutrition logs for a date range
-   */
   getLogsForRange(startDate: string, endDate: string): NutritionLog[] {
     const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      return [];
-    }
-
+    if (!userId) return [];
     return this.db.query<NutritionLog>(
       'SELECT * FROM nutrition_logs WHERE userId = ? AND date >= ? AND date <= ? ORDER BY date DESC, createdAt DESC',
       [userId, startDate, endDate]
     );
   }
 
-  /**
-   * Delete a nutrition log
-   */
   deleteLog(logId: string): void {
     this.db.exec('DELETE FROM nutrition_logs WHERE id = ?', [logId]);
   }
 
-  /**
-   * Get default recommended daily goals (based on average adult)
-   */
   getDefaultGoals(): Omit<NutritionGoals, 'userId'> {
     return {
       dailyKcalGoal: 2000,
@@ -387,16 +382,31 @@ export class NutritionService {
     };
   }
 
+  getPresetGoals(type: string): Omit<NutritionGoals, 'userId'> {
+    switch (type) {
+      case 'weight_loss':
+        return { dailyKcalGoal: 1500, proteinGoal: 100, carbsGoal: 150, fatGoal: 50, fiberGoal: 30, sugarGoal: 30, sodiumGoal: 2000, goalType: 'weight_loss' };
+      case 'muscle_gain':
+        return { dailyKcalGoal: 2800, proteinGoal: 150, carbsGoal: 350, fatGoal: 80, fiberGoal: 30, sugarGoal: 60, sodiumGoal: 2500, goalType: 'muscle_gain' };
+      case 'maintenance':
+        return { dailyKcalGoal: 2000, proteinGoal: 75, carbsGoal: 250, fatGoal: 65, fiberGoal: 25, sugarGoal: 50, sodiumGoal: 2300, goalType: 'maintenance' };
+      default:
+        return this.getDefaultGoals();
+    }
+  }
+
   private getEmptySummary(date: string): DailyNutritionSummary {
     return {
       date,
-      totalKcal: 0,
-      totalProtein: 0,
-      totalCarbs: 0,
-      totalFat: 0,
-      totalFiber: 0,
-      totalSugar: 0,
-      totalSodium: 0,
+      totalKcal: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0,
+      totalFiber: 0, totalSugar: 0, totalSodium: 0,
     };
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

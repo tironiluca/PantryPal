@@ -48,6 +48,16 @@ export class ProductsService {
   }
 
   /**
+   * Search products by name using Open Food Facts search API
+   */
+  searchByName(name: string): Observable<any> {
+    const encoded = encodeURIComponent(name.trim());
+    return this.http.get<any>(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encoded}&json=true&page_size=5&fields=product_name,generic_name,nutriments,brands`
+    );
+  }
+
+  /**
    * Clear product cache
    */
   async clearCache(): Promise<void> {

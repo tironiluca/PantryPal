@@ -99,7 +99,7 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   text-transform: none;
   font-size: 0.75rem;
   padding: 8px 12px;
@@ -108,6 +108,14 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+
+  // Override Material's inner wrapper to stack icon + label
+  ::ng-deep .mdc-tab__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
 
   &::before {
     content: '';
@@ -151,7 +159,7 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
       transform: scale(1.15);
     }
 
-    .labels .primary {
+    .tab-label {
       font-weight: 700;
       color: white;
     }
@@ -189,24 +197,17 @@ nav[mat-tab-nav-bar] mat-icon {
 }
 
 // Label styling
-nav[mat-tab-nav-bar] .labels {
-  display: flex;
-  flex-direction: column;
+nav[mat-tab-nav-bar] .tab-label {
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
   line-height: 1.2;
   text-align: center;
-  width: 100%;
-}
-
-nav[mat-tab-nav-bar] .primary {
-  font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
   transition: all 0.3s ease;
-}
-
-nav[mat-tab-nav-bar] .secondary {
-  font-size: 0.65rem;
-  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 // Content panel styling
@@ -255,15 +256,14 @@ mat-tab-nav-panel {
     padding: 6px 4px;
     overflow-x: auto;
     overflow-y: hidden;
-    // Hide scrollbar but allow touch scroll
     scrollbar-width: none;
     &::-webkit-scrollbar { display: none; }
   }
 
   nav[mat-tab-nav-bar] a[mat-tab-link] {
-    min-width: 56px;
-    flex: 1 0 56px;
-    padding: 5px 6px;
+    min-width: 48px;
+    flex: 1 0 48px;
+    padding: 5px 4px;
     border-radius: 10px;
   }
 
@@ -273,12 +273,20 @@ mat-tab-nav-panel {
     height: 20px;
   }
 
-  nav[mat-tab-nav-bar] .primary {
-    font-size: 0.65rem;
+  nav[mat-tab-nav-bar] .tab-label {
+    font-size: 0.6rem;
     letter-spacing: 0;
   }
+}
 
-  nav[mat-tab-nav-bar] .secondary {
-    display: none; // Hide sub-label on very small screens
+// Very small screens: hide labels, show only on active tab
+@media (max-width: 400px) {
+  nav[mat-tab-nav-bar] .tab-label {
+    display: none;
+  }
+
+  nav[mat-tab-nav-bar] a[mat-tab-link].mdc-tab--active .tab-label,
+  nav[mat-tab-nav-bar] a[mat-tab-link][active="true"] .tab-label {
+    display: block;
   }
 }

@@ -54,10 +54,10 @@ DROP POLICY IF EXISTS "Users manage own household memberships" ON household_memb
 CREATE POLICY "Users manage own household memberships"
   ON household_members FOR ALL
   USING (
-    user_id = auth.uid()::text
+    household_members.user_id = auth.uid()::text
     OR EXISTS (
       SELECT 1 FROM household_members hm2
-      WHERE hm2.household_id = household_id
+      WHERE hm2.household_id = household_members.household_id
         AND hm2.user_id = auth.uid()::text
     )
   );
@@ -86,13 +86,13 @@ DROP POLICY IF EXISTS "Household shared inventory" ON inventory;
 CREATE POLICY "Household shared inventory"
   ON inventory FOR SELECT
   USING (
-    user_id = auth.uid()::text
+    inventory.user_id = auth.uid()::text
     OR EXISTS (
       SELECT 1
       FROM household_members hm1
       JOIN household_members hm2 ON hm1.household_id = hm2.household_id
       WHERE hm1.user_id = auth.uid()::text
-        AND hm2.user_id = user_id
+        AND hm2.user_id = inventory.user_id
     )
   );
 
@@ -101,12 +101,12 @@ DROP POLICY IF EXISTS "Household shared ingredients" ON ingredients;
 CREATE POLICY "Household shared ingredients"
   ON ingredients FOR SELECT
   USING (
-    user_id = auth.uid()::text
+    ingredients.user_id = auth.uid()::text
     OR EXISTS (
       SELECT 1
       FROM household_members hm1
       JOIN household_members hm2 ON hm1.household_id = hm2.household_id
       WHERE hm1.user_id = auth.uid()::text
-        AND hm2.user_id = user_id
+        AND hm2.user_id = ingredients.user_id
     )
   );

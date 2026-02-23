@@ -1,77 +1,79 @@
-<h2 mat-dialog-title>
-  {{ model?.id ? "Edit" : "Add" }} Inventory Item
-</h2>
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>
+    {{ model?.id ? t('inventory.editItem') : t('inventory.addItem') }}
+  </h2>
 
-<div mat-dialog-content class="inventory-form">
-  <mat-form-field appearance="outline">
-    <mat-label>Ingredient ID</mat-label>
-    <input matInput [(ngModel)]="model.ingredientId" />
-  </mat-form-field>
-
-  <div class="quantity-row">
+  <div mat-dialog-content class="inventory-form">
     <mat-form-field appearance="outline">
-      <mat-label>Quantity</mat-label>
-      <input matInput type="number" [(ngModel)]="model.quantity" />
+      <mat-label>{{ t('inventory.ingredientId') }}</mat-label>
+      <input matInput [(ngModel)]="model.ingredientId" />
+    </mat-form-field>
+
+    <div class="quantity-row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.quantity') }}</mat-label>
+        <input matInput type="number" [(ngModel)]="model.quantity" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.unit') }}</mat-label>
+        <input matInput [(ngModel)]="model.unit" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('inventory.minRestock') }}</mat-label>
+      <input matInput type="number" [(ngModel)]="model.minRestock" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Unit</mat-label>
-      <input matInput [(ngModel)]="model.unit" />
+      <mat-label>{{ t('inventory.barcode') }}</mat-label>
+      <input matInput [(ngModel)]="model.barcode" />
     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t('inventory.expiryFormat') }}</mat-label>
+      <input matInput [(ngModel)]="model.expiry" />
+    </mat-form-field>
+
+    <div class="action-buttons">
+      <button mat-stroked-button (click)="scanBarcode()">
+        <mat-icon>qr_code_scanner</mat-icon>
+        {{ t('inventory.scanBarcode') }}
+      </button>
+
+      <button mat-stroked-button (click)="image_input.click()">
+        <mat-icon>upload</mat-icon>
+        {{ t('inventory.uploadImage') }}
+      </button>
+
+      <button
+        mat-stroked-button
+        (click)="fetchProduct()"
+        [disabled]="!model.barcode"
+      >
+        <mat-icon>cloud_download</mat-icon>
+        {{ t('inventory.fetchProduct') }}
+      </button>
+
+      <input
+        [hidden]="true"
+        #image_input
+        type="file"
+        (change)="onFile($event)"
+        accept="image/*"
+      />
+    </div>
   </div>
 
-  <mat-form-field appearance="outline">
-    <mat-label>Min Restock</mat-label>
-    <input matInput type="number" [(ngModel)]="model.minRestock" />
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Barcode</mat-label>
-    <input matInput [(ngModel)]="model.barcode" />
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Expiry (YYYY-MM-DD)</mat-label>
-    <input matInput [(ngModel)]="model.expiry" />
-  </mat-form-field>
-
-  <div class="action-buttons">
-    <button mat-stroked-button (click)="scanBarcode()">
-      <mat-icon>qr_code_scanner</mat-icon>
-      Scan Barcode
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="close()">
+      <mat-icon>close</mat-icon>
+      {{ t('common.cancel') }}
     </button>
-
-    <button mat-stroked-button (click)="image_input.click()">
-      <mat-icon>upload</mat-icon>
-      Upload Image
+    <button mat-flat-button color="primary" (click)="save()">
+      <mat-icon>save</mat-icon>
+      {{ t('common.save') }}
     </button>
-
-    <button
-      mat-stroked-button
-      (click)="fetchProduct()"
-      [disabled]="!model.barcode"
-    >
-      <mat-icon>cloud_download</mat-icon>
-      Fetch Product
-    </button>
-
-    <input
-      [hidden]="true"
-      #image_input
-      type="file"
-      (change)="onFile($event)"
-      accept="image/*"
-    />
   </div>
-</div>
-
-<div mat-dialog-actions>
-  <button mat-button (click)="close()">
-    <mat-icon>close</mat-icon>
-    Cancel
-  </button>
-  <button mat-flat-button color="primary" (click)="save()">
-    <mat-icon>save</mat-icon>
-    Save
-  </button>
-</div>
+</ng-container>

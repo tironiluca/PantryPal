@@ -10,13 +10,15 @@ import { FormsModule } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { TranslocoModule, TranslocoService } from "@jsverse/transloco";
 import { DbService } from "../../../core/services/db.service";
 import { DataEventsService } from "../../../core/services/data-events.service";
 import { OcrService } from "../../../core/services/ocr.service";
 import { ProductsService } from "../../../core/services/products.service";
+import { NutritionService } from "../../../core/services/nutrition.service";
 import { ErrorHandlerService } from "../../../core/services/error-handler.service";
 import { SnackbarService } from "../../../core/services/snackbar.service";
-import { MatIconModule } from "@angular/material/icon";
 import { InventoryItem } from "../../../core/models/inventory.model";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { catchError, of } from "rxjs";
@@ -33,6 +35,7 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    TranslocoModule,
   ],
   templateUrl: './inventory-edit.dialog.html',
   styles: [`
@@ -40,12 +43,15 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
       width: 90vw;
       max-width: 500px;
       padding: var(--spacing-md);
+      padding-top: calc(var(--spacing-md) + 8px);
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
 
     .inventory-form {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-md);
+      gap: var(--spacing-sm);
     }
 
     mat-form-field {
@@ -62,7 +68,7 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
       display: flex;
       flex-wrap: wrap;
       gap: var(--spacing-sm);
-      margin-top: var(--spacing-sm);
+      margin-top: var(--spacing-xs);
 
       button {
         flex: 1 1 auto;
@@ -75,7 +81,7 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     }
 
     mat-dialog-actions {
-      padding: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
       border-top: 1px solid var(--divider-color);
 
       button {
@@ -112,6 +118,8 @@ export class InventoryEditDialog {
   private dataEvents = inject(DataEventsService);
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
+  private transloco = inject(TranslocoService);
+  private nutritionService = inject(NutritionService);
   private destroyRef = inject(DestroyRef);
 
   model: any = {
@@ -127,36 +135,34 @@ export class InventoryEditDialog {
     @Inject(MAT_DIALOG_DATA) public data: InventoryItem | null,
     private ref: MatDialogRef<InventoryEditDialog>
   ) {
-    if (data) 
+    if (data)
       this.model = { ...data };
   }
 
   save() {
     try {
-      // Validation
       if (!this.model.ingredientId || !this.model.ingredientId.trim()) {
-        this.snackbar.error('Please enter an ingredient name');
+        this.snackbar.error(this.transloco.translate('inventory.enterIngredientName'));
         return;
       }
 
       if (this.model.quantity <= 0) {
-        this.snackbar.error('Quantity must be greater than 0');
+        this.snackbar.error(this.transloco.translate('inventory.quantityMustBePositive'));
         return;
       }
 
       if (this.model.minRestock < 0) {
-        this.snackbar.error('Minimum restock cannot be negative');
+        this.snackbar.error(this.transloco.translate('inventory.minRestockNegative'));
         return;
       }
 
-      // Check for duplicate barcode
       if (this.model.barcode) {
         const existing = this.db.query<any>(
           'SELECT id FROM inventory WHERE barcode = ? AND id != ?',
           [this.model.barcode, this.model.id || '']
         );
         if (existing.length > 0) {
-          this.snackbar.error('This barcode is already in use');
+          this.snackbar.error(this.transloco.translate('inventory.barcodeAlreadyInUse'));
           return;
         }
       }
@@ -180,8 +186,8 @@ export class InventoryEditDialog {
             now,
           ]
         );
-        this.snackbar.success('Item added successfully');
-      this.dataEvents.emit('inventory', 'create', this.model.id);
+        this.snackbar.success(this.transloco.translate('inventory.itemAdded'));
+        this.dataEvents.emit('inventory', 'create', this.model.id);
       } else {
         this.db.exec(
           "UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?",
@@ -197,12 +203,12 @@ export class InventoryEditDialog {
             this.model.id,
           ]
         );
-        this.snackbar.success('Item updated successfully');
+        this.snackbar.success(this.transloco.translate('inventory.itemUpdated'));
         this.dataEvents.emit('inventory', 'update', this.model.id);
       }
       this.ref.close(true);
     } catch (error) {
-      this.errorHandler.handle(error, 'Failed to save inventory item');
+      this.errorHandler.handle(error, this.transloco.translate('inventory.failedSaveItem'));
     }
   }
 
@@ -215,19 +221,19 @@ export class InventoryEditDialog {
       const f = ev.target?.files?.[0];
       if (!f) return;
 
-      this.snackbar.info('Extracting expiry date from image...');
+      this.snackbar.info(this.transloco.translate('inventory.extractingExpiry'));
       const iso = await this.ocr.extractExpiry(f);
 
       if (iso) {
         this.model.expiry = iso;
-        this.snackbar.success('Expiry date extracted successfully');
+        this.snackbar.success(this.transloco.translate('inventory.expiryExtracted'));
       } else {
-        this.snackbar.warning('Could not detect expiry date in image');
+        this.snackbar.warning(this.transloco.translate('inventory.expiryNotDetected'));
       }
     } catch (error) {
       this.errorHandler.handleWithMessage(
         error,
-        'Failed to extract expiry date from image',
+        this.transloco.translate('inventory.failedExtractExpiry'),
         'OCR'
       );
     }
@@ -242,25 +248,29 @@ export class InventoryEditDialog {
     ref.afterClosed().subscribe(code => {
       if (code) {
         this.model.barcode = code;
-        this.snackbar.success(`Barcode scanned: ${code}`);
+        this.snackbar.info(this.transloco.translate('inventory.fetchingProduct'));
+        this.doFetchProduct();
       }
     });
   }
 
   async fetchProduct() {
     if (!this.model.barcode) {
-      this.snackbar.warning('Please enter or scan a barcode first');
+      this.snackbar.warning(this.transloco.translate('inventory.enterOrScanBarcode'));
       return;
     }
+    this.snackbar.info(this.transloco.translate('inventory.fetchingProduct'));
+    this.doFetchProduct();
+  }
 
-    this.snackbar.info('Fetching product information...');
+  private doFetchProduct() {
     this.products.byBarcode(this.model.barcode)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         catchError(error => {
           this.errorHandler.handleWithMessage(
             error,
-            'Failed to fetch product information',
+            this.transloco.translate('inventory.failedFetchProduct'),
             'Product fetch'
           );
           return of(null);
@@ -268,21 +278,45 @@ export class InventoryEditDialog {
       )
       .subscribe((res: any) => {
         if (!res || res.status !== 1) {
-          this.snackbar.info('Product not found in database');
+          this.snackbar.info(this.transloco.translate('inventory.productNotFound'));
           return;
         }
 
-        const name = res?.product?.product_name || res?.product?.generic_name;
+        const product = res.product;
+        const name = product?.product_name || product?.generic_name;
+
+        // Only fill ingredientId if currently empty
         if (name && !this.model.ingredientId) {
           this.model.ingredientId = name
             .toLowerCase()
             .replace(/\s+/g, "-")
             .slice(0, 30);
-          this.snackbar.success('Product information loaded');
+          this.snackbar.success(this.transloco.translate('inventory.productLoaded'));
         } else if (name) {
-          this.snackbar.info('Product found, but ingredient already set');
+          this.snackbar.info(this.transloco.translate('inventory.productFoundIngredientSet'));
         } else {
-          this.snackbar.warning('Product found but no name available');
+          this.snackbar.warning(this.transloco.translate('inventory.productFoundNoName'));
+        }
+
+        // Autofill nutrition data if available from Open Food Facts
+        if (this.model.ingredientId && product?.nutriments) {
+          const n = product.nutriments;
+          const kcal = n['energy-kcal_100g'] || n['energy-kcal'] || 0;
+          if (kcal > 0) {
+            try {
+              this.nutritionService.updateIngredientNutrition(this.model.ingredientId, {
+                energyKcal: kcal,
+                proteinG: n.proteins_100g || n.proteins || 0,
+                carbsG: n.carbohydrates_100g || n.carbohydrates || 0,
+                fatG: n.fat_100g || n.fat || 0,
+                fiberG: n.fiber_100g || n.fiber,
+                sugarG: n.sugars_100g || n.sugars,
+                sodiumMg: (n.sodium_100g || n.sodium || 0) * 1000,
+              });
+            } catch {
+              // Ingredient may not exist in DB yet; nutrition will be set when ingredient is created
+            }
+          }
         }
       });
   }

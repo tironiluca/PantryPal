@@ -37,7 +37,9 @@
     "recipesDesc": "Discover meals and plan cooking.",
     "mealPlanDesc": "Plan meals on a calendar and generate shopping lists.",
     "nutritionDesc": "Track daily nutrition and macronutrient goals.",
-    "cartDesc": "Build shopping lists from shortages."
+    "cartDesc": "Build shopping lists from shortages.",
+    "settings": "Settings",
+    "settingsDesc": "Language, theme and family sharing."
   },
   "auth": {
     "welcomeTo": "Welcome to PantryPal",

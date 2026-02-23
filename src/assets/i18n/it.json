@@ -37,7 +37,9 @@
     "recipesDesc": "Scopri pasti e pianifica la cucina.",
     "mealPlanDesc": "Pianifica i pasti su un calendario e genera liste della spesa.",
     "nutritionDesc": "Monitora la nutrizione giornaliera e gli obiettivi dei macronutrienti.",
-    "cartDesc": "Crea liste della spesa dalle carenze."
+    "cartDesc": "Crea liste della spesa dalle carenze.",
+    "settings": "Impostazioni",
+    "settingsDesc": "Lingua, tema e condivisione famiglia."
   },
   "auth": {
     "welcomeTo": "Benvenuto su PantryPal",

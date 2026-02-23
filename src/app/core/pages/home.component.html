@@ -1,27 +1,4 @@
 <section class="home-shell" *transloco="let t">
-  <!-- Top Toolbar with Sync Status -->
-  <mat-toolbar class="top-toolbar">
-    <span class="app-title">
-      <mat-icon class="app-icon">restaurant</mat-icon>
-      PantryPal
-    </span>
-    <span class="spacer"></span>
-    @if (voiceSupported) {
-      <button
-        mat-icon-button
-        (click)="toggleVoiceControl()"
-        [matTooltip]="t('voice.voiceCommands')"
-        class="voice-button"
-      >
-        <mat-icon>mic</mat-icon>
-      </button>
-    }
-    <pp-sync-status></pp-sync-status>
-  </mat-toolbar>
-
-  <!-- Voice Control Overlay -->
-  <pp-voice-control-overlay></pp-voice-control-overlay>
-
   <mat-tab-nav-panel #featurePanel>
     <router-outlet></router-outlet>
   </mat-tab-nav-panel>

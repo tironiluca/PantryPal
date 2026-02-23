@@ -4,23 +4,48 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { MigrationService } from './core/services/migration.service';
+import { VoiceService } from './core/services/voice.service';
+import { SnackbarService } from './core/services/snackbar.service';
+import { SyncStatusComponent } from './shared/components/sync-status/sync-status.component';
+import { VoiceControlOverlayComponent } from './features/voice/voice-control-overlay.component';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'pp-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, MatToolbarModule, MatIconModule, MatButtonModule, MatMenuModule],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatTooltipModule,
+    SyncStatusComponent,
+    VoiceControlOverlayComponent,
+    TranslocoModule,
+  ],
   template: `
-  <mat-toolbar class="app-toolbar" color="primary">
+  <mat-toolbar class="app-toolbar" color="primary" *transloco="let t">
     <div class="toolbar-content">
       <div class="brand">
         <mat-icon class="brand-icon">kitchen</mat-icon>
         <span class="brand-name">PantryPal</span>
       </div>
       <div class="toolbar-actions">
+        @if (auth.isAuthenticated()) {
+          @if (voiceSupported) {
+            <button mat-icon-button (click)="toggleVoiceControl()" [matTooltip]="t('voice.voiceCommands')" class="voice-button" aria-label="Voice commands">
+              <mat-icon>mic</mat-icon>
+            </button>
+          }
+          <pp-sync-status></pp-sync-status>
+        }
         <button mat-icon-button (click)="toggleTheme()" class="theme-toggle" aria-label="Toggle theme">
           <mat-icon>{{ theme.mode() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
         </button>
@@ -46,6 +71,7 @@ import { MigrationService } from './core/services/migration.service';
       </div>
     </div>
   </mat-toolbar>
+  <pp-voice-control-overlay></pp-voice-control-overlay>
   <router-outlet></router-outlet>
   `,
   styles: [`
@@ -112,6 +138,7 @@ import { MigrationService } from './core/services/migration.service';
       }
     }
 
+    .voice-button,
     .user-menu-button,
     .login-button {
       transition: background-color 0.3s ease;
@@ -135,6 +162,10 @@ export class AppComponent {
   theme = inject(ThemeService);
   auth = inject(AuthService);
   private migration = inject(MigrationService);
+  private voiceService = inject(VoiceService);
+  private snackbar = inject(SnackbarService);
+
+  voiceSupported = this.voiceService.isSupported();
 
   constructor() {
     const iconRegistry = inject(MatIconRegistry);
@@ -158,8 +189,21 @@ export class AppComponent {
     this.theme.set(this.theme.mode() === 'light' ? 'dark' : 'light');
   }
 
+  toggleVoiceControl(): void {
+    if (!this.voiceSupported) {
+      this.snackbar.warning('Voice commands are not supported in this browser');
+      return;
+    }
+
+    try {
+      this.voiceService.toggleListening();
+    } catch (error) {
+      console.error('Failed to toggle voice control:', error);
+      this.snackbar.error('Failed to start voice control');
+    }
+  }
+
   async logout() {
     await this.auth.signOut();
   }
 }
-

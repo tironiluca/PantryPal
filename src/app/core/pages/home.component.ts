@@ -3,15 +3,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule } from '@jsverse/transloco';
-import { SyncStatusComponent } from '../../shared/components/sync-status/sync-status.component';
-import { VoiceControlOverlayComponent } from '../../features/voice/voice-control-overlay.component';
 import { SyncService } from '../services/sync.service';
 import { AuthService } from '../services/auth.service';
-import { VoiceService } from '../services/voice.service';
-import { SnackbarService } from '../services/snackbar.service';
 
 type FeatureTab = {
   labelKey: string;
@@ -30,11 +25,8 @@ type FeatureTab = {
     MatTabsModule,
     MatTooltipModule,
     MatIconModule,
-    MatToolbarModule,
     MatButtonModule,
     TranslocoModule,
-    SyncStatusComponent,
-    VoiceControlOverlayComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -43,28 +35,10 @@ type FeatureTab = {
 export class HomeComponent implements OnInit {
   private syncService = inject(SyncService);
   private auth = inject(AuthService);
-  private voiceService = inject(VoiceService);
-  private snackbar = inject(SnackbarService);
-
-  voiceSupported = this.voiceService.isSupported();
 
   ngOnInit(): void {
     if (this.auth.isAuthenticated()) {
       this.syncService.startAutoSync(5);
-    }
-  }
-
-  toggleVoiceControl(): void {
-    if (!this.voiceSupported) {
-      this.snackbar.warning('Voice commands are not supported in this browser');
-      return;
-    }
-
-    try {
-      this.voiceService.toggleListening();
-    } catch (error) {
-      console.error('Failed to toggle voice control:', error);
-      this.snackbar.error('Failed to start voice control');
     }
   }
 
@@ -104,6 +78,12 @@ export class HomeComponent implements OnInit {
       route: 'cart',
       icon: 'shopping_cart',
       descKey: 'home.cartDesc',
+    },
+    {
+      labelKey: 'home.settings',
+      route: 'settings',
+      icon: 'settings',
+      descKey: 'home.settingsDesc',
     },
   ];
 }

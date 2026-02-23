@@ -12,42 +12,6 @@
   position: relative;
 }
 
-// Top toolbar styling
-.top-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
-  color: white;
-  padding: 0 16px;
-  min-height: 64px;
-  box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
-
-  .app-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-
-    .app-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-    }
-  }
-
-  .spacer {
-    flex: 1;
-  }
-}
-
-:host-context(.dark-theme) .top-toolbar {
-  background: linear-gradient(135deg, #2d1105 0%, #4a1e0a 100%);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
-
 // Modern navigation bar with glassmorphism effect
 nav[mat-tab-nav-bar] {
   position: sticky;

@@ -58,6 +58,10 @@ import { TranslocoModule } from '@jsverse/transloco';
               <mat-icon>person</mat-icon>
               <span>Profile</span>
             </button>
+            <button mat-menu-item routerLink="/home/settings">
+              <mat-icon>settings</mat-icon>
+              <span>Settings</span>
+            </button>
             <button mat-menu-item (click)="logout()">
               <mat-icon>logout</mat-icon>
               <span>Logout</span>

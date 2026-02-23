@@ -79,11 +79,5 @@ export class HomeComponent implements OnInit {
       icon: 'shopping_cart',
       descKey: 'home.cartDesc',
     },
-    {
-      labelKey: 'home.settings',
-      route: 'settings',
-      icon: 'settings',
-      descKey: 'home.settingsDesc',
-    },
   ];
 }

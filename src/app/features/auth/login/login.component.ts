@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'pp-login',
@@ -25,6 +26,7 @@ import { AuthService } from '../../../core/services/auth.service';
     MatIconModule,
     MatDividerModule,
     MatProgressSpinnerModule,
+    TranslocoModule,
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],

@@ -11,6 +11,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { DbService } from '../../core/services/db.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { DataEventsService } from '../../core/services/data-events.service';
@@ -37,203 +38,161 @@ interface Ingredient {
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    TranslocoModule,
   ],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>{{ isEditMode() ? 'edit' : 'add' }}</mat-icon>
-      {{ isEditMode() ? 'Edit' : 'Add' }} Recipe
-    </h2>
+    <ng-container *transloco="let t">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ isEditMode() ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode() ? t('recipes.editRecipe') : t('recipes.addRecipe') }}
+      </h2>
 
-    <mat-dialog-content>
-      <form [formGroup]="recipeForm" class="recipe-form">
-        <!-- Recipe Name -->
-        <mat-form-field appearance="outline">
-          <mat-label>Recipe Name</mat-label>
-          <input matInput formControlName="name" placeholder="e.g., Spaghetti Carbonara" />
-          <mat-icon matPrefix>restaurant_menu</mat-icon>
-          @if (recipeForm.get('name')?.hasError('required')) {
-            <mat-error>Recipe name is required</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Recipe Details Row -->
-        <div class="details-row">
+      <mat-dialog-content>
+        <form [formGroup]="recipeForm" class="recipe-form">
           <mat-form-field appearance="outline">
-            <mat-label>Servings</mat-label>
-            <input matInput type="number" formControlName="servings" min="1" />
-            <mat-icon matPrefix>people</mat-icon>
+            <mat-label>{{ t('recipes.recipeName') }}</mat-label>
+            <input matInput formControlName="name" [placeholder]="t('recipes.recipeNamePlaceholder')" />
+            <mat-icon matPrefix>restaurant_menu</mat-icon>
+            @if (recipeForm.get('name')?.hasError('required')) {
+              <mat-error>{{ t('recipes.recipeNameRequired') }}</mat-error>
+            }
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Prep Time (min)</mat-label>
-            <input matInput type="number" formControlName="prepTime" min="0" />
-            <mat-icon matPrefix>schedule</mat-icon>
-          </mat-form-field>
+          <div class="details-row">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('recipes.servings') }}</mat-label>
+              <input matInput type="number" formControlName="servings" min="1" />
+              <mat-icon matPrefix>people</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('recipes.prepTime') }}</mat-label>
+              <input matInput type="number" formControlName="prepTime" min="0" />
+              <mat-icon matPrefix>schedule</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('recipes.cookTime') }}</mat-label>
+              <input matInput type="number" formControlName="cookTime" min="0" />
+              <mat-icon matPrefix>timer</mat-icon>
+            </mat-form-field>
+          </div>
 
           <mat-form-field appearance="outline">
-            <mat-label>Cook Time (min)</mat-label>
-            <input matInput type="number" formControlName="cookTime" min="0" />
-            <mat-icon matPrefix>timer</mat-icon>
+            <mat-label>{{ t('recipes.imageUrl') }}</mat-label>
+            <input matInput formControlName="imageUrl" [placeholder]="t('recipes.imageUrlPlaceholder')" />
+            <mat-icon matPrefix>image</mat-icon>
           </mat-form-field>
-        </div>
 
-        <!-- Image URL -->
-        <mat-form-field appearance="outline">
-          <mat-label>Image URL (optional)</mat-label>
-          <input matInput formControlName="imageUrl" placeholder="https://example.com/image.jpg" />
-          <mat-icon matPrefix>image</mat-icon>
-        </mat-form-field>
+          <!-- Ingredients Section -->
+          <div class="section-header">
+            <h3><mat-icon>shopping_basket</mat-icon>{{ t('recipes.ingredients') }}</h3>
+            <button mat-mini-fab color="primary" type="button" (click)="addIngredient()" [matTooltip]="t('recipes.addIngredient')">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
 
-        <!-- Ingredients Section -->
-        <div class="section-header">
-          <h3>
-            <mat-icon>shopping_basket</mat-icon>
-            Ingredients
-          </h3>
-          <button
-            mat-mini-fab
-            color="primary"
-            type="button"
-            (click)="addIngredient()"
-            matTooltip="Add ingredient"
-          >
-            <mat-icon>add</mat-icon>
-          </button>
-        </div>
+          <div formArrayName="ingredients" class="ingredients-list">
+            @if (ingredients.length === 0) {
+              <div class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>{{ t('recipes.noIngredientsAdded') }}</p>
+              </div>
+            }
+            @for (ingredient of ingredients.controls; track $index) {
+              <div [formGroupName]="$index" class="ingredient-row">
+                <mat-form-field appearance="outline" class="ingredient-select">
+                  <mat-label>{{ t('inventory.ingredient') }}</mat-label>
+                  <mat-select formControlName="ingredientId">
+                    <mat-option [value]="null">{{ t('recipes.selectIngredient') }}</mat-option>
+                    @for (ing of availableIngredients(); track ing.id) {
+                      <mat-option [value]="ing.id">
+                        {{ ing.name }}
+                        <span class="category-badge">{{ ing.category }}</span>
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-icon matPrefix>local_dining</mat-icon>
+                  <mat-error>{{ t('common.required') }}</mat-error>
+                </mat-form-field>
 
-        <div formArrayName="ingredients" class="ingredients-list">
-          @if (ingredients.length === 0) {
-            <div class="empty-state">
-              <mat-icon>info</mat-icon>
-              <p>No ingredients added yet. Click the + button to add ingredients.</p>
-            </div>
+                <mat-form-field appearance="outline" class="quantity-field">
+                  <mat-label>{{ t('inventory.quantity') }}</mat-label>
+                  <input matInput type="number" formControlName="quantity" min="0" step="0.01" />
+                  <mat-error>{{ t('common.required') }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="unit-field">
+                  <mat-label>{{ t('inventory.unit') }}</mat-label>
+                  <mat-select formControlName="unit">
+                    <mat-option value="g">{{ t('units.g') }}</mat-option>
+                    <mat-option value="kg">{{ t('units.kg') }}</mat-option>
+                    <mat-option value="ml">{{ t('units.ml') }}</mat-option>
+                    <mat-option value="l">{{ t('units.l') }}</mat-option>
+                    <mat-option value="cup">{{ t('units.cup') }}</mat-option>
+                    <mat-option value="tbsp">{{ t('units.tbsp') }}</mat-option>
+                    <mat-option value="tsp">{{ t('units.tsp') }}</mat-option>
+                    <mat-option value="pcs">{{ t('units.pcs') }}</mat-option>
+                    <mat-option value="oz">{{ t('units.oz') }}</mat-option>
+                    <mat-option value="lb">{{ t('units.lb') }}</mat-option>
+                  </mat-select>
+                  <mat-error>{{ t('common.required') }}</mat-error>
+                </mat-form-field>
+
+                <button mat-icon-button color="warn" type="button" (click)="removeIngredient($index)" [matTooltip]="t('recipes.removeIngredient')">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Instructions Section -->
+          <div class="section-header">
+            <h3><mat-icon>list_alt</mat-icon>{{ t('recipes.instructions') }}</h3>
+            <button mat-mini-fab color="primary" type="button" (click)="addStep()" [matTooltip]="t('recipes.addStep')">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+
+          <div formArrayName="steps" class="steps-list">
+            @if (steps.length === 0) {
+              <div class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>{{ t('recipes.noInstructionsAdded') }}</p>
+              </div>
+            }
+            @for (step of steps.controls; track $index) {
+              <div class="step-row">
+                <div class="step-number">{{ $index + 1 }}</div>
+                <mat-form-field appearance="outline" class="step-field">
+                  <mat-label>{{ t('recipes.step') }} {{ $index + 1 }}</mat-label>
+                  <textarea matInput [formControlName]="$index" rows="2" [placeholder]="t('recipes.describeStep')"></textarea>
+                  <mat-error>{{ t('common.required') }}</mat-error>
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="removeStep($index)" [matTooltip]="t('recipes.removeStep')">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        </form>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="close()">
+          <mat-icon>close</mat-icon>
+          {{ t('common.cancel') }}
+        </button>
+        <button mat-raised-button color="primary" (click)="save()" [disabled]="recipeForm.invalid || saving()">
+          @if (saving()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
           }
-
-          @for (ingredient of ingredients.controls; track $index) {
-            <div [formGroupName]="$index" class="ingredient-row">
-              <mat-form-field appearance="outline" class="ingredient-select">
-                <mat-label>Ingredient</mat-label>
-                <mat-select formControlName="ingredientId">
-                  <mat-option [value]="null">Select an ingredient</mat-option>
-                  @for (ing of availableIngredients(); track ing.id) {
-                    <mat-option [value]="ing.id">
-                      {{ ing.name }}
-                      <span class="category-badge">{{ ing.category }}</span>
-                    </mat-option>
-                  }
-                </mat-select>
-                <mat-icon matPrefix>local_dining</mat-icon>
-                <mat-error>Required</mat-error>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="quantity-field">
-                <mat-label>Quantity</mat-label>
-                <input matInput type="number" formControlName="quantity" min="0" step="0.01" />
-                <mat-error>Required</mat-error>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="unit-field">
-                <mat-label>Unit</mat-label>
-                <mat-select formControlName="unit">
-                  <mat-option value="g">grams (g)</mat-option>
-                  <mat-option value="kg">kilograms (kg)</mat-option>
-                  <mat-option value="ml">milliliters (ml)</mat-option>
-                  <mat-option value="l">liters (l)</mat-option>
-                  <mat-option value="cup">cup</mat-option>
-                  <mat-option value="tbsp">tablespoon</mat-option>
-                  <mat-option value="tsp">teaspoon</mat-option>
-                  <mat-option value="pcs">pieces</mat-option>
-                  <mat-option value="oz">ounces (oz)</mat-option>
-                  <mat-option value="lb">pounds (lb)</mat-option>
-                </mat-select>
-                <mat-error>Required</mat-error>
-              </mat-form-field>
-
-              <button
-                mat-icon-button
-                color="warn"
-                type="button"
-                (click)="removeIngredient($index)"
-                matTooltip="Remove ingredient"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          }
-        </div>
-
-        <!-- Instructions Section -->
-        <div class="section-header">
-          <h3>
-            <mat-icon>list_alt</mat-icon>
-            Instructions
-          </h3>
-          <button
-            mat-mini-fab
-            color="primary"
-            type="button"
-            (click)="addStep()"
-            matTooltip="Add step"
-          >
-            <mat-icon>add</mat-icon>
-          </button>
-        </div>
-
-        <div formArrayName="steps" class="steps-list">
-          @if (steps.length === 0) {
-            <div class="empty-state">
-              <mat-icon>info</mat-icon>
-              <p>No instructions added yet. Click the + button to add steps.</p>
-            </div>
-          }
-
-          @for (step of steps.controls; track $index) {
-            <div class="step-row">
-              <div class="step-number">{{ $index + 1 }}</div>
-              <mat-form-field appearance="outline" class="step-field">
-                <mat-label>Step {{ $index + 1 }}</mat-label>
-                <textarea
-                  matInput
-                  [formControlName]="$index"
-                  rows="2"
-                  placeholder="Describe this step..."
-                ></textarea>
-                <mat-error>Step cannot be empty</mat-error>
-              </mat-form-field>
-              <button
-                mat-icon-button
-                color="warn"
-                type="button"
-                (click)="removeStep($index)"
-                matTooltip="Remove step"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          }
-        </div>
-      </form>
-    </mat-dialog-content>
-
-    <mat-dialog-actions>
-      <button mat-button (click)="close()">
-        <mat-icon>close</mat-icon>
-        Cancel
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="save()"
-        [disabled]="recipeForm.invalid || saving()"
-      >
-        @if (saving()) {
-          <mat-spinner diameter="20"></mat-spinner>
-        } @else {
-          <mat-icon>save</mat-icon>
-        }
-        {{ saving() ? 'Saving...' : 'Save Recipe' }}
-      </button>
-    </mat-dialog-actions>
+          {{ saving() ? t('common.saving') : t('recipes.saveRecipe') }}
+        </button>
+      </mat-dialog-actions>
+    </ng-container>
   `,
   styles: [`
     mat-dialog-content {
@@ -425,6 +384,7 @@ export class RecipeEditDialog implements OnInit {
   private fb = inject(FormBuilder);
   private db = inject(DbService);
   private snackbar = inject(SnackbarService);
+  private transloco = inject(TranslocoService);
   private dialogRef = inject(MatDialogRef<RecipeEditDialog>);
   private dataEvents = inject(DataEventsService);
 
@@ -459,14 +419,20 @@ export class RecipeEditDialog implements OnInit {
 
   private loadIngredients(): void {
     const userId = this.db.getCurrentUserId();
-    const ingredients = this.db.query<any>(
-      `SELECT i.id, i.name, c.name as category
-       FROM ingredients i
-       LEFT JOIN ingredient_categories c ON i.categoryId = c.id
-       WHERE i.userId = ? AND (i.isDeleted IS NULL OR i.isDeleted = 0)
-       ORDER BY i.name`,
-      [userId]
-    );
+    // BUG-15: null userId must use IS NULL, not = NULL (SQL NULL comparison)
+    const sql = userId
+      ? `SELECT i.id, i.name, c.name as category
+         FROM ingredients i
+         LEFT JOIN ingredient_categories c ON i.categoryId = c.id
+         WHERE i.userId = ? AND (i.isDeleted IS NULL OR i.isDeleted = 0)
+         ORDER BY i.name`
+      : `SELECT i.id, i.name, c.name as category
+         FROM ingredients i
+         LEFT JOIN ingredient_categories c ON i.categoryId = c.id
+         WHERE i.userId IS NULL AND (i.isDeleted IS NULL OR i.isDeleted = 0)
+         ORDER BY i.name`;
+    const params = userId ? [userId] : [];
+    const ingredients = this.db.query<any>(sql, params);
     this.availableIngredients.set(ingredients.map(ing => ({
       id: ing.id,
       name: ing.name,
@@ -539,7 +505,7 @@ export class RecipeEditDialog implements OnInit {
 
   async save(): Promise<void> {
     if (this.recipeForm.invalid) {
-      this.snackbar.error('Please fill in all required fields');
+      this.snackbar.error(this.transloco.translate('recipes.fillRequiredFields'));
       return;
     }
 
@@ -623,15 +589,14 @@ export class RecipeEditDialog implements OnInit {
         );
       }
 
-      this.snackbar.success(
-        `Recipe "${formValue.name}" ${this.isEditMode() ? 'updated' : 'created'} successfully!`
-      );
+      const msgKey = this.isEditMode() ? 'recipes.recipeUpdated' : 'recipes.recipeCreated';
+      this.snackbar.success(this.transloco.translate(msgKey, { name: formValue.name }));
       this.dataEvents.emit('recipes', this.isEditMode() ? 'update' : 'create', recipeId);
       this.dataEvents.emit('recipe_ingredients', this.isEditMode() ? 'update' : 'create');
       this.dialogRef.close(recipeId);
     } catch (error) {
       console.error('Failed to save recipe:', error);
-      this.snackbar.error('Failed to save recipe');
+      this.snackbar.error(this.transloco.translate('recipes.failedSave'));
     } finally {
       this.saving.set(false);
     }

@@ -3,42 +3,45 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslocoModule } from '@jsverse/transloco';
 import { BarcodeService } from '../../core/services/barcode.service';
 
 @Component({
   standalone: true,
   selector: 'pp-barcode-scanner-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>qr_code_scanner</mat-icon>
-      Scan Barcode
-    </h2>
-    <mat-dialog-content>
-      <div class="scanner-container">
-        <video #videoEl autoplay playsinline muted></video>
+    <ng-container *transloco="let t">
+      <h2 mat-dialog-title>
+        <mat-icon>qr_code_scanner</mat-icon>
+        {{ t('inventory.scanBarcode') }}
+      </h2>
+      <mat-dialog-content>
+        <div class="scanner-container">
+          <video #videoEl autoplay playsinline muted></video>
+          @if (scanning) {
+            <div class="scanner-overlay">
+              <div class="scan-line"></div>
+            </div>
+          }
+          @if (error) {
+            <div class="error-overlay">
+              <mat-icon>error_outline</mat-icon>
+              <p>{{ error }}</p>
+            </div>
+          }
+        </div>
         @if (scanning) {
-          <div class="scanner-overlay">
-            <div class="scan-line"></div>
-          </div>
+          <p class="hint">{{ t('inventory.pointCameraAtBarcode') }}</p>
         }
-        @if (error) {
-          <div class="error-overlay">
-            <mat-icon>error_outline</mat-icon>
-            <p>{{ error }}</p>
-          </div>
-        }
-      </div>
-      @if (scanning) {
-        <p class="hint">Point your camera at a barcode</p>
-      }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="cancel()">
-        <mat-icon>close</mat-icon>
-        Cancel
-      </button>
-    </mat-dialog-actions>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="cancel()">
+          <mat-icon>close</mat-icon>
+          {{ t('common.cancel') }}
+        </button>
+      </mat-dialog-actions>
+    </ng-container>
   `,
   styles: [`
     h2 {

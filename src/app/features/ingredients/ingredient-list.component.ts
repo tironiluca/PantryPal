@@ -14,6 +14,7 @@ import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DataEventsService } from "../../core/services/data-events.service";
+import { TranslocoModule } from "@jsverse/transloco";
 
 @Component({
   standalone: true,
@@ -27,6 +28,7 @@ import { DataEventsService } from "../../core/services/data-events.service";
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslocoModule,
   ],
   templateUrl: './ingredient-list.component.html',
   styleUrls: ['./ingredient-list.component.scss']
@@ -57,7 +59,7 @@ export class IngredientListComponent {
 
   refresh() {
     try {
-      this.rows = this.db.query<Ingredient>("SELECT * FROM ingredients");
+      this.rows = this.db.queryByUser<Ingredient>('ingredients');
       this.applyFilters();
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load ingredients');

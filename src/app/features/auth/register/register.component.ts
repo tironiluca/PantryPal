@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'pp-register',
@@ -25,6 +26,7 @@ import { AuthService } from '../../../core/services/auth.service';
     MatIconModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
+    TranslocoModule,
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],

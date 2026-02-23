@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { MealPlanService, MealPlanWithRecipe } from '../../core/services/meal-plan.service';
 import { DbService } from '../../core/services/db.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -42,125 +43,106 @@ interface Recipe {
     MatDatepickerModule,
     MatNativeDateModule,
     MatCheckboxModule,
+    TranslocoModule,
   ],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
-      {{ isEditMode ? 'Edit Meal Plan' : 'Add Meal to Plan' }}
-    </h2>
+    <ng-container *transloco="let t">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode ? t('mealPlan.editMealPlan') : t('mealPlan.addMealToPlan') }}
+      </h2>
 
-    <mat-dialog-content>
-      <form [formGroup]="form" class="meal-plan-form">
-        <!-- Date -->
-        <mat-form-field appearance="outline">
-          <mat-label>Date</mat-label>
-          <input
-            matInput
-            [matDatepicker]="picker"
-            formControlName="date"
-            required
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-          @if (form.get('date')?.hasError('required')) {
-            <mat-error>Date is required</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Meal Type -->
-        <mat-form-field appearance="outline">
-          <mat-label>Meal Type</mat-label>
-          <mat-select formControlName="mealType" required>
-            <mat-option value="breakfast">Breakfast</mat-option>
-            <mat-option value="lunch">Lunch</mat-option>
-            <mat-option value="dinner">Dinner</mat-option>
-            <mat-option value="snack">Snack</mat-option>
-          </mat-select>
-          @if (form.get('mealType')?.hasError('required')) {
-            <mat-error>Meal type is required</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Recipe -->
-        <mat-form-field appearance="outline">
-          <mat-label>Recipe</mat-label>
-          <mat-select formControlName="recipeId" required>
-            @if (recipes().length === 0) {
-              <mat-option disabled>No recipes available. Create recipes first.</mat-option>
-            } @else {
-              @for (recipe of recipes(); track recipe.id) {
-                <mat-option [value]="recipe.id">{{ recipe.name }}</mat-option>
-              }
+      <mat-dialog-content>
+        <form [formGroup]="form" class="meal-plan-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.date') }}</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="date" required />
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            @if (form.get('date')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.dateRequired') }}</mat-error>
             }
-          </mat-select>
-          <mat-hint>Select a recipe for this meal</mat-hint>
-          @if (form.get('recipeId')?.hasError('required')) {
-            <mat-error>Recipe is required</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
 
-        <!-- Servings -->
-        <mat-form-field appearance="outline">
-          <mat-label>Servings</mat-label>
-          <input matInput type="number" formControlName="servings" min="1" max="20" required />
-          <mat-hint>Number of servings</mat-hint>
-          @if (form.get('servings')?.hasError('required')) {
-            <mat-error>Servings is required</mat-error>
-          }
-          @if (form.get('servings')?.hasError('min')) {
-            <mat-error>Minimum 1 serving</mat-error>
-          }
-          @if (form.get('servings')?.hasError('max')) {
-            <mat-error>Maximum 20 servings</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.mealType') }}</mat-label>
+            <mat-select formControlName="mealType" required>
+              <mat-option value="breakfast">{{ t('mealPlan.breakfast') }}</mat-option>
+              <mat-option value="lunch">{{ t('mealPlan.lunch') }}</mat-option>
+              <mat-option value="dinner">{{ t('mealPlan.dinner') }}</mat-option>
+              <mat-option value="snack">{{ t('mealPlan.snack') }}</mat-option>
+            </mat-select>
+            @if (form.get('mealType')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.mealTypeRequired') }}</mat-error>
+            }
+          </mat-form-field>
 
-        <!-- Notes -->
-        <mat-form-field appearance="outline">
-          <mat-label>Notes (optional)</mat-label>
-          <textarea
-            matInput
-            formControlName="notes"
-            rows="3"
-            placeholder="Add any notes or special instructions..."
-          ></textarea>
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.recipe') }}</mat-label>
+            <mat-select formControlName="recipeId" required>
+              @if (recipes().length === 0) {
+                <mat-option disabled>{{ t('mealPlan.noRecipesAvailable') }}</mat-option>
+              } @else {
+                @for (recipe of recipes(); track recipe.id) {
+                  <mat-option [value]="recipe.id">{{ recipe.name }}</mat-option>
+                }
+              }
+            </mat-select>
+            <mat-hint>{{ t('mealPlan.selectRecipe') }}</mat-hint>
+            @if (form.get('recipeId')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.recipeRequired') }}</mat-error>
+            }
+          </mat-form-field>
 
-        <!-- Completed (only for edit mode) -->
-        @if (isEditMode) {
-          <mat-checkbox formControlName="completed">
-            Mark as completed
-          </mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.servings') }}</mat-label>
+            <input matInput type="number" formControlName="servings" min="1" max="20" required />
+            <mat-hint>{{ t('mealPlan.numberOfServings') }}</mat-hint>
+            @if (form.get('servings')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.servingsRequired') }}</mat-error>
+            }
+            @if (form.get('servings')?.hasError('min')) {
+              <mat-error>{{ t('mealPlan.minServing') }}</mat-error>
+            }
+            @if (form.get('servings')?.hasError('max')) {
+              <mat-error>{{ t('mealPlan.maxServing') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.notesOptional') }}</mat-label>
+            <textarea matInput formControlName="notes" rows="3" [placeholder]="t('mealPlan.notesPlaceholder')"></textarea>
+          </mat-form-field>
+
+          @if (isEditMode) {
+            <mat-checkbox formControlName="completed">
+              {{ t('mealPlan.markAsCompleted') }}
+            </mat-checkbox>
+          }
+        </form>
+
+        @if (selectedRecipe(); as recipe) {
+          <div class="recipe-preview">
+            <h3>{{ t('mealPlan.recipePreview') }}</h3>
+            <p class="recipe-name">{{ recipe.name }}</p>
+            @if (recipe.steps) {
+              <p class="recipe-steps">{{ recipe.steps }}</p>
+            }
+          </div>
         }
-      </form>
+      </mat-dialog-content>
 
-      <!-- Recipe preview -->
-      @if (selectedRecipe(); as recipe) {
-        <div class="recipe-preview">
-          <h3>Recipe Preview</h3>
-          <p class="recipe-name">{{ recipe.name }}</p>
-          @if (recipe.steps) {
-            <p class="recipe-steps">{{ recipe.steps }}</p>
-          }
-        </div>
-      }
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">
-        <mat-icon>close</mat-icon>
-        Cancel
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="onSave()"
-        [disabled]="form.invalid || recipes().length === 0"
-      >
-        <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
-        {{ isEditMode ? 'Update' : 'Add to Plan' }}
-      </button>
-    </mat-dialog-actions>
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="onCancel()">
+          <mat-icon>close</mat-icon>
+          {{ t('common.cancel') }}
+        </button>
+        <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid || recipes().length === 0">
+          <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+          {{ isEditMode ? t('mealPlan.update') : t('mealPlan.addToPlan') }}
+        </button>
+      </mat-dialog-actions>
+    </ng-container>
   `,
   styles: [`
     mat-dialog-content {
@@ -250,6 +232,7 @@ export class MealPlanAddDialog implements OnInit {
   private mealPlanService = inject(MealPlanService);
   private db = inject(DbService);
   private snackbar = inject(SnackbarService);
+  private transloco = inject(TranslocoService);
   private dialogRef = inject(MatDialogRef<MealPlanAddDialog>);
   private dataEvents = inject(DataEventsService);
 
@@ -301,7 +284,7 @@ export class MealPlanAddDialog implements OnInit {
 
   onSave(): void {
     if (this.form.invalid) {
-      this.snackbar.error('Please fill in all required fields');
+      this.snackbar.error(this.transloco.translate('common.fillRequiredFields'));
       return;
     }
 
@@ -334,7 +317,7 @@ export class MealPlanAddDialog implements OnInit {
       this.dialogRef.close(true);
     } catch (error) {
       console.error('Failed to save meal plan:', error);
-      this.snackbar.error('Failed to save meal plan');
+      this.snackbar.error(this.transloco.translate('mealPlan.failedSave') || 'Failed to save meal plan');
     }
   }
 

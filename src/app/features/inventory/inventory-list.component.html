@@ -1,11 +1,11 @@
-<div class="container">
+<div class="container" *transloco="let t">
   <!-- Header with stats -->
   <div class="header">
-    <h2>Inventory</h2>
+    <h2>{{ t('inventory.title') }}</h2>
     <div class="stats">
-      <span class="stat">{{ rows.length }} items</span>
+      <span class="stat">{{ rows.length }} {{ t('inventory.items') }}</span>
       @if (expiringCount > 0) {
-        <span class="stat warning">{{ expiringCount }} expiring soon</span>
+        <span class="stat warning">{{ expiringCount }} {{ t('inventory.expiringSoon') }}</span>
       }
     </div>
   </div>
@@ -13,36 +13,36 @@
   <!-- Filter controls -->
   <div class="filters">
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search</mat-label>
-      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Search by ingredient or barcode">
+      <mat-label>{{ t('common.search') }}</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="t('inventory.searchPlaceholder')">
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Location</mat-label>
+      <mat-label>{{ t('inventory.location') }}</mat-label>
       <mat-select [(ngModel)]="locationFilter" (ngModelChange)="applyFilters()">
-        <mat-option [value]="null">All</mat-option>
-        <mat-option value="fridge">Fridge</mat-option>
-        <mat-option value="freezer">Freezer</mat-option>
-        <mat-option value="pantry">Pantry</mat-option>
-        <mat-option value="other">Other</mat-option>
+        <mat-option [value]="null">{{ t('common.all') }}</mat-option>
+        <mat-option value="fridge">{{ t('inventory.fridge') }}</mat-option>
+        <mat-option value="freezer">{{ t('inventory.freezer') }}</mat-option>
+        <mat-option value="pantry">{{ t('inventory.pantry') }}</mat-option>
+        <mat-option value="other">{{ t('inventory.other') }}</mat-option>
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Expiration</mat-label>
+      <mat-label>{{ t('inventory.expiration') }}</mat-label>
       <mat-select [(ngModel)]="expiringFilter" (ngModelChange)="applyFilters()">
-        <mat-option value="all">All</mat-option>
-        <mat-option value="expired">Expired</mat-option>
-        <mat-option value="week">Expiring this week</mat-option>
-        <mat-option value="month">Expiring this month</mat-option>
+        <mat-option value="all">{{ t('common.all') }}</mat-option>
+        <mat-option value="expired">{{ t('inventory.expired') }}</mat-option>
+        <mat-option value="week">{{ t('inventory.expiringThisWeek') }}</mat-option>
+        <mat-option value="month">{{ t('inventory.expiringThisMonth') }}</mat-option>
       </mat-select>
     </mat-form-field>
 
     @if (activeFilterCount > 0) {
       <button mat-stroked-button (click)="clearFilters()">
         <mat-icon>clear</mat-icon>
-        Clear Filters
+        {{ t('inventory.clearFilters') }}
       </button>
     }
   </div>
@@ -53,7 +53,7 @@
       <ng-container matColumnDef="ingredientId">
         <th mat-header-cell *matHeaderCellDef>
           <button mat-button (click)="onSortChange('ingredientId')">
-            Ingredient
+            {{ t('inventory.ingredient') }}
             @if (sortColumn === 'ingredientId') {
               <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             }
@@ -65,7 +65,7 @@
       <ng-container matColumnDef="quantity">
         <th mat-header-cell *matHeaderCellDef>
           <button mat-button (click)="onSortChange('quantity')">
-            Quantity
+            {{ t('inventory.quantity') }}
             @if (sortColumn === 'quantity') {
               <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             }
@@ -77,7 +77,7 @@
       <ng-container matColumnDef="location">
         <th mat-header-cell *matHeaderCellDef>
           <button mat-button (click)="onSortChange('location')">
-            Location
+            {{ t('inventory.location') }}
             @if (sortColumn === 'location') {
               <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             }
@@ -89,7 +89,7 @@
       <ng-container matColumnDef="expiry">
         <th mat-header-cell *matHeaderCellDef>
           <button mat-button (click)="onSortChange('expiry')">
-            Expiry
+            {{ t('inventory.expiry') }}
             @if (sortColumn === 'expiry') {
               <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             }
@@ -119,11 +119,11 @@
     <div class="empty-state">
       <mat-icon>inventory_2</mat-icon>
       @if (rows.length === 0) {
-        <h3>No items yet</h3>
-        <p>Start by adding your first pantry item</p>
+        <h3>{{ t('inventory.noItemsYet') }}</h3>
+        <p>{{ t('inventory.addFirstItem') }}</p>
       } @else {
-        <h3>No items match your filters</h3>
-        <p>Try adjusting your search or filters</p>
+        <h3>{{ t('inventory.noMatchingItems') }}</h3>
+        <p>{{ t('inventory.adjustFilters') }}</p>
       }
     </div>
   }

@@ -1,4 +1,4 @@
-<div class="profile-container">
+<div class="profile-container" *transloco="let t">
   @if (loading()) {
     <div class="loading-spinner">
       <mat-spinner></mat-spinner>
@@ -7,7 +7,7 @@
     <mat-card class="profile-card">
       <mat-card-header>
         <mat-card-title>
-          <h1>Profile Settings</h1>
+          <h1>{{ t('auth.profile') }}</h1>
         </mat-card-title>
       </mat-card-header>
 
@@ -16,7 +16,7 @@
         <div class="avatar-section">
           <div class="avatar-container">
             @if (avatarUrl) {
-              <img [src]="avatarUrl" alt="Avatar" class="avatar-image" />
+              <img [src]="avatarUrl" [alt]="t('auth.avatar')" class="avatar-image" />
             } @else {
               <div class="avatar-placeholder">
                 <span>{{ getInitials() }}</span>
@@ -39,7 +39,7 @@
               [disabled]="saving()"
             >
               <mat-icon>upload</mat-icon>
-              Upload Avatar
+              {{ t('auth.uploadAvatar') }}
             </button>
 
             @if (avatarUrl) {
@@ -50,7 +50,7 @@
                 [disabled]="saving()"
               >
                 <mat-icon>delete</mat-icon>
-                Remove
+                {{ t('common.remove') }}
               </button>
             }
           </div>
@@ -61,19 +61,19 @@
         <!-- Profile Form -->
         <form (ngSubmit)="onSubmit()" #profileForm="ngForm">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Display Name</mat-label>
+            <mat-label>{{ t('auth.displayName') }}</mat-label>
             <input
               matInput
               type="text"
               name="displayName"
               [(ngModel)]="displayName"
-              placeholder="Your Name"
+              [placeholder]="t('auth.yourName')"
             />
             <mat-icon matPrefix>person</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email</mat-label>
+            <mat-label>{{ t('auth.email') }}</mat-label>
             <input
               matInput
               type="email"
@@ -82,7 +82,7 @@
               disabled
             />
             <mat-icon matPrefix>email</mat-icon>
-            <mat-hint>Email cannot be changed</mat-hint>
+            <mat-hint>{{ t('auth.emailCannotBeChanged') }}</mat-hint>
           </mat-form-field>
 
           <button
@@ -97,7 +97,7 @@
             } @else {
               <ng-container>
                 <mat-icon>save</mat-icon>
-                Save Changes
+                {{ t('auth.saveChanges') }}
               </ng-container>
             }
           </button>
@@ -107,16 +107,16 @@
 
         <!-- Account Info -->
         <div class="account-info">
-          <h2>Account Information</h2>
+          <h2>{{ t('auth.accountInfo') }}</h2>
 
           <div class="info-row">
-            <span class="info-label">Account Created:</span>
+            <span class="info-label">{{ t('auth.accountCreated') }}</span>
             <span class="info-value">{{ profile()?.createdAt | date: 'medium' }}</span>
           </div>
 
           @if (profile()?.lastSyncAt) {
             <div class="info-row">
-              <span class="info-label">Last Synced:</span>
+              <span class="info-label">{{ t('auth.lastSynced') }}</span>
               <span class="info-value">{{ profile()?.lastSyncAt | date: 'medium' }}</span>
             </div>
           }
@@ -126,12 +126,12 @@
 
         <!-- App Settings -->
         <div class="app-settings">
-          <h2>App Settings</h2>
+          <h2>{{ t('auth.appSettings') }}</h2>
 
           <div class="setting-row">
             <div class="setting-label">
               <mat-icon>dark_mode</mat-icon>
-              <span>Dark Theme</span>
+              <span>{{ t('auth.darkTheme') }}</span>
             </div>
             <mat-slide-toggle
               [checked]="theme.mode() === 'dark'"
@@ -144,7 +144,7 @@
 
         <!-- Account Actions -->
         <div class="account-actions">
-          <h2>Account Actions</h2>
+          <h2>{{ t('auth.accountActions') }}</h2>
 
           <button
             mat-stroked-button
@@ -152,7 +152,7 @@
             (click)="signOut()"
           >
             <mat-icon>logout</mat-icon>
-            Sign Out
+            {{ t('auth.signOut') }}
           </button>
 
           <button
@@ -163,7 +163,7 @@
             [disabled]="saving()"
           >
             <mat-icon>delete_forever</mat-icon>
-            Delete Account
+            {{ t('auth.deleteAccount') }}
           </button>
         </div>
       </mat-card-content>

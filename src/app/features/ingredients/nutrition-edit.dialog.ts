@@ -11,7 +11,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@jsverse/transloco';
-import { NutritionService, NutritionData } from '../../core/services/nutrition.service';
+import { NutritionData, NutritionService } from '../../core/services/nutrition.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 
 interface SearchResult {
@@ -215,8 +215,8 @@ interface SearchResult {
   `]
 })
 export class NutritionEditDialog {
-  private nutritionService = inject(NutritionService);
   private snackbar = inject(SnackbarService);
+  private nutritionService = inject(NutritionService);
   private dialogRef = inject(MatDialogRef<NutritionEditDialog>);
 
   searchQuery = '';
@@ -277,14 +277,12 @@ export class NutritionEditDialog {
   saveSelected(): void {
     const s = this.selected();
     if (!s) return;
-    this.nutritionService.updateIngredientNutrition(this.data.ingredientId, s);
-    this.snackbar.success('Nutrition info saved!');
-    this.dialogRef.close(true);
+    // Return nutrition data to caller — DB persistence happens in IngredientEditDialog.save() (BUG-11)
+    this.dialogRef.close(s);
   }
 
   saveManual(): void {
-    this.nutritionService.updateIngredientNutrition(this.data.ingredientId, this.manual);
-    this.snackbar.success('Nutrition info saved!');
-    this.dialogRef.close(true);
+    // Return nutrition data to caller — DB persistence happens in IngredientEditDialog.save() (BUG-11)
+    this.dialogRef.close({ ...this.manual });
   }
 }

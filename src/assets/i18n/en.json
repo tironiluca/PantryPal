@@ -23,7 +23,10 @@
     "export": "Export",
     "clear": "Clear",
     "today": "Today",
-    "all": "All"
+    "all": "All",
+    "and": "and",
+    "required": "Required",
+    "fillRequiredFields": "Please fill in all required fields"
   },
   "home": {
     "inventory": "Inventory",
@@ -146,7 +149,8 @@
     "itemDeleted": "Inventory item deleted successfully",
     "failedDeleteItem": "Failed to delete inventory item",
     "startingScanner": "Starting barcode scanner...",
-    "barcodeScanned": "Barcode scanned:"
+    "barcodeScanned": "Barcode scanned:",
+    "pointCameraAtBarcode": "Point your camera at a barcode"
   },
   "ingredients": {
     "title": "Ingredients",
@@ -169,7 +173,10 @@
     "defaultShelfLife": "Default Shelf Life (days)",
     "notifyStart": "Notify Start (days before)",
     "notifyRepeat": "Notify Repeat (days)",
-    "nutritionInfo": "Nutrition Info"
+    "nutritionInfo": "Nutrition Info",
+    "editNutritionInfo": "Edit Nutrition Info",
+    "addNutritionInfo": "Add Nutrition Info",
+    "kcalPer100g": "kcal / 100g"
   },
   "recipes": {
     "title": "Recipes",
@@ -279,7 +286,10 @@
     "markAsCompleted": "Mark as completed",
     "recipePreview": "Recipe Preview",
     "addToPlan": "Add to Plan",
-    "update": "Update"
+    "update": "Update",
+    "servings": "Servings",
+    "servingsRequired": "Servings is required",
+    "failedSave": "Failed to save meal plan"
   },
   "nutrition": {
     "dashboard": "Nutrition Dashboard",

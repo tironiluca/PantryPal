@@ -23,7 +23,10 @@
     "export": "Esporta",
     "clear": "Cancella",
     "today": "Oggi",
-    "all": "Tutti"
+    "all": "Tutti",
+    "and": "e",
+    "required": "Obbligatorio",
+    "fillRequiredFields": "Si prega di compilare tutti i campi obbligatori"
   },
   "home": {
     "inventory": "Inventario",
@@ -146,7 +149,8 @@
     "itemDeleted": "Articolo inventario eliminato con successo",
     "failedDeleteItem": "Eliminazione articolo inventario fallita",
     "startingScanner": "Avvio scanner codice a barre...",
-    "barcodeScanned": "Codice a barre scansionato:"
+    "barcodeScanned": "Codice a barre scansionato:",
+    "pointCameraAtBarcode": "Punta la fotocamera verso un codice a barre"
   },
   "ingredients": {
     "title": "Ingredienti",
@@ -169,7 +173,10 @@
     "defaultShelfLife": "Durata Predefinita (giorni)",
     "notifyStart": "Notifica Inizio (giorni prima)",
     "notifyRepeat": "Notifica Ripetizione (giorni)",
-    "nutritionInfo": "Info Nutrizionali"
+    "nutritionInfo": "Info Nutrizionali",
+    "editNutritionInfo": "Modifica Info Nutrizionali",
+    "addNutritionInfo": "Aggiungi Info Nutrizionali",
+    "kcalPer100g": "kcal / 100g"
   },
   "recipes": {
     "title": "Ricette",
@@ -279,6 +286,9 @@
     "markAsCompleted": "Segna come completato",
     "recipePreview": "Anteprima Ricetta",
     "addToPlan": "Aggiungi al Piano",
+    "servings": "Porzioni",
+    "servingsRequired": "Le porzioni sono obbligatorie",
+    "failedSave": "Salvataggio piano pasti fallito",
     "update": "Aggiorna"
   },
   "nutrition": {

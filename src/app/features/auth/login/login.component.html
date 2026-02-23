@@ -1,20 +1,20 @@
-<div class="auth-container">
+<div class="auth-container" *transloco="let t">
   <mat-card class="auth-card">
     <mat-card-header>
       <mat-card-title>
         <div class="auth-header">
           <mat-icon class="auth-icon">restaurant</mat-icon>
-          <h1>Welcome to PantryPal</h1>
+          <h1>{{ t('auth.welcomeTo') }}</h1>
         </div>
       </mat-card-title>
-      <mat-card-subtitle>Sign in to sync your pantry across devices</mat-card-subtitle>
+      <mat-card-subtitle>{{ t('auth.signInToSync') }}</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
         <!-- Email Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ t('auth.email') }}</mat-label>
           <input
             matInput
             type="email"
@@ -22,7 +22,7 @@
             [(ngModel)]="email"
             required
             email
-            placeholder="your@email.com"
+            [placeholder]="t('auth.emailPlaceholder')"
             autocomplete="email"
           />
           <mat-icon matPrefix>email</mat-icon>
@@ -30,7 +30,7 @@
 
         <!-- Password Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ t('auth.password') }}</mat-label>
           <input
             matInput
             [type]="hidePassword() ? 'password' : 'text'"
@@ -47,7 +47,7 @@
             matSuffix
             type="button"
             (click)="togglePasswordVisibility()"
-            [attr.aria-label]="'Toggle password visibility'"
+            [attr.aria-label]="t('auth.togglePasswordVisibility')"
           >
             <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
@@ -55,7 +55,7 @@
 
         <!-- Forgot Password Link -->
         <div class="forgot-password">
-          <a routerLink="/auth/forgot-password">Forgot password?</a>
+          <a routerLink="/auth/forgot-password">{{ t('auth.forgotPassword') }}</a>
         </div>
 
         <!-- Sign In Button -->
@@ -69,13 +69,13 @@
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
-            Sign In
+            {{ t('auth.signIn') }}
           }
         </button>
       </form>
 
       <mat-divider class="divider">
-        <span class="divider-text">OR</span>
+        <span class="divider-text">{{ t('common.or') }}</span>
       </mat-divider>
 
       <!-- OAuth Buttons -->
@@ -87,7 +87,7 @@
           [disabled]="loading()"
         >
           <mat-icon svgIcon="google"></mat-icon>
-          Continue with Google
+          {{ t('auth.continueWithGoogle') }}
         </button>
 
         <button
@@ -97,15 +97,15 @@
           [disabled]="loading()"
         >
           <mat-icon>code</mat-icon>
-          Continue with GitHub
+          {{ t('auth.continueWithGithub') }}
         </button>
       </div>
 
       <!-- Sign Up Link -->
       <div class="signup-link">
         <p>
-          Don't have an account?
-          <a routerLink="/auth/register">Sign up</a>
+          {{ t('auth.noAccount') }}
+          <a routerLink="/auth/register">{{ t('auth.signUp') }}</a>
         </p>
       </div>
     </mat-card-content>

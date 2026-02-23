@@ -1,10 +1,10 @@
-<div class="container">
-  <h2>Ingredients</h2>
+<div class="container" *transloco="let t">
+  <h2>{{ t('ingredients.title') }}</h2>
 
   <!-- Search -->
   <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Search by name or category">
+    <mat-label>{{ t('common.search') }}</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="t('ingredients.searchPlaceholder')">
     <mat-icon matPrefix>search</mat-icon>
   </mat-form-field>
 
@@ -13,7 +13,7 @@
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>
           <button mat-button (click)="onSortChange('name')">
-            Name
+            {{ t('ingredients.name') }}
             @if (sortColumn === 'name') {
               <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             }
@@ -23,14 +23,15 @@
       </ng-container>
 
       <ng-container matColumnDef="categoryId">
-        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <th mat-header-cell *matHeaderCellDef>{{ t('ingredients.category') }}</th>
         <td mat-cell *matCellDef="let r">{{ r.categoryId || "-" }}</td>
       </ng-container>
 
       <ng-container matColumnDef="notify">
-        <th mat-header-cell *matHeaderCellDef>Notify</th>
+        <th mat-header-cell *matHeaderCellDef>{{ t('ingredients.notify') }}</th>
         <td mat-cell *matCellDef="let r">
-          start: {{ r.notifyStartDays ?? 3 }}d, repeat: {{ r.notifyRepeatDays ?? 1 }}d
+          {{ t('ingredients.start') }} {{ r.notifyStartDays ?? 3 }}{{ t('ingredients.days') }},
+          {{ t('ingredients.repeat') }} {{ r.notifyRepeatDays ?? 1 }}{{ t('ingredients.days') }}
         </td>
       </ng-container>
 
@@ -50,7 +51,10 @@
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
     </table>
   } @else {
-    <p>@if (rows.length === 0) { No ingredients yet. } @else { No ingredients match your search. }</p>
+    <p>
+      @if (rows.length === 0) { {{ t('ingredients.noIngredientsYet') }} }
+      @else { {{ t('ingredients.noMatchingIngredients') }} }
+    </p>
   }
 
   <button mat-fab color="primary" class="fab" (click)="add()">

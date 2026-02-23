@@ -15,6 +15,7 @@ import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DataEventsService } from "../../core/services/data-events.service";
+import { TranslocoModule } from "@jsverse/transloco";
 
 @Component({
   selector:'pp-inventory-list',
@@ -29,6 +30,7 @@ import { DataEventsService } from "../../core/services/data-events.service";
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslocoModule,
   ],
   templateUrl: './inventory-list.component.html',
   styleUrls: ['./inventory-list.component.scss']
@@ -62,7 +64,7 @@ export class InventoryListComponent {
 
   refresh() {
     try {
-      this.rows = this.db.query<InventoryItem>("SELECT * FROM inventory");
+      this.rows = this.db.queryByUser<InventoryItem>('inventory');
       this.applyFilters();
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load inventory');

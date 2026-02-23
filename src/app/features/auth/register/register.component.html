@@ -1,26 +1,26 @@
-<div class="auth-container">
+<div class="auth-container" *transloco="let t">
   <mat-card class="auth-card">
     <mat-card-header>
       <mat-card-title>
         <div class="auth-header">
           <mat-icon class="auth-icon">restaurant</mat-icon>
-          <h1>Create Your Account</h1>
+          <h1>{{ t('auth.createAccount') }}</h1>
         </div>
       </mat-card-title>
-      <mat-card-subtitle>Join PantryPal to manage your pantry across all your devices</mat-card-subtitle>
+      <mat-card-subtitle>{{ t('auth.joinPantryPal') }}</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
       <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
         <!-- Display Name Field (Optional) -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Display Name (Optional)</mat-label>
+          <mat-label>{{ t('auth.displayName') }}</mat-label>
           <input
             matInput
             type="text"
             name="displayName"
             [(ngModel)]="displayName"
-            placeholder="John Doe"
+            [placeholder]="t('auth.displayNamePlaceholder')"
             autocomplete="name"
           />
           <mat-icon matPrefix>person</mat-icon>
@@ -28,7 +28,7 @@
 
         <!-- Email Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ t('auth.email') }}</mat-label>
           <input
             matInput
             type="email"
@@ -36,7 +36,7 @@
             [(ngModel)]="email"
             required
             email
-            placeholder="your@email.com"
+            [placeholder]="t('auth.emailPlaceholder')"
             autocomplete="email"
           />
           <mat-icon matPrefix>email</mat-icon>
@@ -44,7 +44,7 @@
 
         <!-- Password Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ t('auth.password') }}</mat-label>
           <input
             matInput
             [type]="hidePassword() ? 'password' : 'text'"
@@ -61,26 +61,26 @@
             matSuffix
             type="button"
             (click)="togglePasswordVisibility()"
-            [attr.aria-label]="'Toggle password visibility'"
+            [attr.aria-label]="t('auth.togglePasswordVisibility')"
           >
             <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
           <mat-hint>
             @if (!password) {
-              At least 6 characters
+              {{ t('auth.atLeast6Chars') }}
             } @else if (isPasswordStrong()) {
-              <span class="password-strong">Strong password ✓</span>
+              <span class="password-strong">{{ t('auth.strongPassword') }} ✓</span>
             } @else if (password.length >= 6) {
-              <span class="password-weak">Weak password</span>
+              <span class="password-weak">{{ t('auth.weakPassword') }}</span>
             } @else {
-              <span class="password-weak">Too short</span>
+              <span class="password-weak">{{ t('auth.tooShort') }}</span>
             }
           </mat-hint>
         </mat-form-field>
 
         <!-- Confirm Password Field -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Confirm Password</mat-label>
+          <mat-label>{{ t('auth.confirmPassword') }}</mat-label>
           <input
             matInput
             [type]="hideConfirmPassword() ? 'password' : 'text'"
@@ -97,22 +97,22 @@
             matSuffix
             type="button"
             (click)="toggleConfirmPasswordVisibility()"
-            [attr.aria-label]="'Toggle password visibility'"
+            [attr.aria-label]="t('auth.togglePasswordVisibility')"
           >
             <mat-icon>{{ hideConfirmPassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
           @if (confirmPassword && !passwordsMatch()) {
-            <mat-error>Passwords do not match</mat-error>
+            <mat-error>{{ t('auth.passwordsDoNotMatch') }}</mat-error>
           }
         </mat-form-field>
 
         <!-- Terms and Conditions Checkbox -->
         <div class="terms-checkbox">
           <mat-checkbox name="acceptTerms" [(ngModel)]="acceptTerms" required>
-            I agree to the
-            <a href="/terms" target="_blank">Terms of Service</a>
-            and
-            <a href="/privacy" target="_blank">Privacy Policy</a>
+            {{ t('auth.agreeToTerms') }}
+            <a href="/terms" target="_blank">{{ t('auth.termsOfService') }}</a>
+            {{ t('common.and') }}
+            <a href="/privacy" target="_blank">{{ t('auth.privacyPolicy') }}</a>
           </mat-checkbox>
         </div>
 
@@ -127,7 +127,7 @@
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
-            Create Account
+            {{ t('auth.signUp') }}
           }
         </button>
       </form>
@@ -135,8 +135,8 @@
       <!-- Sign In Link -->
       <div class="signin-link">
         <p>
-          Already have an account?
-          <a routerLink="/auth/login">Sign in</a>
+          {{ t('auth.alreadyHaveAccount') }}
+          <a routerLink="/auth/login">{{ t('auth.signIn') }}</a>
         </p>
       </div>
     </mat-card-content>

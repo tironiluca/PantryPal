@@ -71,7 +71,10 @@ export class RecipeListComponent {
 
   refresh() {
     try {
-      this.rows = this.db.query<any>('SELECT id, name FROM recipes');
+      const userId = this.db.getCurrentUserId();
+      this.rows = userId
+        ? this.db.query<any>('SELECT id, name FROM recipes WHERE userId = ? AND (isDeleted IS NULL OR isDeleted = 0)', [userId])
+        : this.db.query<any>('SELECT id, name FROM recipes WHERE userId IS NULL AND (isDeleted IS NULL OR isDeleted = 0)');
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load recipes');
       this.rows = [];

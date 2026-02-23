@@ -207,7 +207,7 @@ export class ExportService {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${title}</title>
+        <title>${this.escapeHtml(title)}</title>
         <style>
           @media print {
             body { margin: 0; padding: 20px; }
@@ -305,7 +305,7 @@ export class ExportService {
       <body>
         <button class="print-button no-print" onclick="window.print()">🖨️ Print</button>
 
-        <h1>${title}</h1>
+        <h1>${this.escapeHtml(title)}</h1>
         <div class="date">${dateStr}</div>
 
         <table>

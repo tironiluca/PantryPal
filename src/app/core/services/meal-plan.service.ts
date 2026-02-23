@@ -149,7 +149,9 @@ export class MealPlanService {
     id: string,
     updates: Partial<Pick<MealPlan, 'date' | 'mealType' | 'recipeId' | 'servings' | 'notes' | 'completed'>>
   ): void {
-    const existing = this.db.query<MealPlan>('SELECT * FROM meal_plans WHERE id = ?', [id]);
+    // Include userId to prevent updating another user's meal plan (BUG-14)
+    const userId = this.db.getCurrentUserId();
+    const existing = this.db.query<MealPlan>('SELECT * FROM meal_plans WHERE id = ? AND userId = ?', [id, userId]);
 
     if (existing.length === 0) {
       throw new Error(`Meal plan ${id} not found`);

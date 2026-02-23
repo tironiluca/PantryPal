@@ -287,14 +287,13 @@ export class VoiceService {
   }
 
   /**
-   * Clean up resources
+   * Clean up resources.
+   * NOTE: Subjects are intentionally NOT completed here (BUG-17) — completing a Subject
+   * permanently prevents future emissions even if startListening() is called again.
+   * Stopping the recognition session is sufficient cleanup for a root-level service.
    */
   destroy(): void {
     this.stopListening();
-    if (this.recognition) {
-      this.recognition = null;
-    }
-    this.transcriptSubject.complete();
-    this.errorSubject.complete();
+    this.recognition = null;
   }
 }

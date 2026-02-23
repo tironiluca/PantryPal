@@ -319,14 +319,31 @@ export class RecipeImportService {
   }
 
   /**
+   * Reject URLs pointing to local/private networks to prevent SSRF (SEC-09)
+   */
+  private isSsrfTarget(url: string): boolean {
+    try {
+      const { hostname } = new URL(url);
+      return /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1|0\.0\.0\.0)/i.test(hostname);
+    } catch {
+      return true; // treat malformed URLs as unsafe
+    }
+  }
+
+  /**
    * Fetch URL with multiple CORS proxy fallbacks
    */
   private async fetchWithFallback(url: string): Promise<string> {
-    // List of CORS proxies to try in order
+    // Block requests to private/local networks (SEC-09 SSRF protection)
+    if (this.isSsrfTarget(url)) {
+      throw new Error('Recipe import does not support local or private network URLs');
+    }
+
+    // All proxy URLs use encodeURIComponent so special chars are handled correctly (BUG-24)
     const proxies = [
       `https://corsproxy.io/?${encodeURIComponent(url)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://cors-anywhere.herokuapp.com/${url}`,
+      `https://cors-anywhere.herokuapp.com/${encodeURIComponent(url)}`,
     ];
 
     let lastError: any = null;

@@ -49,6 +49,19 @@ export class SyncService {
     'meal_plans',
   ];
 
+  // Allowlist of valid columns per table — protects against SQL injection via remote column names (BUG-12)
+  private readonly TABLE_COLUMNS: Record<string, string[]> = {
+    ingredient_categories: ['id', 'name', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+    ingredients: ['id', 'name', 'categoryId', 'defaultShelfLifeDays', 'notifyStartDays', 'notifyRepeatDays',
+                  'energyKcal', 'proteinG', 'carbsG', 'fatG', 'fiberG', 'sugarG', 'sodiumMg',
+                  'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+    inventory: ['id', 'ingredientId', 'quantity', 'unit', 'location', 'expiry', 'barcode', 'minStock',
+                'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+    recipes: ['id', 'name', 'steps', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+    recipe_ingredients: ['recipeId', 'ingredientId', 'quantity', 'unit', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+    meal_plans: ['id', 'date', 'mealType', 'recipeId', 'notes', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+  };
+
   /**
    * Sync now - push local changes and pull remote changes
    */
@@ -291,11 +304,14 @@ export class SyncService {
         if (!isChild) {
           query = query.in('user_id', pullUserIds);
         } else {
-          // For child tables (recipe_ingredients), filter indirectly via parent records
-          const localRecipeIds = this.db.query<{id: string}>('SELECT id FROM recipes WHERE userId = ?', [userId])
-            .map(r => r.id);
-          if (localRecipeIds.length === 0) continue;
-          query = query.in('recipe_id', localRecipeIds);
+          // For child tables (recipe_ingredients), include recipes from all household members (BUG-20)
+          const placeholders = pullUserIds.map(() => '?').join(',');
+          const sharedRecipeIds = this.db.query<{id: string}>(
+            `SELECT id FROM recipes WHERE userId IN (${placeholders}) AND (isDeleted IS NULL OR isDeleted = 0)`,
+            pullUserIds
+          ).map(r => r.id);
+          if (sharedRecipeIds.length === 0) continue;
+          query = query.in('recipe_id', sharedRecipeIds);
         }
 
         const { data, error } = await query;
@@ -353,7 +369,9 @@ export class SyncService {
 
         // Insert/update non-conflicting records
         if (safeRecords.length > 0) {
-          const columns = Object.keys(safeRecords[0]);
+          // Filter columns against allowlist to prevent SQL injection via remote column names (BUG-12)
+          const allowedCols = this.TABLE_COLUMNS[table] ?? [];
+          const columns = Object.keys(safeRecords[0]).filter(c => allowedCols.includes(c));
 
           for (const record of safeRecords) {
             const placeholders = columns.map(() => '?').join(',');
@@ -415,19 +433,27 @@ export class SyncService {
     return { count, conflicts, errors };
   }
 
+  // Named reference so we can remove the listener in stopAutoSync (BUG-03)
+  private readonly onlineHandler = () => {
+    if (this.auth.isAuthenticated() && !this.isSyncingSignal()) {
+      console.log('Back online - triggering sync');
+      this.syncNow();
+    }
+  };
+
+  // Typed interval handle instead of window global (BUG-04)
+  private syncIntervalHandle: ReturnType<typeof setInterval> | null = null;
+
   /**
    * Start auto-sync (periodic background sync)
    */
   startAutoSync(intervalMinutes: number = 5): void {
-    // Check if already syncing
-    if ((window as any).__pantrypal_sync_interval) {
-      console.log('Auto-sync already running');
-      return;
-    }
+    // Always clean up first to avoid duplicate listeners/intervals
+    this.stopAutoSync();
 
     const intervalMs = intervalMinutes * 60 * 1000;
 
-    (window as any).__pantrypal_sync_interval = setInterval(async () => {
+    this.syncIntervalHandle = setInterval(async () => {
       if (this.auth.isAuthenticated() && navigator.onLine && !this.isSyncingSignal()) {
         console.log('Auto-sync triggered');
         await this.syncNow();
@@ -437,23 +463,19 @@ export class SyncService {
     console.log(`Auto-sync started (every ${intervalMinutes} minutes)`);
 
     // Also sync when coming back online
-    window.addEventListener('online', () => {
-      if (this.auth.isAuthenticated() && !this.isSyncingSignal()) {
-        console.log('Back online - triggering sync');
-        this.syncNow();
-      }
-    });
+    window.addEventListener('online', this.onlineHandler);
   }
 
   /**
    * Stop auto-sync
    */
   stopAutoSync(): void {
-    if ((window as any).__pantrypal_sync_interval) {
-      clearInterval((window as any).__pantrypal_sync_interval);
-      (window as any).__pantrypal_sync_interval = null;
+    if (this.syncIntervalHandle !== null) {
+      clearInterval(this.syncIntervalHandle);
+      this.syncIntervalHandle = null;
       console.log('Auto-sync stopped');
     }
+    window.removeEventListener('online', this.onlineHandler);
   }
 
   /**

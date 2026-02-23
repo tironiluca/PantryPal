@@ -12,6 +12,8 @@ export class DbService {
   private db!: any;
   private memOnly = false;
   private initialized = false;
+  // Deduplicates concurrent init() calls (BUG-02)
+  private initPromise: Promise<void> | null = null;
 
   private mem: Record<string, any[]> = {
     ingredient_categories: [],
@@ -21,7 +23,12 @@ export class DbService {
 
   async init(): Promise<void> {
     if (this.initialized) return;
-    this.initialized = true;
+    if (this.initPromise) return this.initPromise;
+    this.initPromise = this._doInit().finally(() => { this.initPromise = null; });
+    return this.initPromise;
+  }
+
+  private async _doInit(): Promise<void> {
     try {
       this.SQL = await initSqlJs({ locateFile: (file: string) => new URL(`assets/${file}`, document.baseURI).toString() });
       // this.SQL = await initSqlJs({ locateFile: (file: string) => `assets/${file}` });
@@ -32,9 +39,12 @@ export class DbService {
       if (this.query<any>('SELECT * FROM ingredients').length === 0) {
         this.exec("INSERT INTO ingredients (id, name, categoryId) VALUES (?,?,?)", ['ing-eggs', 'Eggs', 'cat-fridge']);
       }
+      // Mark initialized only after all async work succeeds
+      this.initialized = true;
     } catch (e) {
       console.warn('sql.js unavailable, falling back to in-memory store', e);
       this.memOnly = true;
+      this.initialized = true;
       // seed demo
       this.mem['ingredients'].push({ id: 'ing-eggs', name: 'Eggs', categoryId: 'cat-fridge' });
     }

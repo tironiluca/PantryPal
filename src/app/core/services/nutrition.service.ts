@@ -148,6 +148,27 @@ export class NutritionService {
     );
   }
 
+  /**
+   * Convert an ingredient quantity to grams so per-100g nutrition data can be scaled correctly.
+   * Returns null for units that cannot be meaningfully converted (e.g. 'pcs').
+   * BUG-19: without this, all non-gram units produce wrong nutrition totals.
+   */
+  private toGrams(quantity: number, unit: string): number | null {
+    const GRAMS_PER_UNIT: Record<string, number> = {
+      g: 1, gram: 1, grams: 1,
+      kg: 1000, kilogram: 1000,
+      oz: 28.3495, ounce: 28.3495,
+      lb: 453.592, lbs: 453.592, pound: 453.592,
+      ml: 1, milliliter: 1,             // water density approximation
+      l: 1000, liter: 1000,
+      cup: 240, cups: 240,
+      tbsp: 15, tablespoon: 15,
+      tsp: 5, teaspoon: 5,
+    };
+    const factor = GRAMS_PER_UNIT[(unit ?? 'g').toLowerCase()];
+    return factor != null ? quantity * factor : null;
+  }
+
   getRecipeNutrition(recipeId: string): NutritionData | null {
     const ingredients = this.db.query<any>(
       `SELECT ri.quantity, ri.unit, i.energyKcal, i.proteinG, i.carbsG, i.fatG, i.fiberG, i.sugarG, i.sodiumMg
@@ -163,7 +184,9 @@ export class NutritionService {
     let totalFiber = 0, totalSugar = 0, totalSodium = 0;
 
     for (const ing of ingredients) {
-      const scaleFactor = ing.quantity / 100;
+      const grams = this.toGrams(ing.quantity, ing.unit);
+      if (grams === null) continue; // unit not convertible (e.g. 'pcs') — skip
+      const scaleFactor = grams / 100;
       totalKcal += (ing.energyKcal || 0) * scaleFactor;
       totalProtein += (ing.proteinG || 0) * scaleFactor;
       totalCarbs += (ing.carbsG || 0) * scaleFactor;
@@ -367,7 +390,9 @@ export class NutritionService {
   }
 
   deleteLog(logId: string): void {
-    this.db.exec('DELETE FROM nutrition_logs WHERE id = ?', [logId]);
+    // Include userId check to prevent deleting another user's log (BUG-13)
+    const userId = this.db.getCurrentUserId();
+    this.db.exec('DELETE FROM nutrition_logs WHERE id = ? AND userId = ?', [logId, userId]);
   }
 
   getDefaultGoals(): Omit<NutritionGoals, 'userId'> {

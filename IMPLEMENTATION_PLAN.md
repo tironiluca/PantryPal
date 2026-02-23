@@ -605,11 +605,493 @@ This comprehensive plan addresses all identified issues and provides a clear roa
 
 Ready to proceed with implementation! 🚀
 
-## Next Step after next step
-add share of db from 2 user in a family.
-fix scan barcode not working on mobile. it seems to load something but the cam screen do not show up
-add internationalization, add as user setting the default language, provide at least italian and english
-add nutrition target by user, let the user pick what he wants as target, add report by day/week overall.
-address tab bar icon hidden by text.
-add alghoritm to propose a diet in nutriction tab as advice section based on desired target
-add the capability to get nutritional info for each ingredient from the web or as manual input.
+---
+
+---
+
+# Phase 0: Security Audit & Critical Bug Fixes
+
+> **Must be completed before any feature work.** These issues were found during a full codebase audit (2026-02-23). They cover data isolation failures, authorization gaps, SQL-injection vectors, XSS, and memory/resource leaks.
+
+---
+
+## Severity Summary
+
+| Severity | Security | Bug | Total |
+|----------|----------|-----|-------|
+| HIGH     | 6        | 6   | 12    |
+| MEDIUM   | 2        | 8   | 10    |
+| LOW      | 2        | 5   | 7     |
+| **Total**| **10**   | **19** | **29** |
+
+---
+
+## 0-A — HIGH Security Issues
+
+### SEC-01 — Hardcoded Supabase Credentials in Source
+**Files:** `src/environments/environment.ts:4-5`, `src/environments/environment.prod.ts:4-5`
+
+Both dev and prod environment files contain the same Supabase URL and anon key — committed to git history and bundled into the build output.
+
+**Fix:**
+- Rotate the current anon key from the Supabase dashboard immediately.
+- Add `src/environments/environment*.ts` to `.gitignore` and replace with a placeholder template (`environment.template.ts`).
+- Supply values at build time via CI environment variables (`--define` or `angular.json` `fileReplacements` pointing to a generated file).
+- Keep a separate key for dev vs prod so future rotation only affects one environment.
+
+---
+
+### SEC-02 — SQL Injection via Interpolated Table/Column Names from Remote Data
+**File:** `src/app/core/services/db.service.ts` — lines 290, 438, 456, 477, 553, 571, 594, 612, 625, 672–701
+**File:** `src/app/core/services/sync.service.ts` — lines 356–382
+
+Table names and column names from Supabase responses (pulled via `pullChanges()`) are interpolated directly into SQL strings. A compromised Supabase account or schema change could inject malicious identifiers.
+
+**Fix:**
+- Define a `ALLOWED_TABLES` constant (allowlist) in `db.service.ts`; validate `table` param at the start of every dynamic-SQL method.
+- Define per-table column allowlists and validate `Object.keys(record)` against them in `sync.service.ts` `pullChanges()` before building `setClause`.
+- Example guard:
+```typescript
+const ALLOWED_TABLES = new Set(['inventory', 'ingredients', 'recipes', ...]);
+if (!ALLOWED_TABLES.has(table)) throw new Error(`Invalid table: ${table}`);
+```
+
+---
+
+### SEC-03 / BUG-21 — XSS via Unescaped Title in Print Window
+**File:** `src/app/core/services/export.service.ts` — lines 207–208, 308, 373–375
+
+`generatePrintHtml()` already has an `escapeHtml()` helper but forgets to apply it to the `title` parameter before writing it into `<title>` and `<h1>` tags of the `document.write()` call. A recipe named `<img src=x onerror=alert(1)>` would execute in the print window.
+
+**Fix:**
+```typescript
+// In generatePrintHtml(), change:
+`<title>${title}</title>`
+`<h1>${title}</h1>`
+// to:
+`<title>${this.escapeHtml(title)}</title>`
+`<h1>${this.escapeHtml(title)}</h1>`
+```
+
+---
+
+### SEC-06 — Household Member RLS Allows Any Member to Delete Others
+**File:** `supabase/migrations/002_family_sharing.sql` — lines 54–63
+
+The `household_members` RLS policy is `FOR ALL` for any member, meaning any member can delete any other member row — including the owner.
+
+**Fix (SQL migration to add):**
+```sql
+-- Drop the overly-permissive policy
+DROP POLICY IF EXISTS "Members can manage household" ON household_members;
+
+-- Owners can do everything; members can only read + delete themselves
+CREATE POLICY "Members can read household" ON household_members
+  FOR SELECT USING (
+    user_id = auth.uid()::text
+    OR household_id IN (
+      SELECT id FROM households WHERE owner_id = auth.uid()::text
+    )
+  );
+
+CREATE POLICY "Owners can manage members" ON household_members
+  FOR ALL USING (
+    household_id IN (
+      SELECT id FROM households WHERE owner_id = auth.uid()::text
+    )
+  );
+
+CREATE POLICY "Members can remove themselves" ON household_members
+  FOR DELETE USING (user_id = auth.uid()::text);
+```
+
+---
+
+### SEC-07 — No Owner Check in `removeMember()`
+**File:** `src/app/core/services/household.service.ts` — lines 164–176
+
+Any authenticated member can call `removeMember()` to delete any other member including the owner, with no client-side or server-side ownership check.
+
+**Fix:**
+```typescript
+async removeMember(memberId: string): Promise<void> {
+  const hh = this.household();
+  const currentUser = this.auth.user();
+  if (!hh || !currentUser) return;
+  // Only the owner can remove others; members can only remove themselves
+  if (hh.ownerId !== currentUser.id && memberId !== currentUser.id) {
+    throw new Error('Only the household owner can remove other members');
+  }
+  const { error } = await this.supabase.from('household_members').delete()
+    .eq('household_id', hh.id).eq('user_id', memberId);
+  if (error) throw error;
+}
+```
+
+---
+
+### SEC-10 — `users` Table Has No RLS in Migration
+**File:** `supabase/migrations/001_initial_schema.sql`
+
+The `users` table (read/written by `auth.service.ts` and `user-profile.service.ts`) has no `ENABLE ROW LEVEL SECURITY` statement in either migration. Without RLS, any authenticated user can query all rows via the Supabase REST API.
+
+**Fix (add to a new migration `003_fix_rls.sql`):**
+```sql
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own profile" ON users
+  FOR SELECT USING (id = auth.uid()::text);
+
+CREATE POLICY "Users can update own profile" ON users
+  FOR UPDATE USING (id = auth.uid()::text);
+
+CREATE POLICY "Users can insert own profile" ON users
+  FOR INSERT WITH CHECK (id = auth.uid()::text);
+```
+
+---
+
+## 0-B — HIGH Functional Bugs
+
+### BUG-06 — Inventory List Shows All Users' Data
+**File:** `src/app/features/inventory/inventory-list.component.ts` — line 65
+
+```typescript
+// WRONG — no userId, no isDeleted filter:
+this.rows = this.db.query<InventoryItem>("SELECT * FROM inventory");
+
+// FIX — use the existing queryByUser helper:
+this.rows = this.db.queryByUser<InventoryItem>('inventory');
+```
+
+---
+
+### BUG-07 — Ingredient List Shows All Users' Data
+**File:** `src/app/features/ingredients/ingredient-list.component.ts` — line 60
+
+```typescript
+// WRONG:
+this.rows = this.db.query<Ingredient>("SELECT * FROM ingredients");
+
+// FIX:
+this.rows = this.db.queryByUser<Ingredient>('ingredients');
+```
+
+---
+
+### BUG-08 — Recipe List Shows All Users' Data
+**File:** `src/app/features/recipes/recipe-list.component.ts` — line 74
+
+```typescript
+// WRONG:
+this.rows = this.db.query<any>('SELECT id, name FROM recipes');
+
+// FIX:
+const userId = this.db.getCurrentUserId();
+this.rows = this.db.query<any>(
+  'SELECT id, name FROM recipes WHERE userId = ? AND (isDeleted IS NULL OR isDeleted = 0)',
+  [userId]
+);
+```
+
+---
+
+### BUG-11 — `openNutritionEdit()` Pre-Inserts Ghost Ingredient Records
+**File:** `src/app/features/ingredients/ingredient-edit/ingredient-edit.dialog.ts` — lines 101–148
+
+When the user clicks "Edit Nutrition" on a **new, unsaved** ingredient, `openNutritionEdit()` assigns a UUID to `this.model.id` and immediately inserts a record to the DB. If the user then closes the main dialog without saving, the incomplete record persists forever.
+
+**Fix:** Remove the pre-insert from `openNutritionEdit()`. Instead, open the nutrition dialog with the in-memory model data. Persist everything (ingredient + nutrition) only in `save()`.
+
+```typescript
+async openNutritionEdit(): Promise<void> {
+  // Ensure the model has an id for keying purposes only (no DB insert yet)
+  if (!this.model.id) this.model.id = uuidv4();
+
+  const ref = this.dialog.open(NutritionEditDialog, {
+    data: { ingredientId: this.model.id, saveImmediately: false }
+  });
+  const result = await ref.afterClosed().toPromise();
+  if (result) {
+    // Store nutrition data on the model for later saving in save()
+    this.pendingNutrition = result;
+  }
+}
+```
+Then in `save()`, after inserting/updating the ingredient, also save `this.pendingNutrition` if set.
+
+---
+
+### BUG-12 — Sync Pull Uses Unchecked Remote Column Names in SQL
+**File:** `src/app/core/services/sync.service.ts` — lines 356–382
+
+`Object.keys(safeRecords[0])` is used to build `INSERT` and `UPDATE` SQL. Column names come from the Supabase response without any validation.
+
+**Fix:** Maintain a `TABLE_COLUMNS` map in `sync.service.ts` and filter keys against it:
+```typescript
+const TABLE_COLUMNS: Record<string, string[]> = {
+  inventory: ['id', 'ingredientId', 'quantity', 'unit', 'location', 'expiry', 'userId', ...],
+  ingredients: ['id', 'name', 'categoryId', 'userId', ...],
+  // ... etc
+};
+
+// In pullChanges():
+const allowedCols = TABLE_COLUMNS[table] ?? [];
+const columns = Object.keys(safeRecords[0]).filter(c => allowedCols.includes(c));
+```
+
+---
+
+## 0-C — MEDIUM Security Issues
+
+### SEC-05 — Full Database Stored in localStorage (OPFS Fallback)
+**File:** `src/app/core/services/db.service.ts` — lines 516–518
+
+When OPFS is unavailable the entire SQLite database is persisted to `localStorage` as a base64 string — accessible to any same-origin script (XSS risk amplifier).
+
+**Fix:** In browsers that support IndexedDB but not OPFS, use IndexedDB as the fallback instead of `localStorage`. The `idb` library provides a Promise-based API. If neither OPFS nor IndexedDB is available, fall back to memory-only and display a warning banner to the user rather than silently writing sensitive data to `localStorage`.
+
+---
+
+### SEC-09 — CORS Proxy Leaks User URLs; One URL Not Encoded
+**File:** `src/app/core/services/recipe-import.service.ts` — lines 326–329
+
+Three third-party CORS proxies are tried in sequence. Every recipe URL the user imports is sent to these external services. The `cors-anywhere` entry is not URL-encoded.
+
+**Fix:**
+1. URL-encode all three proxy URLs: `` `https://cors-anywhere.herokuapp.com/${encodeURIComponent(url)}` ``.
+2. Add basic SSRF protection — reject `localhost`, `127.*`, `10.*`, `192.168.*`, `169.254.*` targets before proxying.
+3. Add a privacy notice in the import UI that URLs are forwarded to a third-party proxy.
+4. Long-term: consider a backend proxy route in Supabase Edge Functions to avoid leaking URLs.
+
+---
+
+## 0-D — MEDIUM Functional Bugs
+
+### BUG-02 — `db.init()` Sets `initialized = true` Before Async Work Completes
+**File:** `src/app/core/services/db.service.ts` — lines 22–41
+
+If `initSqlJs()` throws, `initialized` is already `true` so retries are silently no-ops and the app runs in broken memory-only mode with no way to recover.
+
+**Fix:** Set `initialized = true` only after successful completion; use a separate flag for "init in progress" to prevent concurrent calls:
+```typescript
+private initPromise: Promise<void> | null = null;
+
+async init(): Promise<void> {
+  if (this.initialized) return;
+  if (this.initPromise) return this.initPromise;
+  this.initPromise = this._doInit().finally(() => { this.initPromise = null; });
+  return this.initPromise;
+}
+
+private async _doInit(): Promise<void> {
+  this.SQL = await initSqlJs(...);
+  // ... rest of init
+  this.initialized = true;
+}
+```
+
+---
+
+### BUG-03 — `window.online` Event Listener Accumulates on Every `startAutoSync()` Call
+**File:** `src/app/core/services/sync.service.ts` — lines 440–444
+
+`startAutoSync()` adds a new listener on every call without removing the previous one.
+
+**Fix:**
+```typescript
+private onlineHandler = () => {
+  if (this.auth.isAuthenticated() && !this.isSyncingSignal()) this.syncNow();
+};
+
+startAutoSync() {
+  this.stopAutoSync(); // always clean up first
+  window.addEventListener('online', this.onlineHandler);
+  // ... setInterval
+}
+
+stopAutoSync() {
+  window.removeEventListener('online', this.onlineHandler);
+  // ... clearInterval
+}
+```
+
+---
+
+### BUG-09 — `NotificationsService` Queries Without userId; `ngOnDestroy` Never Fires
+**File:** `src/app/core/services/notifications.service.ts` — lines 18–19, 52
+
+The inventory query has no `userId` filter. Also, `ngOnDestroy` is declared but `providedIn: 'root'` services are never destroyed, so the polling interval never stops.
+
+**Fix:**
+1. Add user filter: `WHERE i.expiry IS NOT NULL AND i.userId = ?` with `[this.db.getCurrentUserId()]`.
+2. Remove `ngOnDestroy`; instead call `stopPolling()` from `AuthService` logout flow.
+
+---
+
+### BUG-17 — `VoiceService.destroy()` Permanently Breaks the Service
+**File:** `src/app/core/services/voice.service.ts` — lines 296–298
+
+`this.transcriptSubject.complete()` makes the Subject permanently deaf — it can never emit again.
+
+**Fix:** Instead of completing, just stop the recognition session. Re-create the Subjects only if the service needs to be truly reset:
+```typescript
+destroy() {
+  this.recognition?.stop();
+  this.recognition = null;
+  // DON'T complete subjects — just stop emitting
+}
+```
+
+---
+
+### BUG-19 — Nutrition Calculation Ignores Unit (Always Treats Quantity as Grams)
+**File:** `src/app/core/services/nutrition.service.ts` — lines 165–167
+
+`scaleFactor = quantity / 100` assumes grams. Any ingredient with unit `cup`, `pcs`, `oz`, etc. gets wildly wrong nutrition values.
+
+**Fix:** Implement unit conversion before computing `scaleFactor`. Until a `UnitConverterService` (Task 3.3) exists, add an inline conversion table:
+```typescript
+const GRAMS: Record<string, number> = {
+  g: 1, kg: 1000, oz: 28.35, lb: 453.59,
+  ml: 1, l: 1000,           // approximate water density
+  cup: 240, tbsp: 15, tsp: 5,
+  pcs: null                  // cannot convert — skip
+};
+
+function toGrams(qty: number, unit: string): number | null {
+  const factor = GRAMS[unit.toLowerCase()];
+  return factor != null ? qty * factor : null;
+}
+```
+
+---
+
+### BUG-20 — Sync Ignores Household Members' `recipe_ingredients`
+**File:** `src/app/core/services/sync.service.ts` — lines 295–298
+
+`pullChanges()` for `recipe_ingredients` only fetches rows where the recipe belongs to the current user, never pulling household members' recipe ingredients.
+
+**Fix:** Widen the filter to include household member recipe IDs:
+```typescript
+const allUserIds = [userId, ...householdMemberIds];
+const sharedRecipeIds = this.db.query<{id: string}>(
+  `SELECT id FROM recipes WHERE userId IN (${allUserIds.map(() => '?').join(',')})`,
+  allUserIds
+).map(r => r.id);
+if (sharedRecipeIds.length > 0) {
+  query = query.in('recipe_id', sharedRecipeIds);
+}
+```
+
+---
+
+### BUG-13 — `deleteLog()` Has No User Ownership Check
+**File:** `src/app/core/services/nutrition.service.ts` — line 370
+
+```typescript
+// FIX — add userId filter:
+deleteLog(logId: string): void {
+  const userId = this.db.getCurrentUserId();
+  this.db.exec('DELETE FROM nutrition_logs WHERE id = ? AND userId = ?', [logId, userId]);
+}
+```
+
+---
+
+### BUG-14 — `updateMeal()` Has No User Ownership Check
+**File:** `src/app/core/services/meal-plan.service.ts` — line 152
+
+```typescript
+// FIX — include userId in the SELECT and subsequent UPDATE:
+const existing = this.db.query<MealPlan>(
+  'SELECT * FROM meal_plans WHERE id = ? AND userId = ?',
+  [id, this.db.getCurrentUserId()]
+);
+```
+
+---
+
+### BUG-15 — Guest User Sees Empty Ingredient List (NULL vs IS NULL)
+**File:** `src/app/features/recipes/recipe-edit.dialog.ts` — lines 461–469
+
+`WHERE i.userId = ?` with a `null` userId produces `WHERE i.userId = NULL` (never matches in SQL). Use `IS NULL` for unauthenticated users.
+
+**Fix:**
+```typescript
+const userId = this.db.getCurrentUserId();
+const where = userId
+  ? `WHERE i.userId = '${userId}' AND ...`
+  : `WHERE i.userId IS NULL AND ...`;
+// better: use queryByUser helper
+```
+
+---
+
+### BUG-23 — Camera Stream Leaks if BarcodeDetector Path Throws
+**File:** `src/app/core/services/barcode.service.ts` — lines 22–50
+
+The `while` loop in the `BarcodeDetector` path does not have a `finally` block. If an exception occurs after `getUserMedia()` succeeds, the `MediaStream` is never stopped.
+
+**Fix:** Wrap the entire `BarcodeDetector` code path in `try/finally`:
+```typescript
+const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+try {
+  videoEl.srcObject = stream;
+  // ... detection loop
+} finally {
+  // caller or finally block: stream.getTracks().forEach(t => t.stop());
+}
+```
+
+---
+
+## 0-E — LOW Issues (Deferred / Nice-to-Have)
+
+| ID | File | Description |
+|----|------|-------------|
+| SEC-04 | `app.component.ts:177` | `bypassSecurityTrustHtml` on hardcoded SVG — no active risk, but establish policy that this pattern requires code review. |
+| SEC-08 | `household-settings.component.ts:69` | Add email regex validation before sending household invitation. |
+| BUG-04 | `sync.service.ts:423` | Move sync interval from `window.__pantrypal_sync_interval` to a typed class field. |
+| BUG-05 | `auth.guard.ts:14` | Replace polling interval/timeout with a proper reactive pattern (`toObservable(auth.loading)`). |
+| BUG-16 | `nutrition-dashboard.component.ts:436` | Add `takeUntilDestroyed` to `afterClosed()` subscriptions for consistency. |
+| BUG-18 | `migration.service.ts:111` | Wrap `setTimeout` async callback in `try/catch`; check `auth.isAuthenticated()` before calling `syncNow()`. |
+| BUG-22 | `db.service.ts:389` | `execBatch` memOnly path is a no-op for persistence — add a warning comment. |
+| BUG-24 | `recipe-import.service.ts:329` | URL-encode the `cors-anywhere` proxy entry. |
+| BUG-25 | `db.service.ts:290` | Add comment noting PRAGMA cannot be parameterized; table name must always be a literal. |
+
+---
+
+## Phase 0 — Recommended Execution Order
+
+```
+Step 1 (immediate, before any deployment):
+  SEC-01 → Rotate Supabase key, add environments to .gitignore
+
+Step 2 (data integrity — fix before adding new data):
+  BUG-06 → Add userId filter to inventory list
+  BUG-07 → Add userId filter to ingredient list
+  BUG-08 → Add userId filter to recipe list
+  BUG-09 → Add userId filter to notifications query
+
+Step 3 (security hardening):
+  SEC-03/BUG-21 → Escape title in export.service
+  SEC-07 → Add owner check to removeMember()
+  SEC-06 → Apply household RLS migration (003_fix_rls.sql)
+  SEC-10 → Apply users table RLS (same migration)
+
+Step 4 (sync correctness):
+  BUG-12 → Whitelist columns in sync pull
+  BUG-20 → Fix household recipe_ingredients pull
+
+Step 5 (stability):
+  BUG-02 → Fix db.init() race condition
+  BUG-03 → Fix online listener leak
+  BUG-11 → Fix ghost ingredient pre-insert
+  BUG-17 → Fix VoiceService Subject.complete()
+  BUG-19 → Fix nutrition unit conversion
+  BUG-23 → Fix camera stream leak in BarcodeDetector path
+
+Step 6 (polish — Low severity):
+  All 0-E items
+```

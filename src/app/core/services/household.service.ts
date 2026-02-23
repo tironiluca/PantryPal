@@ -165,6 +165,12 @@ export class HouseholdService {
     const hh = this.household();
     if (!hh) return;
 
+    const currentUserId = this.auth.getCurrentUserId();
+    // Only the owner can remove others; any member can remove themselves
+    if (hh.ownerId !== currentUserId && memberId !== currentUserId) {
+      throw new Error('Only the household owner can remove other members');
+    }
+
     const { error } = await this.supabase
       .from('household_members')
       .delete()

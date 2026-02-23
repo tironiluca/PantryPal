@@ -20,34 +20,40 @@ export class BarcodeService {
       // Try native BarcodeDetector API first (if available)
       if ('BarcodeDetector' in window) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
-        videoEl.srcObject = stream;
-
+        // Wrap in try/finally so the stream is always stopped, even if an exception occurs (BUG-23)
         try {
-          await videoEl.play();
-        } catch (playError) {
-          console.warn('Video play failed, retrying with muted:', playError);
-          videoEl.muted = true;
-          await videoEl.play();
-        }
+          videoEl.srcObject = stream;
 
-        const detector = new (window as any).BarcodeDetector({
-          formats: ['ean_13', 'ean_8', 'code_128', 'upc_a']
-        });
-
-        const end = Date.now() + 8000;
-        while (Date.now() < end) {
           try {
-            const bitmap = await createImageBitmap(videoEl as any);
-            const codes = await detector.detect(bitmap);
-            if (codes?.length) {
-              return codes[0].rawValue;
-            }
-          } catch (detectionError) {
-            // Frame not ready yet, continue
+            await videoEl.play();
+          } catch (playError) {
+            console.warn('Video play failed, retrying with muted:', playError);
+            videoEl.muted = true;
+            await videoEl.play();
           }
-          await new Promise(r => setTimeout(r, 200));
+
+          const detector = new (window as any).BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'code_128', 'upc_a']
+          });
+
+          const end = Date.now() + 8000;
+          while (Date.now() < end) {
+            try {
+              const bitmap = await createImageBitmap(videoEl as any);
+              const codes = await detector.detect(bitmap);
+              if (codes?.length) {
+                return codes[0].rawValue;
+              }
+            } catch (detectionError) {
+              // Frame not ready yet, continue
+            }
+            await new Promise(r => setTimeout(r, 200));
+          }
+          return null;
+        } finally {
+          // Stop all tracks so the camera light turns off (stream cleanup for BarcodeDetector path)
+          stream.getTracks().forEach(t => t.stop());
         }
-        return null;
       }
 
       // Fallback to ZXing library

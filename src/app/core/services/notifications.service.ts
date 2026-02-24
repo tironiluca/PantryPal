@@ -1,11 +1,22 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import { DbService } from './db.service';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
-export class NotificationsService implements OnDestroy {
+export class NotificationsService {
+  private db = inject(DbService);
+  private auth = inject(AuthService);
+
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private db: DbService) {}
+  constructor() {
+    // Automatically stop polling when the user signs out
+    effect(() => {
+      if (!this.auth.isAuthenticated()) {
+        this.stopPolling();
+      }
+    });
+  }
 
   async requestPermission() {
     if (typeof Notification === 'undefined') return false;
@@ -55,9 +66,5 @@ export class NotificationsService implements OnDestroy {
       clearInterval(this.pollHandle);
       this.pollHandle = null;
     }
-  }
-
-  ngOnDestroy() {
-    this.stopPolling();
   }
 }

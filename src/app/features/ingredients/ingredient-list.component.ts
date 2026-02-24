@@ -15,6 +15,7 @@ import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
+import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
 
 @Component({
   standalone: true,
@@ -123,15 +124,22 @@ export class IngredientListComponent {
   }
 
   remove(row: any) {
-    try {
-      if (confirm(`Are you sure you want to delete "${row.name}"?`)) {
-        this.db.exec("DELETE FROM ingredients WHERE id = ?", [row.id]);
-        this.dataEvents.emit('ingredients', 'delete', row.id);
-        this.snackbar.success('Ingredient deleted successfully');
-        this.refresh();
-      }
-    } catch (error) {
-      this.errorHandler.handle(error, 'Failed to delete ingredient');
-    }
+    this.dialog
+      .open(ConfirmDialog, {
+        data: { title: 'Delete Ingredient', message: `Delete "${row.name}"?`, confirmColor: 'warn', icon: 'delete' },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ok => {
+        if (!ok) return;
+        try {
+          this.db.exec("DELETE FROM ingredients WHERE id = ?", [row.id]);
+          this.dataEvents.emit('ingredients', 'delete', row.id);
+          this.snackbar.success('Ingredient deleted successfully');
+          this.refresh();
+        } catch (error) {
+          this.errorHandler.handle(error, 'Failed to delete ingredient');
+        }
+      });
   }
 }

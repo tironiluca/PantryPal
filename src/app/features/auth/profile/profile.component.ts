@@ -16,6 +16,8 @@ import { UserProfileService } from '../../../core/services/user-profile.service'
 import { SnackbarService } from '../../../core/services/snackbar.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+import { ConfirmDialog } from '../../../shared/dialogs/confirm/confirm.dialog';
 
 @Component({
   selector: 'pp-profile',
@@ -116,7 +118,11 @@ export class ProfileComponent implements OnInit {
   }
 
   async removeAvatar(): Promise<void> {
-    const confirmed = confirm('Are you sure you want to remove your avatar?');
+    const confirmed = await firstValueFrom(
+      this.dialog.open(ConfirmDialog, {
+        data: { title: 'Remove Avatar', message: 'Are you sure you want to remove your avatar?', confirmColor: 'warn', icon: 'person_off' },
+      }).afterClosed()
+    );
 
     if (!confirmed) {
       return;
@@ -141,8 +147,16 @@ export class ProfileComponent implements OnInit {
   }
 
   async deleteAccount(): Promise<void> {
-    const confirmed = confirm(
-      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.'
+    const confirmed = await firstValueFrom(
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Delete Account',
+          message: 'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
+          confirmColor: 'warn',
+          icon: 'warning',
+          confirmLabel: 'Delete Account',
+        },
+      }).afterClosed()
     );
 
     if (!confirmed) {

@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, Inject } from '@angular/core';
+import { Component, inject, signal, OnInit, Inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -409,6 +410,7 @@ export class NutritionDashboardComponent implements OnInit {
   private nutritionService = inject(NutritionService);
   private snackbar = inject(SnackbarService);
   private dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
 
   summary = signal<DailyNutritionSummary | null>(null);
   hasGoals = signal(false);
@@ -433,7 +435,7 @@ export class NutritionDashboardComponent implements OnInit {
       maxWidth: '95vw',
     });
 
-    ref.afterClosed().subscribe(result => {
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
       if (result) {
         this.nutritionService.setGoals(result);
         this.loadTodayNutrition();

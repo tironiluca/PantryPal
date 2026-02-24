@@ -146,9 +146,15 @@ export class HouseholdSettingsComponent implements OnInit {
   }
 
   async invite(): Promise<void> {
-    if (!this.inviteEmail.trim()) return;
+    const email = this.inviteEmail.trim();
+    if (!email) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      this.errorHandler.handle(new Error('Invalid email'), 'Please enter a valid email address');
+      return;
+    }
     try {
-      await this.householdService.inviteMember(this.inviteEmail.trim());
+      await this.householdService.inviteMember(email);
       this.inviteEmail = '';
     } catch (err) {
       this.errorHandler.handle(err, 'Failed to send invitation');

@@ -12,44 +12,14 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataEventsService } from '../../core/services/data-events.service';
+import { ConfirmDialog } from '../../shared/dialogs/confirm/confirm.dialog';
 
 @Component({
   standalone: true,
   selector: 'pp-recipe-list',
   imports: [CommonModule, RouterModule, MatTableModule, MatButtonModule, MatIconModule, MatDialogModule],
-  template: `
-  <div class="container">
-    <h2>Recipes</h2>
-    @if (rows.length > 0) {
-      <table mat-table [dataSource]="rows" class="mat-elevation-z1">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let r">{{r.name}}</td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let r">
-            <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
-            <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="cols"></tr>
-        <tr mat-row *matRowDef="let row; columns: cols;"></tr>
-      </table>
-    } @else {
-      <p>No recipes yet.</p>
-    }
-    <div class="actions">
-      <button mat-stroked-button [routerLink]="['/recipes/meal']">Meal of the Day</button>
-      <button mat-stroked-button (click)="importRecipe()">
-        <mat-icon>download</mat-icon>
-        Import Recipe
-      </button>
-      <button mat-fab color="primary" class="fab" (click)="add()"><mat-icon>add</mat-icon></button>
-    </div>
-  </div>
-  `,
-  styleUrls: ['./recipe-list.component.scss']
+  templateUrl: './recipe-list.component.html',
+  styleUrls: ['./recipe-list.component.scss'],
 })
 export class RecipeListComponent {
   private db = inject(DbService);
@@ -110,16 +80,23 @@ export class RecipeListComponent {
   }
 
   remove(r: any) {
-    try {
-      if (confirm(`Are you sure you want to delete recipe "${r.name}"?`)) {
-        this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
-        this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
-        this.dataEvents.emit('recipes', 'delete', r.id);
-        this.snackbar.success('Recipe deleted successfully');
-        this.refresh();
-      }
-    } catch (error) {
-      this.errorHandler.handle(error, 'Failed to delete recipe');
-    }
+    this.dialog
+      .open(ConfirmDialog, {
+        data: { title: 'Delete Recipe', message: `Delete "${r.name}"?`, confirmColor: 'warn', icon: 'delete' },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ok => {
+        if (!ok) return;
+        try {
+          this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
+          this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
+          this.dataEvents.emit('recipes', 'delete', r.id);
+          this.snackbar.success('Recipe deleted successfully');
+          this.refresh();
+        } catch (error) {
+          this.errorHandler.handle(error, 'Failed to delete recipe');
+        }
+      });
   }
 }

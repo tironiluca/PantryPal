@@ -297,6 +297,9 @@ export class DbService {
   private addColumnIfNotExists(table: string, column: string, type: string): void {
     try {
       // Check if column exists
+      // NOTE: PRAGMA statements cannot use parameterized binding — the table
+      // name must be a string literal. Callers must never pass user-controlled
+      // values here; this method is only called from the internal migrate() path.
       const result = this.db.exec(`PRAGMA table_info(${table})`);
 
       if (result.length > 0 && result[0].values) {
@@ -397,7 +400,8 @@ export class DbService {
     }
 
     if (this.memOnly) {
-      // Execute each statement individually in memory mode
+      // NOTE: memOnly path executes statements individually and does NOT persist.
+      // No OPFS write occurs here — data lives only in-memory for this session.
       statements.forEach(stmt => this.exec(stmt.sql, stmt.params));
       return Promise.resolve();
     }

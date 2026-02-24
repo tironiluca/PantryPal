@@ -16,6 +16,7 @@ import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
+import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
 
 @Component({
   selector:'pp-inventory-list',
@@ -186,15 +187,22 @@ export class InventoryListComponent {
   }
 
   remove(row: InventoryItem) {
-    try {
-      if (confirm(`Are you sure you want to delete this inventory item?`)) {
-        this.db.exec("DELETE FROM inventory WHERE id = ?", [row.id]);
-        this.dataEvents.emit('inventory', 'delete', row.id);
-        this.snackbar.success('Inventory item deleted successfully');
-        this.refresh();
-      }
-    } catch (error) {
-      this.errorHandler.handle(error, 'Failed to delete inventory item');
-    }
+    this.dialog
+      .open(ConfirmDialog, {
+        data: { title: 'Delete Item', message: 'Are you sure you want to delete this inventory item?', confirmColor: 'warn', icon: 'delete' },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ok => {
+        if (!ok) return;
+        try {
+          this.db.exec("DELETE FROM inventory WHERE id = ?", [row.id]);
+          this.dataEvents.emit('inventory', 'delete', row.id);
+          this.snackbar.success('Inventory item deleted successfully');
+          this.refresh();
+        } catch (error) {
+          this.errorHandler.handle(error, 'Failed to delete inventory item');
+        }
+      });
   }
 }

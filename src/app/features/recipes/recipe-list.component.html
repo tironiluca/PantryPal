@@ -1,0 +1,30 @@
+<div class="container">
+  <h2>Recipes</h2>
+  @if (rows.length > 0) {
+    <table mat-table [dataSource]="rows" class="mat-elevation-z1">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let r">{{r.name}}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let r">
+          <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="cols"></tr>
+      <tr mat-row *matRowDef="let row; columns: cols;"></tr>
+    </table>
+  } @else {
+    <p>No recipes yet.</p>
+  }
+  <div class="actions">
+    <button mat-stroked-button [routerLink]="['/recipes/meal']">Meal of the Day</button>
+    <button mat-stroked-button (click)="importRecipe()">
+      <mat-icon>download</mat-icon>
+      Import Recipe
+    </button>
+    <button mat-fab color="primary" class="fab" (click)="add()"><mat-icon>add</mat-icon></button>
+  </div>
+</div>

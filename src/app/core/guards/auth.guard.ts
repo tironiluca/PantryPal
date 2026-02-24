@@ -1,6 +1,21 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { firstValueFrom, filter, timeout, catchError, of } from 'rxjs';
+
+/**
+ * Waits for AuthService to finish loading using a reactive signal observable.
+ * Resolves immediately if already done; times out after 5 s.
+ */
+const waitForAuthReady = (auth: AuthService): Promise<void> =>
+  firstValueFrom(
+    toObservable(auth.loading).pipe(
+      filter(loading => !loading),
+      timeout({ each: 5000 }),
+      catchError(() => of(false)),
+    )
+  ).then(() => void 0);
 
 /**
  * Auth Guard - Protects routes that require authentication
@@ -10,22 +25,8 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  // Wait for auth to initialize if still loading
   if (auth.loading()) {
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if (!auth.loading()) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100);
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(interval);
-        resolve();
-      }, 5000);
-    });
+    await waitForAuthReady(auth);
   }
 
   const isAuthenticated = auth.isAuthenticated();
@@ -48,22 +49,8 @@ export const guestGuard: CanActivateFn = async (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  // Wait for auth to initialize if still loading
   if (auth.loading()) {
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if (!auth.loading()) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100);
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(interval);
-        resolve();
-      }, 5000);
-    });
+    await waitForAuthReady(auth);
   }
 
   const isAuthenticated = auth.isAuthenticated();

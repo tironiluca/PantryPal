@@ -1,0 +1,272 @@
+.meal-plan-container {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.calendar-card {
+  margin-bottom: var(--spacing-md);
+}
+
+.header-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+
+  h2 {
+    margin: 0;
+    min-width: 200px;
+    text-align: center;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--divider-color);
+  border: 1px solid var(--divider-color);
+}
+
+.day-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-sm);
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.calendar-day {
+  background-color: var(--background-color);
+  min-height: 150px;
+  padding: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  &.today {
+    background-color: rgba(67, 160, 71, 0.05);
+    border: 2px solid var(--primary-color);
+  }
+
+  &.other-month {
+    opacity: 0.5;
+    background-color: var(--surface-color);
+  }
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+
+  .today-indicator {
+    font-size: 8px;
+    width: 8px;
+    height: 8px;
+    color: var(--primary-color);
+  }
+}
+
+.meal-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.meal-slot {
+  flex: 1;
+  min-height: 24px;
+}
+
+.meal-item {
+  background-color: var(--surface-color);
+  border: 1px solid var(--divider-color);
+  border-left: 3px solid var(--primary-color);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-bottom: 4px;
+
+  &:hover {
+    background-color: var(--hover-color);
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+    border-left-color: var(--accent-color);
+  }
+
+  .meal-icon {
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+    }
+  }
+
+  .meal-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+
+    .meal-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+
+    .servings {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+  }
+
+  .meal-menu-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &:hover .meal-menu-btn {
+    opacity: 1;
+  }
+}
+
+.empty-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px dashed var(--divider-color);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  font-size: 11px;
+  color: var(--text-secondary);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .add-hint {
+    display: none;
+  }
+
+  &:hover {
+    opacity: 1;
+    background-color: rgba(67, 160, 71, 0.05);
+    border-color: var(--primary-color);
+
+    .add-hint {
+      display: inline;
+    }
+  }
+}
+
+.calendar-day:hover .empty-slot {
+  opacity: 0.6;
+}
+
+.legend-card {
+  mat-card-content {
+    padding: var(--spacing-md);
+  }
+}
+
+.legend {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--primary-color);
+  }
+}
+
+@media (max-width: 768px) {
+  .meal-plan-container {
+    padding: var(--spacing-sm);
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navigation h2 {
+    font-size: 18px;
+    min-width: 150px;
+  }
+
+  .calendar-day {
+    min-height: 100px;
+    font-size: 11px;
+  }
+
+  .meal-item {
+    font-size: 10px;
+    padding: 2px 4px;
+
+    .meal-icon mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { DbService } from './db.service';
 import { ProductsService } from './products.service';
 import { AuthService } from './auth.service';
+import { UnitConverterService, Unit } from './unit-converter.service';
 
 export interface NutritionData {
   energyKcal: number;
@@ -82,6 +83,7 @@ export class NutritionService {
   private db = inject(DbService);
   private products = inject(ProductsService);
   private auth = inject(AuthService);
+  private unitConverter = inject(UnitConverterService);
 
   async getNutritionByBarcode(barcode: string): Promise<NutritionData | null> {
     try {
@@ -149,24 +151,22 @@ export class NutritionService {
   }
 
   /**
-   * Convert an ingredient quantity to grams so per-100g nutrition data can be scaled correctly.
+   * Convert an ingredient quantity to grams using UnitConverterService.
+   * Volume units are treated as mL (water density approx: 1ml ≈ 1g) for nutrition purposes.
    * Returns null for units that cannot be meaningfully converted (e.g. 'pcs').
-   * BUG-19: without this, all non-gram units produce wrong nutrition totals.
    */
   private toGrams(quantity: number, unit: string): number | null {
-    const GRAMS_PER_UNIT: Record<string, number> = {
-      g: 1, gram: 1, grams: 1,
-      kg: 1000, kilogram: 1000,
-      oz: 28.3495, ounce: 28.3495,
-      lb: 453.592, lbs: 453.592, pound: 453.592,
-      ml: 1, milliliter: 1,             // water density approximation
-      l: 1000, liter: 1000,
-      cup: 240, cups: 240,
-      tbsp: 15, tablespoon: 15,
-      tsp: 5, teaspoon: 5,
-    };
-    const factor = GRAMS_PER_UNIT[(unit ?? 'g').toLowerCase()];
-    return factor != null ? quantity * factor : null;
+    const u = (unit ?? 'g').toLowerCase() as Unit;
+    const unitType = this.unitConverter.getUnitType(u);
+    if (unitType === 'weight') {
+      return this.unitConverter.convert(quantity, u, 'g');
+    }
+    if (unitType === 'volume') {
+      // Water density approximation: 1 ml ≈ 1 g — acceptable for typical recipe nutrition estimates
+      const ml = this.unitConverter.convert(quantity, u, 'ml');
+      return ml;
+    }
+    return null; // 'pcs' or unknown unit — skip
   }
 
   getRecipeNutrition(recipeId: string): NutritionData | null {

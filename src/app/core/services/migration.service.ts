@@ -109,8 +109,13 @@ export class MigrationService {
 
       // Trigger initial sync to push migrated data to cloud
       setTimeout(async () => {
-        console.log('Triggering initial sync after migration...');
-        await this.sync.syncNow();
+        try {
+          if (!this.auth.isAuthenticated()) return;
+          console.log('Triggering initial sync after migration...');
+          await this.sync.syncNow();
+        } catch (e) {
+          console.error('Initial sync after migration failed:', e);
+        }
       }, 1000);
     } catch (error) {
       console.error('Migration failed:', error);

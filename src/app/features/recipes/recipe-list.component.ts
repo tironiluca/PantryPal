@@ -13,6 +13,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataEventsService } from '../../core/services/data-events.service';
 import { ConfirmDialog } from '../../shared/dialogs/confirm/confirm.dialog';
+import { KeyboardService } from '../../core/services/keyboard.service';
 
 @Component({
   standalone: true,
@@ -28,6 +29,7 @@ export class RecipeListComponent {
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
   private dataEvents = inject(DataEventsService);
+  private keyboard = inject(KeyboardService);
 
   rows: any[] = [];
   cols = ['name', 'actions'];
@@ -37,6 +39,10 @@ export class RecipeListComponent {
     this.dataEvents.on('recipes', 'recipe_ingredients')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
+
+    this.keyboard.addNew$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.add());
   }
 
   refresh() {

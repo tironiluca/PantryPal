@@ -1,4 +1,4 @@
-import { Component, inject, DestroyRef } from "@angular/core";
+import { Component, inject, DestroyRef, ViewChild, ElementRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { MatTableModule } from "@angular/material/table";
@@ -17,6 +17,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
 import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
+import { KeyboardService } from "../../core/services/keyboard.service";
 
 @Component({
   selector:'pp-inventory-list',
@@ -43,6 +44,9 @@ export class InventoryListComponent {
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
   private dataEvents = inject(DataEventsService);
+  private keyboard = inject(KeyboardService);
+
+  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
   rows: InventoryItem[] = [];
   filteredRows: InventoryItem[] = [];
@@ -61,6 +65,18 @@ export class InventoryListComponent {
     this.dataEvents.on('inventory', 'ingredients')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
+
+    this.keyboard.addNew$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.add());
+
+    this.keyboard.focusSearch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.searchInput?.nativeElement.focus());
+
+    this.keyboard.escape$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.clearFilters());
   }
 
   refresh() {

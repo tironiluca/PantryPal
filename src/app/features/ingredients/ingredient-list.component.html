@@ -4,7 +4,7 @@
   <!-- Search -->
   <mat-form-field appearance="outline" class="search-field">
     <mat-label>{{ t('common.search') }}</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="t('ingredients.searchPlaceholder')">
+    <input #searchInput matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="t('ingredients.searchPlaceholder')">
     <mat-icon matPrefix>search</mat-icon>
   </mat-form-field>
 

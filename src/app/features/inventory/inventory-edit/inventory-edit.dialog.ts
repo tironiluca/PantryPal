@@ -9,8 +9,10 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
+import { MatDividerModule } from "@angular/material/divider";
 import { TranslocoModule, TranslocoService } from "@jsverse/transloco";
 import { DbService } from "../../../core/services/db.service";
 import { DataEventsService } from "../../../core/services/data-events.service";
@@ -33,8 +35,10 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatDividerModule,
     TranslocoModule,
   ],
   templateUrl: './inventory-edit.dialog.html',
@@ -54,11 +58,34 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
       gap: var(--spacing-sm);
     }
 
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mat-sys-on-surface-variant);
+      margin: var(--spacing-xs) 0 0;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        opacity: 0.7;
+      }
+    }
+
+    mat-divider {
+      margin: var(--spacing-xs) 0;
+    }
+
     mat-form-field {
       width: 100%;
     }
 
-    .quantity-row {
+    .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--spacing-md);
@@ -93,13 +120,13 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 480px) {
       mat-dialog-content {
         width: 95vw;
         max-width: 95vw;
       }
 
-      .quantity-row {
+      .two-col {
         grid-template-columns: 1fr;
       }
 

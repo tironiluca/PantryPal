@@ -1,12 +1,13 @@
-import { Component, inject, DestroyRef, ViewChild, ElementRef } from "@angular/core";
+import { Component, inject, signal, DestroyRef, ViewChild, ElementRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { MatTableModule } from "@angular/material/table";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { DbService } from "../../core/services/db.service";
 import { InventoryItem } from "../../core/models/inventory.model";
@@ -18,21 +19,26 @@ import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
 import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
 import { KeyboardService } from "../../core/services/keyboard.service";
+import { SkeletonComponent } from "../../shared/components/skeleton/skeleton.component";
+import { UseItUpBannerComponent } from "../../shared/components/use-it-up-banner/use-it-up-banner.component";
 
 @Component({
-  selector:'pp-inventory-list',
+  selector: 'pp-inventory-list',
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatChipsModule,
+    MatTooltipModule,
     TranslocoModule,
+    SkeletonComponent,
+    UseItUpBannerComponent,
   ],
   templateUrl: './inventory-list.component.html',
   styleUrls: ['./inventory-list.component.scss']
@@ -50,8 +56,8 @@ export class InventoryListComponent {
 
   rows: InventoryItem[] = [];
   filteredRows: InventoryItem[] = [];
-
-  cols = ["ingredientId", "quantity", "expiry", "location", "actions"];
+  loading = signal(false);
+  ingredientNames = new Map<string, string>();
 
   // Filter/sort state
   searchTerm = '';
@@ -80,25 +86,69 @@ export class InventoryListComponent {
   }
 
   refresh() {
+    this.loading.set(true);
     try {
       this.rows = this.db.queryByUser<InventoryItem>('inventory');
+      this.loadIngredientNames();
       this.applyFilters();
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load inventory');
       this.rows = [];
       this.filteredRows = [];
+    } finally {
+      this.loading.set(false);
     }
+  }
+
+  private loadIngredientNames() {
+    const ids = [...new Set(this.rows.map(r => r.ingredientId))];
+    if (ids.length === 0) {
+      this.ingredientNames = new Map();
+      return;
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    try {
+      const ingredients = this.db.query<{ id: string; name: string }>(
+        `SELECT id, name FROM ingredients WHERE id IN (${placeholders})`,
+        ids
+      );
+      this.ingredientNames = new Map(ingredients.map(i => [i.id, i.name]));
+    } catch {
+      this.ingredientNames = new Map();
+    }
+  }
+
+  getIngredientName(id: string): string {
+    return this.ingredientNames.get(id) ?? id;
+  }
+
+  getExpiryStatus(expiry?: string): 'expired' | 'warning' | 'ok' | null {
+    if (!expiry) return null;
+    const days = Math.floor((new Date(expiry).getTime() - Date.now()) / 86400000);
+    if (days < 0) return 'expired';
+    if (days <= 7) return 'warning';
+    return 'ok';
+  }
+
+  getLocationIcon(location?: string): string {
+    const icons: Record<string, string> = {
+      fridge: 'kitchen',
+      freezer: 'ac_unit',
+      pantry: 'shelves',
+      other: 'inventory_2',
+    };
+    return icons[location ?? 'other'] ?? 'inventory_2';
   }
 
   applyFilters() {
     let filtered = [...this.rows];
 
-    // Search filter
+    // Search by resolved name or barcode
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(item =>
-        item.ingredientId.toLowerCase().includes(term) ||
-        item.barcode?.includes(term)
+        this.getIngredientName(item.ingredientId).toLowerCase().includes(term) ||
+        item.barcode?.toLowerCase().includes(term)
       );
     }
 
@@ -129,12 +179,10 @@ export class InventoryListComponent {
       let aVal: any = a[this.sortColumn as keyof InventoryItem];
       let bVal: any = b[this.sortColumn as keyof InventoryItem];
 
-      // Handle null/undefined
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
 
-      // Date comparison
       if (this.sortColumn === 'expiry') {
         aVal = new Date(aVal).getTime();
         bVal = new Date(bVal).getTime();
@@ -162,11 +210,6 @@ export class InventoryListComponent {
     this.locationFilter = null;
     this.expiringFilter = 'all';
     this.applyFilters();
-  }
-
-  isExpired(expiry?: string): boolean {
-    if (!expiry) return false;
-    return new Date(expiry) < new Date();
   }
 
   get expiringCount(): number {

@@ -1,0 +1,35 @@
+<ng-container *transloco="let t">
+  @if (suggestion() && !dismissed()) {
+    <div class="use-it-up-banner animate-in" role="alert">
+      <div class="banner-header">
+        <mat-icon class="banner-icon">warning_amber</mat-icon>
+        <span class="banner-title">{{ t('useItUp.title') }}</span>
+        <button mat-icon-button class="dismiss-btn" (click)="dismiss()" [attr.aria-label]="t('common.close')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="expiring-items">
+        @for (item of suggestion()!.expiringItems; track item.id) {
+          <mat-chip [class]="item.daysLeft < 0 ? 'expiry-expired' : 'expiry-warning'">
+            {{ item.name }}
+            @if (item.daysLeft < 0) {
+              ({{ t('inventory.expired') }})
+            } @else {
+              ({{ item.daysLeft }}d)
+            }
+          </mat-chip>
+        }
+      </div>
+
+      @if (suggestion()!.matchedRecipes.length > 0) {
+        <div class="recipe-suggestions">
+          <span class="suggestions-label">{{ t('useItUp.recipeSuggestions') }}</span>
+          @for (recipe of suggestion()!.matchedRecipes; track recipe.recipeId) {
+            <a class="recipe-link" [routerLink]="['/home/recipes']">{{ recipe.recipeName }}</a>
+          }
+        </div>
+      }
+    </div>
+  }
+</ng-container>

@@ -1,4 +1,7 @@
 <div class="container" *transloco="let t">
+  <!-- "Use It Up" expiry banner -->
+  <pp-use-it-up-banner />
+
   <!-- Header with stats -->
   <div class="header">
     <h2>{{ t('inventory.title') }}</h2>
@@ -14,7 +17,8 @@
   <div class="filters">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>{{ t('common.search') }}</mat-label>
-      <input #searchInput matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" [placeholder]="t('inventory.searchPlaceholder')">
+      <input #searchInput matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
+             [placeholder]="t('inventory.searchPlaceholder')">
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
 
@@ -47,74 +51,51 @@
     }
   </div>
 
-  <!-- Table -->
-  @if (filteredRows.length > 0) {
-    <table mat-table [dataSource]="filteredRows" class="mat-elevation-z1">
-      <ng-container matColumnDef="ingredientId">
-        <th mat-header-cell *matHeaderCellDef>
-          <button mat-button (click)="onSortChange('ingredientId')">
-            {{ t('inventory.ingredient') }}
-            @if (sortColumn === 'ingredientId') {
-              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            }
-          </button>
-        </th>
-        <td mat-cell *matCellDef="let r">{{ r.ingredientId }}</td>
-      </ng-container>
+  <!-- Card grid -->
+  @if (loading()) {
+    <pp-skeleton [count]="6" />
+  } @else if (filteredRows.length > 0) {
+    <div class="list-card-grid">
+      @for (r of filteredRows; track r.id) {
+        <div class="list-card animate-in" (click)="edit(r)">
+          <div class="list-card__title">{{ getIngredientName(r.ingredientId) }}</div>
 
-      <ng-container matColumnDef="quantity">
-        <th mat-header-cell *matHeaderCellDef>
-          <button mat-button (click)="onSortChange('quantity')">
-            {{ t('inventory.quantity') }}
-            @if (sortColumn === 'quantity') {
-              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            }
-          </button>
-        </th>
-        <td mat-cell *matCellDef="let r">{{ r.quantity }} {{ r.unit }}</td>
-      </ng-container>
+          <div class="card-location">
+            <mat-icon class="location-icon">{{ getLocationIcon(r.location) }}</mat-icon>
+            <span>{{ t('inventory.' + (r.location || 'other')) }}</span>
+          </div>
 
-      <ng-container matColumnDef="location">
-        <th mat-header-cell *matHeaderCellDef>
-          <button mat-button (click)="onSortChange('location')">
-            {{ t('inventory.location') }}
-            @if (sortColumn === 'location') {
-              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            }
-          </button>
-        </th>
-        <td mat-cell *matCellDef="let r">{{ r.location || '-' }}</td>
-      </ng-container>
+          <div class="list-card__meta">
+            <mat-chip-set>
+              <mat-chip class="qty-chip">{{ r.quantity }} {{ r.unit }}</mat-chip>
 
-      <ng-container matColumnDef="expiry">
-        <th mat-header-cell *matHeaderCellDef>
-          <button mat-button (click)="onSortChange('expiry')">
-            {{ t('inventory.expiry') }}
-            @if (sortColumn === 'expiry') {
-              <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            }
-          </button>
-        </th>
-        <td mat-cell *matCellDef="let r" [class.expired]="isExpired(r.expiry)">
-          {{ r.expiry || "-" }}
-        </td>
-      </ng-container>
+              @if (r.barcode) {
+                <mat-chip class="barcode-chip" [matTooltip]="r.barcode">
+                  <mat-icon>qr_code</mat-icon>
+                </mat-chip>
+              }
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let r">
-          <button mat-icon-button (click)="edit(r)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="remove(r)">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </ng-container>
+              @if (r.expiry) {
+                <mat-chip [class]="'expiry-chip expiry-' + getExpiryStatus(r.expiry)"
+                          [matTooltip]="r.expiry">
+                  <mat-icon>schedule</mat-icon>
+                  {{ r.expiry }}
+                </mat-chip>
+              }
+            </mat-chip-set>
+          </div>
 
-      <tr mat-header-row *matHeaderRowDef="cols"></tr>
-      <tr mat-row *matRowDef="let row; columns: cols"></tr>
-    </table>
+          <div class="list-card__actions" (click)="$event.stopPropagation()">
+            <button mat-icon-button (click)="edit(r)" [matTooltip]="t('common.edit')">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="remove(r)" [matTooltip]="t('common.delete')">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
   } @else {
     <div class="empty-state">
       <mat-icon>inventory_2</mat-icon>
@@ -128,7 +109,7 @@
     </div>
   }
 
-  <button mat-fab color="primary" class="fab" (click)="add()">
+  <button mat-fab color="primary" class="fab" (click)="add()" [matTooltip]="t('inventory.addItem')">
     <mat-icon>add</mat-icon>
   </button>
 </div>

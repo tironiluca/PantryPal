@@ -14,6 +14,9 @@ import { MealPlanService, MealPlanWithRecipe } from '../../core/services/meal-pl
 import { AuthService } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { DataEventsService } from '../../core/services/data-events.service';
+import { DbService } from '../../core/services/db.service';
+import { UnitConverterService, Unit } from '../../core/services/unit-converter.service';
+import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { MealPlanAddDialog } from './meal-plan-add.dialog';
 import { ConfirmDialog } from '../../shared/dialogs/confirm/confirm.dialog';
 
@@ -55,6 +58,9 @@ export class MealPlanCalendarComponent implements OnInit {
   private snackbar = inject(SnackbarService);
   private dataEvents = inject(DataEventsService);
   private destroyRef = inject(DestroyRef);
+  private db = inject(DbService);
+  private unitConverter = inject(UnitConverterService);
+  private errorHandler = inject(ErrorHandlerService);
 
   weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   mealTypes: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'> = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -176,9 +182,121 @@ export class MealPlanCalendarComponent implements OnInit {
   }
 
   toggleCompleted(meal: MealPlanWithRecipe): void {
-    this.mealPlanService.markAsCompleted(meal.id, !meal.completed);
-    this.loadMealPlans();
-    this.snackbar.success(meal.completed ? 'Marked as incomplete' : 'Marked as complete');
+    const isCompleting = !meal.completed;
+
+    // Marking incomplete: no deduction prompt
+    if (!isCompleting) {
+      this.mealPlanService.markAsCompleted(meal.id, false);
+      this.loadMealPlans();
+      this.snackbar.success('Marked as incomplete');
+      return;
+    }
+
+    // Marking complete: ask to deduct from inventory
+    this.dialog
+      .open(ConfirmDialog, {
+        data: {
+          title: 'Deduct Ingredients?',
+          message: `Deduct ingredients for "${meal.recipeName}" from your inventory?`,
+          confirmLabel: 'Deduct',
+          cancelLabel: 'Skip',
+          icon: 'remove_shopping_cart',
+        },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(shouldDeduct => {
+        this.mealPlanService.markAsCompleted(meal.id, true);
+        this.loadMealPlans();
+        if (shouldDeduct) {
+          this.deductIngredients(meal);
+        } else {
+          this.snackbar.success('Marked as complete');
+        }
+      });
+  }
+
+  private deductIngredients(meal: MealPlanWithRecipe): void {
+    try {
+      const recipeIngredients = this.db.query<any>(
+        `SELECT ri.ingredientId, ri.quantity, ri.unit, ing.name
+         FROM recipe_ingredients ri
+         JOIN ingredients ing ON ing.id = ri.ingredientId
+         WHERE ri.recipeId = ? AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)`,
+        [meal.recipeId]
+      );
+
+      if (recipeIngredients.length === 0) {
+        this.snackbar.success('Marked as complete (no ingredients to deduct)');
+        return;
+      }
+
+      let deducted = 0;
+      let skipped = 0;
+      const now = new Date().toISOString();
+
+      for (const ri of recipeIngredients) {
+        const servings = meal.servings ?? 1;
+        let remaining = ri.quantity * servings;
+        const neededUnit = ri.unit as Unit;
+
+        // Fetch inventory rows ordered by earliest expiry first (FIFO)
+        const invRows = this.db.query<any>(
+          `SELECT id, quantity, unit FROM inventory
+           WHERE ingredientId = ? AND quantity > 0
+             AND (isDeleted IS NULL OR isDeleted = 0)
+           ORDER BY CASE WHEN expiry IS NULL THEN '9999-12-31' ELSE expiry END ASC`,
+          [ri.ingredientId]
+        );
+
+        let fullyDeducted = false;
+
+        for (const inv of invRows) {
+          if (remaining <= 0) { fullyDeducted = true; break; }
+
+          const invUnit = inv.unit as Unit;
+          const invInRecipeUnit = this.unitConverter.convert(inv.quantity, invUnit, neededUnit);
+          if (invInRecipeUnit === null) continue; // Incompatible units — skip this row
+
+          if (invInRecipeUnit >= remaining) {
+            // This row covers the rest
+            const deductInInvUnit = this.unitConverter.convert(remaining, neededUnit, invUnit);
+            if (deductInInvUnit === null) continue;
+            const newQty = Math.max(0, inv.quantity - deductInInvUnit);
+            this.db.exec(
+              `UPDATE inventory SET quantity = ?, updatedAt = ?, version = version + 1 WHERE id = ?`,
+              [newQty, now, inv.id]
+            );
+            remaining = 0;
+            fullyDeducted = true;
+            break;
+          } else {
+            // Partially deplete this row
+            remaining -= invInRecipeUnit;
+            this.db.exec(
+              `UPDATE inventory SET quantity = 0, updatedAt = ?, version = version + 1 WHERE id = ?`,
+              [now, inv.id]
+            );
+          }
+        }
+
+        if (fullyDeducted || remaining <= 0) {
+          deducted++;
+        } else {
+          skipped++;
+        }
+      }
+
+      this.dataEvents.emit('inventory', 'update');
+
+      if (skipped === 0) {
+        this.snackbar.success(`Marked as complete — deducted ${deducted} ingredient(s)`);
+      } else {
+        this.snackbar.warning(`Marked as complete — deducted ${deducted}, skipped ${skipped} (unit mismatch or low stock)`);
+      }
+    } catch (error) {
+      this.errorHandler.handle(error, 'Failed to deduct ingredients');
+    }
   }
 
   deleteMeal(meal: MealPlanWithRecipe): void {

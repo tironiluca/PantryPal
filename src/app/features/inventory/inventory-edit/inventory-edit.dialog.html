@@ -4,37 +4,90 @@
   </h2>
 
   <div mat-dialog-content class="inventory-form">
+
+    <!-- Section: Basic Info -->
+    <div class="section-header">
+      <mat-icon>label</mat-icon>
+      {{ t('inventory.sectionBasic') }}
+    </div>
+    <mat-divider />
+
     <mat-form-field appearance="outline">
-      <mat-label>{{ t('inventory.ingredientId') }}</mat-label>
-      <input matInput [(ngModel)]="model.ingredientId" />
+      <mat-label>{{ t('inventory.ingredientName') }}</mat-label>
+      <mat-icon matPrefix>eco</mat-icon>
+      <input matInput [(ngModel)]="model.ingredientId" [placeholder]="t('inventory.ingredientNameHint')" />
     </mat-form-field>
 
-    <div class="quantity-row">
+    <div class="two-col">
       <mat-form-field appearance="outline">
         <mat-label>{{ t('inventory.quantity') }}</mat-label>
-        <input matInput type="number" [(ngModel)]="model.quantity" />
+        <input matInput type="number" [(ngModel)]="model.quantity" min="0" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ t('inventory.unit') }}</mat-label>
-        <input matInput [(ngModel)]="model.unit" />
+        <mat-select [(ngModel)]="model.unit">
+          <mat-option value="pcs">pcs</mat-option>
+          <mat-option value="g">g</mat-option>
+          <mat-option value="kg">kg</mat-option>
+          <mat-option value="ml">ml</mat-option>
+          <mat-option value="l">l</mat-option>
+          <mat-option value="oz">oz</mat-option>
+          <mat-option value="lb">lb</mat-option>
+          <mat-option value="tbsp">tbsp</mat-option>
+          <mat-option value="tsp">tsp</mat-option>
+          <mat-option value="cup">cup</mat-option>
+        </mat-select>
       </mat-form-field>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('inventory.minRestock') }}</mat-label>
-      <input matInput type="number" [(ngModel)]="model.minRestock" />
-    </mat-form-field>
+    <!-- Section: Storage -->
+    <div class="section-header">
+      <mat-icon>kitchen</mat-icon>
+      {{ t('inventory.sectionStorage') }}
+    </div>
+    <mat-divider />
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('inventory.barcode') }}</mat-label>
-      <input matInput [(ngModel)]="model.barcode" />
-    </mat-form-field>
+    <div class="two-col">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.location') }}</mat-label>
+        <mat-select [(ngModel)]="model.location">
+          <mat-option value="">— {{ t('inventory.noLocation') }} —</mat-option>
+          <mat-option value="fridge">{{ t('inventory.fridge') }}</mat-option>
+          <mat-option value="freezer">{{ t('inventory.freezer') }}</mat-option>
+          <mat-option value="pantry">{{ t('inventory.pantry') }}</mat-option>
+          <mat-option value="other">{{ t('inventory.other') }}</mat-option>
+        </mat-select>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t('inventory.expiryFormat') }}</mat-label>
-      <input matInput [(ngModel)]="model.expiry" />
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.expiryDate') }}</mat-label>
+        <mat-icon matPrefix>event</mat-icon>
+        <input matInput type="date" [(ngModel)]="model.expiry" />
+      </mat-form-field>
+    </div>
+
+    <!-- Section: Tracking -->
+    <div class="section-header">
+      <mat-icon>track_changes</mat-icon>
+      {{ t('inventory.sectionTracking') }}
+    </div>
+    <mat-divider />
+
+    <div class="two-col">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.minRestock') }}</mat-label>
+        <mat-icon matPrefix>inventory</mat-icon>
+        <input matInput type="number" [(ngModel)]="model.minRestock" min="0" />
+        <mat-hint>{{ t('inventory.minRestockHint') }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('inventory.barcode') }}</mat-label>
+        <mat-icon matPrefix>qr_code</mat-icon>
+        <input matInput [(ngModel)]="model.barcode" />
+      </mat-form-field>
+    </div>
 
     <div class="action-buttons">
       <button mat-stroked-button (click)="scanBarcode()">

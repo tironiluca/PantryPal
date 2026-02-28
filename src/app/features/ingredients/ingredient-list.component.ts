@@ -1,11 +1,12 @@
-import { Component, inject, DestroyRef, ViewChild, ElementRef } from "@angular/core";
+import { Component, inject, signal, DestroyRef, ViewChild, ElementRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { MatTableModule } from "@angular/material/table";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { DbService } from "../../core/services/db.service";
 import { Ingredient } from "../../core/models/ingredient.model";
@@ -17,6 +18,7 @@ import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
 import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
 import { KeyboardService } from "../../core/services/keyboard.service";
+import { SkeletonComponent } from "../../shared/components/skeleton/skeleton.component";
 
 @Component({
   standalone: true,
@@ -24,13 +26,15 @@ import { KeyboardService } from "../../core/services/keyboard.service";
   imports: [
     CommonModule,
     FormsModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatChipsModule,
+    MatTooltipModule,
     TranslocoModule,
+    SkeletonComponent,
   ],
   templateUrl: './ingredient-list.component.html',
   styleUrls: ['./ingredient-list.component.scss']
@@ -49,7 +53,8 @@ export class IngredientListComponent {
 
   rows: Ingredient[] = [];
   filteredRows: Ingredient[] = [];
-  cols = ["name", "categoryId", "notify", "actions"];
+  loading = signal(false);
+  categoryNames = new Map<string, string>();
 
   searchTerm = '';
   sortColumn = 'name';
@@ -75,29 +80,47 @@ export class IngredientListComponent {
   }
 
   refresh() {
+    this.loading.set(true);
     try {
       this.rows = this.db.queryByUser<Ingredient>('ingredients');
+      this.loadCategoryNames();
       this.applyFilters();
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to load ingredients');
       this.rows = [];
       this.filteredRows = [];
+    } finally {
+      this.loading.set(false);
     }
+  }
+
+  private loadCategoryNames() {
+    try {
+      const categories = this.db.query<{ id: string; name: string }>(
+        `SELECT id, name FROM ingredient_categories`
+      );
+      this.categoryNames = new Map(categories.map(c => [c.id, c.name]));
+    } catch {
+      this.categoryNames = new Map();
+    }
+  }
+
+  getCategoryName(id?: string): string {
+    if (!id) return '';
+    return this.categoryNames.get(id) ?? id;
   }
 
   applyFilters() {
     let filtered = [...this.rows];
 
-    // Search filter
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(term) ||
-        item.categoryId?.toLowerCase().includes(term)
+        this.getCategoryName(item.categoryId).toLowerCase().includes(term)
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       let aVal: any = a[this.sortColumn as keyof Ingredient];
       let bVal: any = b[this.sortColumn as keyof Ingredient];
@@ -111,16 +134,6 @@ export class IngredientListComponent {
     });
 
     this.filteredRows = filtered;
-  }
-
-  onSortChange(column: string) {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-    this.applyFilters();
   }
 
   add() {

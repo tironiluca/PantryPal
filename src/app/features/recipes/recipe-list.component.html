@@ -1,30 +1,71 @@
-<div class="container">
-  <h2>Recipes</h2>
-  @if (rows.length > 0) {
-    <table mat-table [dataSource]="rows" class="mat-elevation-z1">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let r">{{r.name}}</td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let r">
-          <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="warn" (click)="remove(r)"><mat-icon>delete</mat-icon></button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="cols"></tr>
-      <tr mat-row *matRowDef="let row; columns: cols;"></tr>
-    </table>
-  } @else {
-    <p>No recipes yet.</p>
-  }
-  <div class="actions">
-    <button mat-stroked-button [routerLink]="['/recipes/meal']">Meal of the Day</button>
-    <button mat-stroked-button (click)="importRecipe()">
-      <mat-icon>download</mat-icon>
-      Import Recipe
-    </button>
-    <button mat-fab color="primary" class="fab" (click)="add()"><mat-icon>add</mat-icon></button>
+<div class="container" *transloco="let t">
+  <div class="header">
+    <h2>{{ t('recipes.title') }}</h2>
+    <div class="header-actions">
+      <button mat-stroked-button [routerLink]="['/recipes/meal']">
+        <mat-icon>restaurant_menu</mat-icon>
+        {{ t('recipes.mealOfTheDay') }}
+      </button>
+      <button mat-stroked-button (click)="importRecipe()">
+        <mat-icon>download</mat-icon>
+        {{ t('recipes.importRecipe') }}
+      </button>
+    </div>
   </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>{{ t('common.search') }}</mat-label>
+    <input #searchInput matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
+           [placeholder]="t('recipes.title')">
+    <mat-icon matPrefix>search</mat-icon>
+  </mat-form-field>
+
+  @if (loading()) {
+    <pp-skeleton [count]="6" />
+  } @else if (filteredRows.length > 0) {
+    <div class="list-card-grid">
+      @for (r of filteredRows; track r.id) {
+        <div class="list-card animate-in" (click)="edit(r)">
+          @if (r.imageUrl) {
+            <img class="recipe-image" [src]="r.imageUrl" [alt]="r.name" loading="lazy">
+          }
+
+          <div class="list-card__title">{{ r.name }}</div>
+
+          <div class="list-card__meta">
+            <mat-chip-set>
+              <mat-chip>
+                <mat-icon>menu_book</mat-icon>
+                {{ r.ingredientCount }} {{ t('recipes.ingredientsAvailable') }}
+              </mat-chip>
+              @if (canCookMap.get(r.id)) {
+                <mat-chip class="can-cook-chip">
+                  <mat-icon>check_circle</mat-icon>
+                  {{ t('recipes.allIngredientsAvailable') }}
+                </mat-chip>
+              }
+            </mat-chip-set>
+          </div>
+
+          <div class="list-card__actions" (click)="$event.stopPropagation()">
+            <button mat-icon-button (click)="edit(r)" [matTooltip]="t('common.edit')">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="remove(r)" [matTooltip]="t('common.delete')">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <mat-icon>menu_book</mat-icon>
+      <h3>{{ t('recipes.noRecipesYet') }}</h3>
+    </div>
+  }
+
+  <button mat-fab color="primary" class="fab" (click)="add()" [matTooltip]="t('recipes.addRecipe')">
+    <mat-icon>add</mat-icon>
+  </button>
 </div>

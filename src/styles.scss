@@ -248,6 +248,100 @@ body {
 }
 
 // ============================================================================
+// CARD GRID LAYOUT — used by inventory, ingredients, recipes lists
+// ============================================================================
+
+.list-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+
+  @media (max-width: 599px) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+}
+
+.list-card {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: box-shadow var(--transition-normal), transform var(--transition-fast);
+  border: 1px solid rgba(120, 50, 10, 0.1);
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .list-card__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface);
+    margin: 0 0 var(--spacing-xs) 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .list-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin-top: var(--spacing-sm);
+  }
+
+  .list-card__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+}
+
+.dark-theme .list-card {
+  background: var(--color-surface-variant);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+// ============================================================================
+// SKELETON SHIMMER — used during loading states
+// ============================================================================
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(120, 50, 10, 0.06) 25%,
+    rgba(120, 50, 10, 0.12) 50%,
+    rgba(120, 50, 10, 0.06) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: var(--border-radius-sm);
+}
+
+.dark-theme .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 180, 120, 0.05) 25%,
+    rgba(255, 180, 120, 0.12) 50%,
+    rgba(255, 180, 120, 0.05) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+}
+
+// ============================================================================
 // MATERIAL COMPONENT OVERRIDES
 // ============================================================================
 

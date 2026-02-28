@@ -109,7 +109,26 @@
     </div>
   }
 
-  <button mat-fab color="primary" class="fab" (click)="add()" [matTooltip]="t('inventory.addItem')">
-    <mat-icon>add</mat-icon>
-  </button>
+  <!-- Hidden file input for OCR expiry scanning -->
+  <input #ocrInput type="file" accept="image/*" capture="environment"
+         style="display:none" (change)="onOcrFile($event)">
+
+  <!-- FAB speed-dial: add / scan barcode / scan expiry -->
+  <div class="fab-group">
+    <button mat-mini-fab color="accent" class="fab-mini"
+            (click)="ocrInput.click()"
+            [matTooltip]="t('inventory.scanExpiry')">
+      <mat-icon>document_scanner</mat-icon>
+    </button>
+    <button mat-mini-fab color="accent" class="fab-mini"
+            (click)="scanAndAdd()"
+            [matTooltip]="t('inventory.scanBarcode')">
+      <mat-icon>qr_code_scanner</mat-icon>
+    </button>
+    <button mat-fab color="primary"
+            (click)="add()"
+            [matTooltip]="t('inventory.addItem')">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
 </div>

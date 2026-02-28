@@ -11,9 +11,12 @@ import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { DbService } from "../../core/services/db.service";
 import { Ingredient } from "../../core/models/ingredient.model";
 import { IngredientEditDialog } from "./ingredient-edit/ingredient-edit.dialog";
+import { BarcodeScannerDialog } from "../inventory/barcode-scanner.dialog";
+import { ProductsService } from "../../core/services/products.service";
 import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { catchError, of } from "rxjs";
 import { DataEventsService } from "../../core/services/data-events.service";
 import { TranslocoModule } from "@jsverse/transloco";
 import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
@@ -43,6 +46,7 @@ export class IngredientListComponent {
 
   private db = inject(DbService);
   private dialog = inject(MatDialog);
+  private products = inject(ProductsService);
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
@@ -142,6 +146,29 @@ export class IngredientListComponent {
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((ok) => ok && this.refresh());
+  }
+
+  scanAndAdd() {
+    this.dialog
+      .open(BarcodeScannerDialog, { width: '95vw', maxWidth: '450px' })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(code => {
+        if (!code) return;
+        this.snackbar.info('Looking up product…');
+        this.products.byBarcode(code)
+          .pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
+          .subscribe((res: any) => {
+            const name: string = res?.status === 1
+              ? (res?.product?.product_name || res?.product?.generic_name || '')
+              : '';
+            this.dialog
+              .open(IngredientEditDialog, { data: name ? { name } as any : null })
+              .afterClosed()
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe(ok => ok && this.refresh());
+          });
+      });
   }
 
   edit(row: Ingredient) {

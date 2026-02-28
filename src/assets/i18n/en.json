@@ -133,6 +133,7 @@
     "sectionStorage": "Storage",
     "sectionTracking": "Tracking",
     "scanBarcode": "Scan Barcode",
+    "scanExpiry": "Scan expiry date from photo",
     "uploadImage": "Upload Image",
     "fetchProduct": "Fetch Product",
     "enterIngredientName": "Please enter an ingredient name",

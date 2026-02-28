@@ -151,26 +151,45 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
-// Floating action button
-.fab {
+// FAB speed-dial group
+.fab-group {
   position: fixed;
   bottom: 88px;
   right: 24px;
   z-index: 15;
-  box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 12px;
 
-  &:hover {
-    transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
+  // Main FAB
+  button[mat-fab] {
+    box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
+    }
+
+    &:active {
+      transform: scale(0.95) rotate(90deg);
+    }
   }
 
-  &:active {
-    transform: scale(0.95) rotate(90deg);
+  // Mini FABs
+  button[mat-mini-fab] {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: scale(1.12);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
   }
 }
 
-:host-context(.dark-theme) .fab {
+:host-context(.dark-theme) .fab-group button[mat-fab] {
   box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
 
   &:hover {
@@ -183,8 +202,9 @@
     min-width: 100%;
   }
 
-  .fab {
+  .fab-group {
     bottom: 80px;
     right: 16px;
+    gap: 8px;
   }
 }

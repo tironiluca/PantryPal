@@ -12,6 +12,8 @@ import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { DbService } from "../../core/services/db.service";
 import { InventoryItem } from "../../core/models/inventory.model";
 import { InventoryEditDialog } from "./inventory-edit/inventory-edit.dialog";
+import { BarcodeScannerDialog } from "./barcode-scanner.dialog";
+import { OcrService } from "../../core/services/ocr.service";
 import { ErrorHandlerService } from "../../core/services/error-handler.service";
 import { SnackbarService } from "../../core/services/snackbar.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -46,6 +48,7 @@ import { UseItUpBannerComponent } from "../../shared/components/use-it-up-banner
 export class InventoryListComponent {
   private db = inject(DbService);
   private dialog = inject(MatDialog);
+  private ocr = inject(OcrService);
   private errorHandler = inject(ErrorHandlerService);
   private snackbar = inject(SnackbarService);
   private destroyRef = inject(DestroyRef);
@@ -235,6 +238,40 @@ export class InventoryListComponent {
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((ok) => ok && this.refresh());
+  }
+
+  scanAndAdd() {
+    this.dialog
+      .open(BarcodeScannerDialog, { width: '95vw', maxWidth: '450px' })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(code => {
+        if (!code) return;
+        this.dialog
+          .open(InventoryEditDialog, { data: { barcode: code } as any })
+          .afterClosed()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(ok => ok && this.refresh());
+      });
+  }
+
+  async onOcrFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.snackbar.info('Extracting expiry date…');
+    try {
+      const iso = await this.ocr.extractExpiry(file);
+      if (!iso) this.snackbar.warning('No date found — enter it manually');
+      this.dialog
+        .open(InventoryEditDialog, { data: { expiry: iso ?? '' } as any })
+        .afterClosed()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(ok => ok && this.refresh());
+    } catch (err) {
+      this.errorHandler.handle(err, 'OCR failed');
+    }
   }
 
   edit(row: InventoryItem) {

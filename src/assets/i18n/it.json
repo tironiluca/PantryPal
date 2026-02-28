@@ -133,6 +133,7 @@
     "sectionStorage": "Conservazione",
     "sectionTracking": "Monitoraggio",
     "scanBarcode": "Scansiona Codice a Barre",
+    "scanExpiry": "Scansiona data di scadenza dalla foto",
     "uploadImage": "Carica Immagine",
     "fetchProduct": "Cerca Prodotto",
     "enterIngredientName": "Inserisci un nome per l'ingrediente",

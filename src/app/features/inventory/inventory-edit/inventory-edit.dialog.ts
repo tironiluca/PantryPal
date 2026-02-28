@@ -1,4 +1,4 @@
-import { Component, Inject, inject, DestroyRef } from "@angular/core";
+import { Component, Inject, inject, DestroyRef, OnInit } from "@angular/core";
 import {
   MAT_DIALOG_DATA,
   MatDialog,
@@ -136,7 +136,7 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     }
   `]
 })
-export class InventoryEditDialog {
+export class InventoryEditDialog implements OnInit {
 
   private ocr = inject(OcrService);
   private dialog = inject(MatDialog);
@@ -164,6 +164,14 @@ export class InventoryEditDialog {
   ) {
     if (data)
       this.model = { ...data };
+  }
+
+  ngOnInit(): void {
+    // Auto-fetch product info when dialog is opened with a pre-scanned barcode
+    if (this.model.barcode && !this.model.id) {
+      this.snackbar.info(this.transloco.translate('inventory.fetchingProduct'));
+      this.doFetchProduct();
+    }
   }
 
   save() {

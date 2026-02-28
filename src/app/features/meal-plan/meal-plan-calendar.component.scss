@@ -211,33 +211,201 @@
   opacity: 0.6;
 }
 
-.legend-card {
-  mat-card-content {
-    padding: var(--spacing-md);
+// View toggle button group
+.view-toggle {
+  height: 36px;
+
+  ::ng-deep .mat-button-toggle {
+    height: 36px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
-.legend {
-  display: flex;
-  gap: var(--spacing-lg);
-  justify-content: center;
-  flex-wrap: wrap;
+// Hide text label on small screens, show icon-only
+.btn-label {
+  @media (max-width: 480px) { display: none; }
 }
 
-.legend-item {
+// ── AGENDA VIEW ──────────────────────────────────────────────
+
+.agenda-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: 14px;
-  color: var(--text-secondary);
+  padding: 3rem 1rem;
+  gap: var(--spacing-md);
+  color: var(--mat-sys-on-surface-variant);
 
   mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    color: var(--primary-color);
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+  }
+
+  p { margin: 0; font-size: 16px; }
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda-day {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+  align-items: flex-start;
+}
+
+.agenda-date-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding-top: 4px;
+
+  .agenda-weekday {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .agenda-day-num {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--mat-sys-on-surface);
+
+    &.today-badge {
+      background: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
   }
 }
+
+.agenda-meals {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.agenda-meal-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--mat-sys-surface-container-low);
+  border-radius: var(--border-radius-md);
+  border-left: 3px solid var(--primary-color);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--mat-sys-surface-container);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &.completed {
+    opacity: 0.55;
+    border-left-color: var(--mat-sys-outline);
+
+    .agenda-meal-name {
+      text-decoration: line-through;
+    }
+  }
+}
+
+.agenda-meal-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+}
+
+.agenda-meal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+
+  .agenda-meal-name {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .agenda-servings {
+    font-size: 12px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .agenda-notes {
+    font-size: 12px;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.agenda-meal-actions {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+
+  button[mat-icon-button] {
+    width: 36px;
+    height: 36px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+
+      &.done { color: var(--color-success); }
+    }
+  }
+}
+
+.agenda-add-btn {
+  align-self: flex-start;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 13px;
+}
+
+// ── RESPONSIVE ──────────────────────────────────────────────
 
 @media (max-width: 768px) {
   .meal-plan-container {
@@ -249,13 +417,17 @@
     align-items: stretch;
   }
 
+  .actions {
+    justify-content: space-between;
+  }
+
   .navigation h2 {
     font-size: 18px;
-    min-width: 150px;
+    min-width: 140px;
   }
 
   .calendar-day {
-    min-height: 100px;
+    min-height: 90px;
     font-size: 11px;
   }
 
@@ -268,5 +440,30 @@
       width: 14px;
       height: 14px;
     }
+
+    // Always show menu button on touch devices
+    .meal-menu-btn {
+      opacity: 0.6;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-day {
+    min-height: 70px;
+    padding: 2px;
+  }
+
+  .day-number {
+    font-size: 11px;
+  }
+
+  .meal-item .meal-icon {
+    display: none; // Save space on tiny screens
+  }
+
+  .agenda-meal-actions button[mat-icon-button] {
+    width: 32px;
+    height: 32px;
   }
 }

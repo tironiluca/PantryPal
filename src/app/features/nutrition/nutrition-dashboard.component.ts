@@ -339,7 +339,7 @@ export class NutritionGoalsDialog {
     }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: var(--spacing-md);
       margin-top: var(--spacing-md);
     }
@@ -401,8 +401,15 @@ export class NutritionGoalsDialog {
       p { margin: 0; color: var(--text-secondary); }
     }
     @media (max-width: 768px) {
-      .stats-grid { grid-template-columns: 1fr; }
-      .breakdown-legend { flex-direction: column; align-items: flex-start; }
+      .stats-grid { grid-template-columns: 1fr 1fr; } // 2-col on tablet/large phone
+      .breakdown-legend { flex-direction: column; align-items: flex-start; gap: var(--spacing-sm); }
+      .stat-value { font-size: 26px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; } // 1-col on small phones
+      .stat-value { font-size: 22px; }
+      .stat-percent { text-align: left; }
+      .nutrients-grid { grid-template-columns: 1fr; }
     }
   `],
 })

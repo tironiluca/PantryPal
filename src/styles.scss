@@ -37,6 +37,12 @@ html {
   --spacing-xl: 32px;
   --spacing-xxl: 48px;
 
+  // Safe-area insets for notched devices (iOS, Android)
+  --safe-area-top: max(env(safe-area-inset-top), 0px);
+  --safe-area-bottom: max(env(safe-area-inset-bottom), 0px);
+  --safe-area-left: max(env(safe-area-inset-left), 0px);
+  --safe-area-right: max(env(safe-area-inset-right), 0px);
+
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 12px;
@@ -156,14 +162,19 @@ body {
 .fab {
   position: fixed !important;
   right: var(--spacing-lg);
-  bottom: calc(56px + var(--spacing-lg)); // Account for bottom nav
+  bottom: calc(64px + var(--spacing-lg) + var(--safe-area-bottom)); // Account for bottom nav + notch
   z-index: 10;
   box-shadow: var(--shadow-lg);
 
   @media (max-width: 599px) {
-    right: var(--spacing-md);
-    bottom: calc(56px + var(--spacing-md));
+    right: calc(var(--spacing-md) + var(--safe-area-right));
+    bottom: calc(64px + var(--spacing-md) + var(--safe-area-bottom));
   }
+}
+
+// Prevent double-tap zoom delay on touch devices
+button, a, [role="button"] {
+  touch-action: manipulation;
 }
 
 // Header styles

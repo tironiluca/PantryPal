@@ -116,28 +116,30 @@ interface Ingredient {
                   <mat-error>{{ t('common.required') }}</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="quantity-field">
-                  <mat-label>{{ t('inventory.quantity') }}</mat-label>
-                  <input matInput type="number" formControlName="quantity" min="0" step="0.01" />
-                  <mat-error>{{ t('common.required') }}</mat-error>
-                </mat-form-field>
+                <div class="qty-unit-row">
+                  <mat-form-field appearance="outline" class="quantity-field">
+                    <mat-label>{{ t('inventory.quantity') }}</mat-label>
+                    <input matInput type="number" formControlName="quantity" min="0" step="0.01" />
+                    <mat-error>{{ t('common.required') }}</mat-error>
+                  </mat-form-field>
 
-                <mat-form-field appearance="outline" class="unit-field">
-                  <mat-label>{{ t('inventory.unit') }}</mat-label>
-                  <mat-select formControlName="unit">
-                    <mat-option value="g">{{ t('units.g') }}</mat-option>
-                    <mat-option value="kg">{{ t('units.kg') }}</mat-option>
-                    <mat-option value="ml">{{ t('units.ml') }}</mat-option>
-                    <mat-option value="l">{{ t('units.l') }}</mat-option>
-                    <mat-option value="cup">{{ t('units.cup') }}</mat-option>
-                    <mat-option value="tbsp">{{ t('units.tbsp') }}</mat-option>
-                    <mat-option value="tsp">{{ t('units.tsp') }}</mat-option>
-                    <mat-option value="pcs">{{ t('units.pcs') }}</mat-option>
-                    <mat-option value="oz">{{ t('units.oz') }}</mat-option>
-                    <mat-option value="lb">{{ t('units.lb') }}</mat-option>
-                  </mat-select>
-                  <mat-error>{{ t('common.required') }}</mat-error>
-                </mat-form-field>
+                  <mat-form-field appearance="outline" class="unit-field">
+                    <mat-label>{{ t('inventory.unit') }}</mat-label>
+                    <mat-select formControlName="unit">
+                      <mat-option value="g">{{ t('units.g') }}</mat-option>
+                      <mat-option value="kg">{{ t('units.kg') }}</mat-option>
+                      <mat-option value="ml">{{ t('units.ml') }}</mat-option>
+                      <mat-option value="l">{{ t('units.l') }}</mat-option>
+                      <mat-option value="cup">{{ t('units.cup') }}</mat-option>
+                      <mat-option value="tbsp">{{ t('units.tbsp') }}</mat-option>
+                      <mat-option value="tsp">{{ t('units.tsp') }}</mat-option>
+                      <mat-option value="pcs">{{ t('units.pcs') }}</mat-option>
+                      <mat-option value="oz">{{ t('units.oz') }}</mat-option>
+                      <mat-option value="lb">{{ t('units.lb') }}</mat-option>
+                    </mat-select>
+                    <mat-error>{{ t('common.required') }}</mat-error>
+                  </mat-form-field>
+                </div>
 
                 <button mat-icon-button color="warn" type="button" (click)="removeIngredient($index)" [matTooltip]="t('recipes.removeIngredient')">
                   <mat-icon>delete</mat-icon>
@@ -198,9 +200,11 @@ interface Ingredient {
     mat-dialog-content {
       width: 100%;
       max-width: 600px;
+      max-height: 75dvh; // Ensure fits on mobile viewport
       padding: var(--spacing-md);
       box-sizing: border-box;
       overflow-x: hidden;
+      overflow-y: auto;
     }
 
     h2 {
@@ -292,7 +296,7 @@ interface Ingredient {
 
     .ingredient-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1.2fr auto;
+      grid-template-columns: 2fr 1.8fr auto; // name | qty+unit wrapper | delete
       gap: var(--spacing-sm);
       align-items: start;
 
@@ -310,6 +314,12 @@ interface Ingredient {
       button {
         margin-top: 8px;
       }
+    }
+
+    .qty-unit-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-sm);
     }
 
     .step-row {
@@ -359,23 +369,39 @@ interface Ingredient {
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 600px) {
       mat-dialog-content {
         min-width: unset;
         width: 100%;
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
+        max-height: 65dvh;
       }
 
       .details-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr; // 2-col on mobile (servings + time side-by-side)
       }
 
+      // Keep ingredient name full width, qty + unit on same row
       .ingredient-row {
         grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
 
-        button {
-          justify-self: end;
-        }
+        // Qty + unit side-by-side using a nested wrapper in template
+        // Handled by .qty-unit-row below
+      }
+
+      .qty-unit-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xs);
+      }
+
+      .ingredient-row button {
+        justify-self: end;
+      }
+
+      .step-row {
+        gap: var(--spacing-xs);
       }
     }
   `],

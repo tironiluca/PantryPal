@@ -17,6 +17,7 @@ nav[mat-tab-nav-bar] {
   position: sticky;
   bottom: 0;
   padding: 8px 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   margin: 0;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
@@ -179,7 +180,7 @@ mat-tab-nav-panel {
   flex: 1;
   height: 100%;
   padding: 1rem;
-  padding-bottom: 96px; // Clear the sticky bottom nav (~72px) + extra breathing room
+  padding-bottom: calc(88px + env(safe-area-inset-bottom)); // Clear sticky bottom nav + notch
   overflow: auto;
 
   // Smooth scroll behavior
@@ -218,6 +219,7 @@ mat-tab-nav-panel {
 @media (max-width: 600px) {
   nav[mat-tab-nav-bar] {
     padding: 6px 4px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;

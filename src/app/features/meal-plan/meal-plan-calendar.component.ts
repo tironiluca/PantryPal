@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MealPlanService, MealPlanWithRecipe } from '../../core/services/meal-plan.service';
@@ -41,11 +43,13 @@ interface CalendarDay {
     RouterLink,
     MatCardModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatIconModule,
     MatDialogModule,
     MatMenuModule,
     MatChipsModule,
     MatTooltipModule,
+    MatDividerModule,
     DragDropModule,
   ],
   templateUrl: './meal-plan-calendar.component.html',
@@ -67,6 +71,7 @@ export class MealPlanCalendarComponent implements OnInit {
 
   currentDate = signal(new Date());
   mealPlans = signal<MealPlanWithRecipe[]>([]);
+  viewMode = signal<'calendar' | 'agenda'>('calendar');
 
   currentMonthYear = computed(() => {
     const date = this.currentDate();
@@ -111,6 +116,14 @@ export class MealPlanCalendarComponent implements OnInit {
 
     return days;
   });
+
+  // Agenda view: all days in current month that have at least one meal
+  agendaDays = computed(() =>
+    this.calendarDays().filter(
+      d => d.isCurrentMonth &&
+        (d.meals.breakfast.length + d.meals.lunch.length + d.meals.dinner.length + d.meals.snack.length) > 0
+    )
+  );
 
   ngOnInit(): void {
     this.loadMealPlans();

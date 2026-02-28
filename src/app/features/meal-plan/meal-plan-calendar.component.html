@@ -13,17 +13,23 @@
             </button>
           </div>
           <div class="actions">
-            <button mat-button (click)="goToToday()">
+            <mat-button-toggle-group [value]="viewMode()" (change)="viewMode.set($event.value)" class="view-toggle">
+              <mat-button-toggle value="calendar" [matTooltip]="'Calendar'">
+                <mat-icon>calendar_month</mat-icon>
+              </mat-button-toggle>
+              <mat-button-toggle value="agenda" [matTooltip]="'Agenda'">
+                <mat-icon>view_agenda</mat-icon>
+              </mat-button-toggle>
+            </mat-button-toggle-group>
+            <button mat-icon-button (click)="goToToday()" matTooltip="Today">
               <mat-icon>today</mat-icon>
-              Today
             </button>
-            <button mat-button routerLink="shopping-list" color="accent">
+            <button mat-icon-button routerLink="shopping-list" color="accent" matTooltip="Shopping List">
               <mat-icon>shopping_basket</mat-icon>
-              Shopping List
             </button>
             <button mat-raised-button color="primary" (click)="openAddDialog()">
               <mat-icon>add</mat-icon>
-              Add Meal
+              <span class="btn-label">Add Meal</span>
             </button>
           </div>
         </div>
@@ -31,105 +37,158 @@
     </mat-card-header>
 
     <mat-card-content>
-      <!-- Calendar Grid -->
-      <div class="calendar-grid">
-        <!-- Day headers -->
-        @for (day of weekDays; track day) {
-          <div class="day-header">{{ day }}</div>
-        }
 
-        <!-- Calendar days -->
-        @for (day of calendarDays(); track day.dateString) {
-          <div
-            class="calendar-day"
-            [class.today]="day.isToday"
-            [class.other-month]="!day.isCurrentMonth"
-          >
-            <div class="day-number">
-              {{ day.date.getDate() }}
-              @if (day.isToday) {
-                <mat-icon class="today-indicator">circle</mat-icon>
-              }
-            </div>
+      <!-- ── CALENDAR VIEW ── -->
+      @if (viewMode() === 'calendar') {
+        <div class="calendar-grid">
+          <!-- Day headers -->
+          @for (day of weekDays; track day) {
+            <div class="day-header">{{ day }}</div>
+          }
 
-            <!-- Meal slots -->
-            <div class="meal-slots">
-              @for (mealType of mealTypes; track mealType) {
-                <div class="meal-slot" [attr.data-meal-type]="mealType">
-                  @if (day.meals[mealType].length > 0) {
-                    @for (meal of day.meals[mealType]; track meal.id) {
-                      <div
-                        class="meal-item"
-                        [class.completed]="meal.completed"
-                        [matTooltip]="getMealTooltip(meal)"
-                        (click)="editMeal(meal)"
-                      >
-                        <div class="meal-icon">
-                          <mat-icon>{{ getMealIcon(mealType) }}</mat-icon>
-                        </div>
-                        <div class="meal-content">
-                          <span class="meal-name">{{ meal.recipeName || 'Unknown' }}</span>
-                          @if (meal.servings > 1) {
-                            <span class="servings">×{{ meal.servings }}</span>
-                          }
-                        </div>
-                        <button
-                          mat-icon-button
-                          class="meal-menu-btn"
-                          [matMenuTriggerFor]="mealMenu"
-                          (click)="$event.stopPropagation()"
+          <!-- Calendar days -->
+          @for (day of calendarDays(); track day.dateString) {
+            <div
+              class="calendar-day"
+              [class.today]="day.isToday"
+              [class.other-month]="!day.isCurrentMonth"
+            >
+              <div class="day-number">
+                {{ day.date.getDate() }}
+                @if (day.isToday) {
+                  <mat-icon class="today-indicator">circle</mat-icon>
+                }
+              </div>
+
+              <!-- Meal slots -->
+              <div class="meal-slots">
+                @for (mealType of mealTypes; track mealType) {
+                  <div class="meal-slot" [attr.data-meal-type]="mealType">
+                    @if (day.meals[mealType].length > 0) {
+                      @for (meal of day.meals[mealType]; track meal.id) {
+                        <div
+                          class="meal-item"
+                          [class.completed]="meal.completed"
+                          [matTooltip]="getMealTooltip(meal)"
+                          (click)="editMeal(meal)"
                         >
-                          <mat-icon>more_vert</mat-icon>
-                        </button>
+                          <div class="meal-icon">
+                            <mat-icon>{{ getMealIcon(mealType) }}</mat-icon>
+                          </div>
+                          <div class="meal-content">
+                            <span class="meal-name">{{ meal.recipeName || 'Unknown' }}</span>
+                            @if (meal.servings > 1) {
+                              <span class="servings">×{{ meal.servings }}</span>
+                            }
+                          </div>
+                          <button
+                            mat-icon-button
+                            class="meal-menu-btn"
+                            [matMenuTriggerFor]="mealMenu"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <mat-icon>more_vert</mat-icon>
+                          </button>
 
-                        <mat-menu #mealMenu="matMenu">
-                          <button mat-menu-item (click)="toggleCompleted(meal)">
-                            <mat-icon>{{ meal.completed ? 'radio_button_unchecked' : 'check_circle' }}</mat-icon>
-                            <span>{{ meal.completed ? 'Mark Incomplete' : 'Mark Complete' }}</span>
-                          </button>
-                          <button mat-menu-item (click)="editMeal(meal)">
-                            <mat-icon>edit</mat-icon>
-                            <span>Edit</span>
-                          </button>
-                          <button mat-menu-item (click)="deleteMeal(meal)">
-                            <mat-icon color="warn">delete</mat-icon>
-                            <span>Delete</span>
-                          </button>
-                        </mat-menu>
+                          <mat-menu #mealMenu="matMenu">
+                            <button mat-menu-item (click)="toggleCompleted(meal)">
+                              <mat-icon>{{ meal.completed ? 'radio_button_unchecked' : 'check_circle' }}</mat-icon>
+                              <span>{{ meal.completed ? 'Mark Incomplete' : 'Mark Complete' }}</span>
+                            </button>
+                            <button mat-menu-item (click)="editMeal(meal)">
+                              <mat-icon>edit</mat-icon>
+                              <span>Edit</span>
+                            </button>
+                            <button mat-menu-item (click)="deleteMeal(meal)">
+                              <mat-icon color="warn">delete</mat-icon>
+                              <span>Delete</span>
+                            </button>
+                          </mat-menu>
+                        </div>
+                      }
+                    } @else {
+                      <div class="empty-slot" (click)="addMealToSlot(day.dateString, mealType)">
+                        <mat-icon>{{ getMealIcon(mealType) }}</mat-icon>
+                        <span class="add-hint">Add {{ mealType }}</span>
                       </div>
                     }
-                  } @else {
-                    <div class="empty-slot" (click)="addMealToSlot(day.dateString, mealType)">
-                      <mat-icon>{{ getMealIcon(mealType) }}</mat-icon>
-                      <span class="add-hint">Add {{ mealType }}</span>
-                    </div>
-                  }
-                </div>
-              }
+                  </div>
+                }
+              </div>
             </div>
+          }
+        </div>
+      }
+
+      <!-- ── AGENDA VIEW ── -->
+      @if (viewMode() === 'agenda') {
+        @if (agendaDays().length === 0) {
+          <div class="agenda-empty">
+            <mat-icon>restaurant_menu</mat-icon>
+            <p>No meals planned for {{ currentMonthYear() }}</p>
+            <button mat-stroked-button (click)="openAddDialog()">
+              <mat-icon>add</mat-icon>
+              Add your first meal
+            </button>
+          </div>
+        } @else {
+          <div class="agenda-list">
+            @for (day of agendaDays(); track day.dateString) {
+              <div class="agenda-day">
+                <div class="agenda-date-header" [class.today]="day.isToday">
+                  <span class="agenda-weekday">{{ day.date.toLocaleDateString('en-US', { weekday: 'short' }) }}</span>
+                  <span class="agenda-day-num" [class.today-badge]="day.isToday">{{ day.date.getDate() }}</span>
+                </div>
+
+                <div class="agenda-meals">
+                  @for (mealType of mealTypes; track mealType) {
+                    @if (day.meals[mealType].length > 0) {
+                      @for (meal of day.meals[mealType]; track meal.id) {
+                        <div class="agenda-meal-card" [class.completed]="meal.completed">
+                          <div class="agenda-meal-type">
+                            <mat-icon>{{ getMealIcon(mealType) }}</mat-icon>
+                            <span>{{ mealType }}</span>
+                          </div>
+                          <div class="agenda-meal-info">
+                            <span class="agenda-meal-name">{{ meal.recipeName || 'Unknown' }}</span>
+                            @if (meal.servings > 1) {
+                              <span class="agenda-servings">{{ meal.servings }} servings</span>
+                            }
+                            @if (meal.notes) {
+                              <span class="agenda-notes">{{ meal.notes }}</span>
+                            }
+                          </div>
+                          <div class="agenda-meal-actions">
+                            <button mat-icon-button
+                              [matTooltip]="meal.completed ? 'Mark incomplete' : 'Mark complete'"
+                              (click)="toggleCompleted(meal)">
+                              <mat-icon [class.done]="meal.completed">
+                                {{ meal.completed ? 'check_circle' : 'radio_button_unchecked' }}
+                              </mat-icon>
+                            </button>
+                            <button mat-icon-button matTooltip="Edit" (click)="editMeal(meal)">
+                              <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" matTooltip="Delete" (click)="deleteMeal(meal)">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    }
+                  }
+                  <!-- Add meal to this day -->
+                  <button class="agenda-add-btn" mat-button (click)="addMealToSlot(day.dateString, 'dinner')">
+                    <mat-icon>add</mat-icon>
+                    Add meal
+                  </button>
+                </div>
+              </div>
+              <mat-divider />
+            }
           </div>
         }
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Legend -->
-  <mat-card class="legend-card">
-    <mat-card-content>
-      <div class="legend">
-        <div class="legend-item">
-          <mat-icon>restaurant</mat-icon>
-          <span>Click empty slots to add meals</span>
-        </div>
-        <div class="legend-item">
-          <mat-icon>check_circle</mat-icon>
-          <span>Completed meals</span>
-        </div>
-        <div class="legend-item">
-          <mat-icon class="today-indicator">circle</mat-icon>
-          <span>Today</span>
-        </div>
-      </div>
+      }
     </mat-card-content>
   </mat-card>
 </div>

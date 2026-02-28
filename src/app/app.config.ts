@@ -6,6 +6,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideTransloco, TranslocoModule } from '@jsverse/transloco';
+import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { TranslocoHttpLoader } from './transloco-loader';
 import { DbService } from './core/services/db.service';
 import { NotificationsService } from './core/services/notifications.service';
@@ -42,5 +43,13 @@ export const appConfig: ApplicationConfig = {
       loader: TranslocoHttpLoader,
     }),
     { provide: APP_INITIALIZER, multi: true, useFactory: initAppFactory },
+    {
+      provide: MAT_DIALOG_DEFAULT_OPTIONS,
+      useValue: {
+        panelClass: 'app-dialog',
+        autoFocus: 'first-tabbable',
+        restoreFocus: true,
+      },
+    },
   ]
 };

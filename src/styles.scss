@@ -505,6 +505,17 @@ button, a, [role="button"] {
   }
 }
 
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .app-dialog .mdc-dialog__surface {
+    animation: slideUpSheet 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
 .slide-up {
   animation: slideUp var(--transition-slow);
 }
@@ -540,6 +551,77 @@ button, a, [role="button"] {
 
   .empty-state mat-icon {
     color: rgba(255, 220, 180, 0.2);
+  }
+}
+
+// ============================================================================
+// DIALOG / BOTTOM SHEET (mobile)
+// ============================================================================
+
+// Base dialog improvements (all screen sizes)
+.app-dialog {
+  .mat-mdc-dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 20px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+// On mobile: render all dialogs as bottom sheets
+@media (max-width: 600px) {
+  // Override CDK overlay pane positioning (inline styles need !important)
+  .cdk-overlay-pane.app-dialog {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    max-height: 92dvh !important;
+  }
+
+  // Rounded top corners, slide-up entrance feel
+  .app-dialog .mdc-dialog__surface,
+  .app-dialog .mat-mdc-dialog-surface {
+    border-radius: 20px 20px 0 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 92dvh !important;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  // Dialog content scrollable
+  .app-dialog mat-dialog-content,
+  .app-dialog .mat-mdc-dialog-content {
+    max-height: 60dvh !important;
+    overflow-y: auto;
+  }
+
+  // Drag handle visual hint at top
+  .app-dialog .mdc-dialog__surface::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.18);
+    margin: 10px auto 0;
+  }
+
+  // Dark theme drag handle
+  .dark-theme .app-dialog .mdc-dialog__surface::before {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  // Dialog title less top padding (handle already takes space)
+  .app-dialog .mat-mdc-dialog-title {
+    padding-top: 8px;
   }
 }
 

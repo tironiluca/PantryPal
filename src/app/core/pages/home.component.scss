@@ -1,21 +1,20 @@
 :host {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  display: block;
+  height: 100%;
 }
 
 .home-shell {
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  position: relative;
+  min-height: 100dvh;
 }
 
 // Modern navigation bar with glassmorphism effect
 nav[mat-tab-nav-bar] {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
   padding: 8px 12px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   margin: 0;
@@ -24,8 +23,8 @@ nav[mat-tab-nav-bar] {
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-  z-index: 10;
-  transition: all 0.3s ease;
+  z-index: 100;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 
   &::before {
     content: '';
@@ -178,9 +177,9 @@ nav[mat-tab-nav-bar] .tab-label {
 // Content panel styling
 mat-tab-nav-panel {
   flex: 1;
-  height: 100%;
+  min-height: 100%;
   padding: 1rem;
-  padding-bottom: calc(88px + env(safe-area-inset-bottom)); // Clear sticky bottom nav + notch
+  padding-bottom: calc(88px + env(safe-area-inset-bottom)); // Clear fixed bottom nav + notch
   overflow: auto;
 
   // Smooth scroll behavior

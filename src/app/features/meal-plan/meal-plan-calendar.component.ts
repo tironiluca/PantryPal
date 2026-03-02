@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,7 +39,6 @@ interface CalendarDay {
   selector: 'pp-meal-plan-calendar',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     MatCardModule,
     MatButtonModule,
@@ -67,7 +66,12 @@ export class MealPlanCalendarComponent implements OnInit {
   private errorHandler = inject(ErrorHandlerService);
 
   weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  mealTypes: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'> = ['breakfast', 'lunch', 'dinner', 'snack'];
+  mealTypes: Array<'breakfast' | 'lunch' | 'dinner' | 'snack'> = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+  ];
 
   currentDate = signal(new Date());
   mealPlans = signal<MealPlanWithRecipe[]>([]);
@@ -120,14 +124,20 @@ export class MealPlanCalendarComponent implements OnInit {
   // Agenda view: all days in current month that have at least one meal
   agendaDays = computed(() =>
     this.calendarDays().filter(
-      d => d.isCurrentMonth &&
-        (d.meals.breakfast.length + d.meals.lunch.length + d.meals.dinner.length + d.meals.snack.length) > 0
+      d =>
+        d.isCurrentMonth &&
+        d.meals.breakfast.length +
+          d.meals.lunch.length +
+          d.meals.dinner.length +
+          d.meals.snack.length >
+          0
     )
   );
 
   ngOnInit(): void {
     this.loadMealPlans();
-    this.dataEvents.on('meal_plans', 'recipes')
+    this.dataEvents
+      .on('meal_plans', 'recipes')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadMealPlans());
   }
@@ -156,42 +166,45 @@ export class MealPlanCalendarComponent implements OnInit {
   }
 
   openAddDialog(): void {
-    this.dialog.open(MealPlanAddDialog, {
-      maxWidth: '500px',
-      width: '95vw',
-      data: { date: this.formatDate(new Date()) },
-    })
-    .afterClosed()
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(result => {
-      if (result) this.snackbar.success('Meal added to plan!');
-    });
+    this.dialog
+      .open(MealPlanAddDialog, {
+        maxWidth: '500px',
+        width: '95vw',
+        data: { date: this.formatDate(new Date()) },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result) this.snackbar.success('Meal added to plan!');
+      });
   }
 
   addMealToSlot(dateString: string, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'): void {
-    this.dialog.open(MealPlanAddDialog, {
-      maxWidth: '500px',
-      width: '95vw',
-      data: { date: dateString, mealType },
-    })
-    .afterClosed()
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(result => {
-      if (result) this.snackbar.success('Meal added to plan!');
-    });
+    this.dialog
+      .open(MealPlanAddDialog, {
+        maxWidth: '500px',
+        width: '95vw',
+        data: { date: dateString, mealType },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result) this.snackbar.success('Meal added to plan!');
+      });
   }
 
   editMeal(meal: MealPlanWithRecipe): void {
-    this.dialog.open(MealPlanAddDialog, {
-      maxWidth: '500px',
-      width: '95vw',
-      data: { mealPlan: meal },
-    })
-    .afterClosed()
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(result => {
-      if (result) this.snackbar.success('Meal updated!');
-    });
+    this.dialog
+      .open(MealPlanAddDialog, {
+        maxWidth: '500px',
+        width: '95vw',
+        data: { mealPlan: meal },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result) this.snackbar.success('Meal updated!');
+      });
   }
 
   toggleCompleted(meal: MealPlanWithRecipe): void {
@@ -265,7 +278,10 @@ export class MealPlanCalendarComponent implements OnInit {
         let fullyDeducted = false;
 
         for (const inv of invRows) {
-          if (remaining <= 0) { fullyDeducted = true; break; }
+          if (remaining <= 0) {
+            fullyDeducted = true;
+            break;
+          }
 
           const invUnit = inv.unit as Unit;
           const invInRecipeUnit = this.unitConverter.convert(inv.quantity, invUnit, neededUnit);
@@ -305,7 +321,9 @@ export class MealPlanCalendarComponent implements OnInit {
       if (skipped === 0) {
         this.snackbar.success(`Marked as complete — deducted ${deducted} ingredient(s)`);
       } else {
-        this.snackbar.warning(`Marked as complete — deducted ${deducted}, skipped ${skipped} (unit mismatch or low stock)`);
+        this.snackbar.warning(
+          `Marked as complete — deducted ${deducted}, skipped ${skipped} (unit mismatch or low stock)`
+        );
       }
     } catch (error) {
       this.errorHandler.handle(error, 'Failed to deduct ingredients');
@@ -315,7 +333,12 @@ export class MealPlanCalendarComponent implements OnInit {
   deleteMeal(meal: MealPlanWithRecipe): void {
     this.dialog
       .open(ConfirmDialog, {
-        data: { title: 'Remove Meal', message: `Remove ${meal.recipeName} from your meal plan?`, confirmColor: 'warn', icon: 'delete' },
+        data: {
+          title: 'Remove Meal',
+          message: `Remove ${meal.recipeName} from your meal plan?`,
+          confirmColor: 'warn',
+          icon: 'delete',
+        },
       })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))

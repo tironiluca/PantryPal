@@ -1,5 +1,5 @@
 import { Component, inject, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +15,6 @@ import { NutritionService } from '../../core/services/nutrition.service';
   selector: 'pp-nutrition-goals-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -45,5 +44,7 @@ export class NutritionGoalsDialog {
     }
   }
 
-  save() { this.dialogRef.close(this.goals); }
+  save() {
+    this.dialogRef.close(this.goals);
+  }
 }

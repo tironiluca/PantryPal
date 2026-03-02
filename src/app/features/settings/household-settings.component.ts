@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,7 +18,6 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
   standalone: true,
   selector: 'pp-household-settings',
   imports: [
-    CommonModule,
     FormsModule,
     MatCardModule,
     MatButtonModule,
@@ -32,7 +31,7 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
     TranslocoModule,
   ],
   templateUrl: './household-settings.component.html',
-  styleUrls: ['./household-settings.component.scss']
+  styleUrls: ['./household-settings.component.scss'],
 })
 export class HouseholdSettingsComponent implements OnInit {
   householdService = inject(HouseholdService);

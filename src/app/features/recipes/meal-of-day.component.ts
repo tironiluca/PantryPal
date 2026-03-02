@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,9 +18,9 @@ interface ScoredRecipe {
 @Component({
   standalone: true,
   selector: 'pp-meal-of-day',
-  imports: [CommonModule, MatCardModule, MatChipsModule, MatIconModule, MatButtonModule],
+  imports: [MatCardModule, MatChipsModule, MatIconModule, MatButtonModule],
   templateUrl: './meal-of-day.component.html',
-  styleUrls: ['./meal-of-day.component.scss']
+  styleUrls: ['./meal-of-day.component.scss'],
 })
 export class MealOfDayComponent {
   private db = inject(DbService);
@@ -102,7 +102,7 @@ export class MealOfDayComponent {
       // Convert all inventory quantities to the recipe's required unit and sum them
       const items = inventoryItems.map((item: any) => ({
         quantity: item.quantity,
-        unit: item.unit as Unit
+        unit: item.unit as Unit,
       }));
 
       const totalAvailable = this.unitConverter.sumQuantities(items, ing.unit as Unit) || 0;
@@ -152,7 +152,7 @@ export class MealOfDayComponent {
       score: Math.max(0, score),
       missing,
       availableCount,
-      totalCount
+      totalCount,
     };
   }
 

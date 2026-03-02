@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,7 +23,6 @@ import { SnackbarService } from '../../core/services/snackbar.service';
   selector: 'pp-weekly-shopping-list',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     MatCardModule,
@@ -213,11 +212,14 @@ export class WeeklyShoppingListComponent implements OnInit {
       .join('\n');
 
     // Copy to clipboard
-    navigator.clipboard.writeText(list).then(() => {
-      this.snackbar.success('Shopping list copied to clipboard!');
-    }).catch(() => {
-      this.snackbar.error('Failed to copy to clipboard');
-    });
+    navigator.clipboard
+      .writeText(list)
+      .then(() => {
+        this.snackbar.success('Shopping list copied to clipboard!');
+      })
+      .catch(() => {
+        this.snackbar.error('Failed to copy to clipboard');
+      });
   }
 
   private getDateRangeString(): string {

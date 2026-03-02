@@ -1,34 +1,33 @@
-import { Component, inject, signal, DestroyRef, ViewChild, ElementRef } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { MatSelectModule } from "@angular/material/select";
-import { MatChipsModule } from "@angular/material/chips";
-import { MatTooltipModule } from "@angular/material/tooltip";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { DbService } from "../../core/services/db.service";
-import { InventoryItem } from "../../core/models/inventory.model";
-import { InventoryEditDialog } from "./inventory-edit/inventory-edit.dialog";
-import { BarcodeScannerDialog } from "./barcode-scanner.dialog";
-import { OcrService } from "../../core/services/ocr.service";
-import { ErrorHandlerService } from "../../core/services/error-handler.service";
-import { SnackbarService } from "../../core/services/snackbar.service";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { DataEventsService } from "../../core/services/data-events.service";
-import { TranslocoModule } from "@jsverse/transloco";
-import { ConfirmDialog } from "../../shared/dialogs/confirm/confirm.dialog";
-import { KeyboardService } from "../../core/services/keyboard.service";
-import { SkeletonComponent } from "../../shared/components/skeleton/skeleton.component";
-import { UseItUpBannerComponent } from "../../shared/components/use-it-up-banner/use-it-up-banner.component";
+import { Component, inject, signal, DestroyRef, ViewChild, ElementRef } from '@angular/core';
+
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { DbService } from '../../core/services/db.service';
+import { InventoryItem } from '../../core/models/inventory.model';
+import { InventoryEditDialog } from './inventory-edit/inventory-edit.dialog';
+import { BarcodeScannerDialog } from './barcode-scanner.dialog';
+import { OcrService } from '../../core/services/ocr.service';
+import { ErrorHandlerService } from '../../core/services/error-handler.service';
+import { SnackbarService } from '../../core/services/snackbar.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DataEventsService } from '../../core/services/data-events.service';
+import { TranslocoModule } from '@jsverse/transloco';
+import { ConfirmDialog } from '../../shared/dialogs/confirm/confirm.dialog';
+import { KeyboardService } from '../../core/services/keyboard.service';
+import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
+import { UseItUpBannerComponent } from '../../shared/components/use-it-up-banner/use-it-up-banner.component';
 
 @Component({
   selector: 'pp-inventory-list',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatButtonModule,
     MatIconModule,
@@ -43,7 +42,7 @@ import { UseItUpBannerComponent } from "../../shared/components/use-it-up-banner
     UseItUpBannerComponent,
   ],
   templateUrl: './inventory-list.component.html',
-  styleUrls: ['./inventory-list.component.scss']
+  styleUrls: ['./inventory-list.component.scss'],
 })
 export class InventoryListComponent {
   private db = inject(DbService);
@@ -71,13 +70,12 @@ export class InventoryListComponent {
 
   constructor() {
     this.refresh();
-    this.dataEvents.on('inventory', 'ingredients')
+    this.dataEvents
+      .on('inventory', 'ingredients')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
 
-    this.keyboard.addNew$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.add());
+    this.keyboard.addNew$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.add());
 
     this.keyboard.focusSearch$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -149,9 +147,10 @@ export class InventoryListComponent {
     // Search by resolved name or barcode
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(item =>
-        this.getIngredientName(item.ingredientId).toLowerCase().includes(term) ||
-        item.barcode?.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        item =>
+          this.getIngredientName(item.ingredientId).toLowerCase().includes(term) ||
+          item.barcode?.toLowerCase().includes(term)
       );
     }
 
@@ -169,10 +168,14 @@ export class InventoryListComponent {
         const daysUntil = Math.floor((expiry.getTime() - now.getTime()) / 86400000);
 
         switch (this.expiringFilter) {
-          case 'expired': return daysUntil < 0;
-          case 'week': return daysUntil >= 0 && daysUntil <= 7;
-          case 'month': return daysUntil >= 0 && daysUntil <= 30;
-          default: return true;
+          case 'expired':
+            return daysUntil < 0;
+          case 'week':
+            return daysUntil >= 0 && daysUntil <= 7;
+          case 'month':
+            return daysUntil >= 0 && daysUntil <= 30;
+          default:
+            return true;
         }
       });
     }
@@ -237,7 +240,7 @@ export class InventoryListComponent {
       .open(InventoryEditDialog, { data: null })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((ok) => ok && this.refresh());
+      .subscribe(ok => ok && this.refresh());
   }
 
   scanAndAdd() {
@@ -279,20 +282,25 @@ export class InventoryListComponent {
       .open(InventoryEditDialog, { data: row })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((ok) => ok && this.refresh());
+      .subscribe(ok => ok && this.refresh());
   }
 
   remove(row: InventoryItem) {
     this.dialog
       .open(ConfirmDialog, {
-        data: { title: 'Delete Item', message: 'Are you sure you want to delete this inventory item?', confirmColor: 'warn', icon: 'delete' },
+        data: {
+          title: 'Delete Item',
+          message: 'Are you sure you want to delete this inventory item?',
+          confirmColor: 'warn',
+          icon: 'delete',
+        },
       })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ok => {
         if (!ok) return;
         try {
-          this.db.exec("DELETE FROM inventory WHERE id = ?", [row.id]);
+          this.db.exec('DELETE FROM inventory WHERE id = ?', [row.id]);
           this.dataEvents.emit('inventory', 'delete', row.id);
           this.snackbar.success('Inventory item deleted successfully');
           this.refresh();

@@ -1,6 +1,6 @@
 import { Component, Inject, inject, signal, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -26,7 +26,6 @@ interface Ingredient {
   standalone: true,
   selector: 'pp-recipe-edit',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -97,18 +96,17 @@ export class RecipeEditDialog implements OnInit {
          ORDER BY i.name`;
     const params = userId ? [userId] : [];
     const ingredients = this.db.query<any>(sql, params);
-    this.availableIngredients.set(ingredients.map(ing => ({
-      id: ing.id,
-      name: ing.name,
-      category: ing.category || 'Other'
-    })));
+    this.availableIngredients.set(
+      ingredients.map(ing => ({
+        id: ing.id,
+        name: ing.name,
+        category: ing.category || 'Other',
+      }))
+    );
   }
 
   private loadRecipeData(): void {
-    const recipe = this.db.query<any>(
-      'SELECT * FROM recipes WHERE id = ?',
-      [this.data.id]
-    )[0];
+    const recipe = this.db.query<any>('SELECT * FROM recipes WHERE id = ?', [this.data.id])[0];
 
     if (!recipe) return;
 
@@ -147,7 +145,11 @@ export class RecipeEditDialog implements OnInit {
     return this.recipeForm.get('steps') as FormArray;
   }
 
-  addIngredient(ingredientId: string | null = null, quantity: number = 1, unit: string = 'g'): void {
+  addIngredient(
+    ingredientId: string | null = null,
+    quantity: number = 1,
+    unit: string = 'g'
+  ): void {
     const ingredientGroup = this.fb.group({
       ingredientId: [ingredientId, Validators.required],
       quantity: [quantity, [Validators.required, Validators.min(0)]],
@@ -184,7 +186,8 @@ export class RecipeEditDialog implements OnInit {
 
       const formValue = this.recipeForm.value;
       const now = new Date().toISOString();
-      const recipeId = this.data?.id || `rec-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const recipeId =
+        this.data?.id || `rec-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       // Prepare steps
       const steps = JSON.stringify(formValue.steps.filter((s: string) => s.trim()));
@@ -242,17 +245,7 @@ export class RecipeEditDialog implements OnInit {
         this.db.exec(
           `INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, version, isDeleted, createdAt, updatedAt)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            recipeId,
-            ing.ingredientId,
-            ing.quantity,
-            ing.unit,
-            userId,
-            1,
-            0,
-            now,
-            now,
-          ]
+          [recipeId, ing.ingredientId, ing.quantity, ing.unit, userId, 1, 0, now, now]
         );
       }
 

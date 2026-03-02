@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,8 +13,15 @@ import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RecipeImportService, ImportedRecipe, ParsedIngredient } from '../../core/services/recipe-import.service';
-import { IngredientMatchingService, IngredientMappingResult } from '../../core/services/ingredient-matching.service';
+import {
+  RecipeImportService,
+  ImportedRecipe,
+  ParsedIngredient,
+} from '../../core/services/recipe-import.service';
+import {
+  IngredientMatchingService,
+  IngredientMappingResult,
+} from '../../core/services/ingredient-matching.service';
 import { DbService } from '../../core/services/db.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 
@@ -29,7 +36,6 @@ interface IngredientMapping {
   selector: 'pp-recipe-import-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -82,7 +88,9 @@ export class RecipeImportDialog {
       this.importedRecipe.set(recipe);
 
       // Parse ingredients and create mappings
-      const parsedIngredients = this.recipeImportService.parseIngredientsWithQuantities(recipe.ingredients);
+      const parsedIngredients = this.recipeImportService.parseIngredientsWithQuantities(
+        recipe.ingredients
+      );
       const ingredientNames = parsedIngredients.map(p => p.ingredientName);
       const mappingResults = this.ingredientMatcher.mapIngredients(ingredientNames);
 
@@ -147,7 +155,9 @@ export class RecipeImportDialog {
 
         // Create new ingredient if needed
         if (!ingredientId) {
-          ingredientId = this.ingredientMatcher.createIngredientFromImport(mapping.original.ingredientName);
+          ingredientId = this.ingredientMatcher.createIngredientFromImport(
+            mapping.original.ingredientName
+          );
         }
 
         // Add to recipe_ingredients

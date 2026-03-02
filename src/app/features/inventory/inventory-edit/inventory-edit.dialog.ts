@@ -1,37 +1,39 @@
-import { Component, Inject, inject, DestroyRef, OnInit } from "@angular/core";
+import { Component, Inject, inject, DestroyRef, OnInit } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
   MatDialogModule,
   MatDialogRef,
-} from "@angular/material/dialog";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { MatSelectModule } from "@angular/material/select";
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from "@angular/material/autocomplete";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { MatDividerModule } from "@angular/material/divider";
-import { TranslocoModule, TranslocoService } from "@jsverse/transloco";
-import { DbService } from "../../../core/services/db.service";
-import { DataEventsService } from "../../../core/services/data-events.service";
-import { OcrService } from "../../../core/services/ocr.service";
-import { ProductsService } from "../../../core/services/products.service";
-import { NutritionService } from "../../../core/services/nutrition.service";
-import { ErrorHandlerService } from "../../../core/services/error-handler.service";
-import { SnackbarService } from "../../../core/services/snackbar.service";
-import { InventoryItem } from "../../../core/models/inventory.model";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { catchError, of } from "rxjs";
-import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
+} from '@angular/material/dialog';
+
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { DbService } from '../../../core/services/db.service';
+import { DataEventsService } from '../../../core/services/data-events.service';
+import { OcrService } from '../../../core/services/ocr.service';
+import { ProductsService } from '../../../core/services/products.service';
+import { NutritionService } from '../../../core/services/nutrition.service';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { SnackbarService } from '../../../core/services/snackbar.service';
+import { InventoryItem } from '../../../core/models/inventory.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
+import { BarcodeScannerDialog } from '../barcode-scanner.dialog';
 
 @Component({
   standalone: true,
-  selector: "pp-inventory-edit-dialog",
+  selector: 'pp-inventory-edit-dialog',
   imports: [
-    CommonModule,
     FormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -44,10 +46,9 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     TranslocoModule,
   ],
   templateUrl: './inventory-edit.dialog.html',
-  styleUrls: ['./inventory-edit.dialog.scss']
+  styleUrls: ['./inventory-edit.dialog.scss'],
 })
 export class InventoryEditDialog implements OnInit {
-
   private ocr = inject(OcrService);
   private dialog = inject(MatDialog);
   private products = inject(ProductsService);
@@ -60,12 +61,12 @@ export class InventoryEditDialog implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   model: any = {
-    id: "",
-    ingredientId: "",
+    id: '',
+    ingredientId: '',
     quantity: 1,
-    unit: "pcs",
+    unit: 'pcs',
     minRestock: 1,
-    expiry: "",
+    expiry: '',
   };
 
   // Autocomplete state for ingredient picker
@@ -77,8 +78,7 @@ export class InventoryEditDialog implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: InventoryItem | null,
     private ref: MatDialogRef<InventoryEditDialog>
   ) {
-    if (data)
-      this.model = { ...data };
+    if (data) this.model = { ...data };
   }
 
   ngOnInit(): void {
@@ -160,7 +160,7 @@ export class InventoryEditDialog implements OnInit {
       if (!this.model.id) {
         this.model.id = `inv-${crypto.randomUUID()}`;
         this.db.exec(
-          "INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)",
+          'INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
           [
             this.model.id,
             this.model.ingredientId,
@@ -178,7 +178,7 @@ export class InventoryEditDialog implements OnInit {
         this.dataEvents.emit('inventory', 'create', this.model.id);
       } else {
         this.db.exec(
-          "UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?",
+          'UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?',
           [
             this.model.ingredientId,
             +this.model.quantity,
@@ -252,7 +252,8 @@ export class InventoryEditDialog implements OnInit {
   }
 
   private doFetchProduct() {
-    this.products.byBarcode(this.model.barcode)
+    this.products
+      .byBarcode(this.model.barcode)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         catchError(error => {
@@ -282,7 +283,7 @@ export class InventoryEditDialog implements OnInit {
             this.model.ingredientId = match.id;
             this.ingredientSearch = match.name;
           } else {
-            const slug = name.toLowerCase().replace(/\s+/g, "-").slice(0, 30);
+            const slug = name.toLowerCase().replace(/\s+/g, '-').slice(0, 30);
             this.model.ingredientId = slug;
             this.ingredientSearch = name;
           }

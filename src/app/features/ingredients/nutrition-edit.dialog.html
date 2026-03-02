@@ -1,112 +1,130 @@
 <div *transloco="let t">
-      <h2 mat-dialog-title>
-        <mat-icon>nutrition</mat-icon>
-        {{ t('ingredients.nutritionInfo') }} — {{ data.ingredientName }}
-      </h2>
+  <h2 mat-dialog-title>
+    <mat-icon>nutrition</mat-icon>
+    {{ t('ingredients.nutritionInfo') }} — {{ data.ingredientName }}
+  </h2>
 
-      <mat-dialog-content>
-        <mat-tab-group>
-          <!-- Search Tab -->
-          <mat-tab [label]="t('common.search')">
-            <div class="tab-content">
-              <div class="search-row">
-                <mat-form-field appearance="outline" class="search-field">
-                  <mat-label>{{ t('common.search') }}</mat-label>
-                  <input matInput [(ngModel)]="searchQuery" (keyup.enter)="search()" [placeholder]="data.ingredientName" />
-                  <mat-icon matSuffix>search</mat-icon>
-                </mat-form-field>
-                <button mat-raised-button color="primary" (click)="search()" [disabled]="searching()">
-                  @if (searching()) { <mat-spinner diameter="18"></mat-spinner> }
-                  @else { <mat-icon>search</mat-icon> }
-                </button>
-              </div>
-
-              @if (searchResults().length > 0) {
-                <p class="hint">{{ t('nutrition.per100g') }}</p>
-                <mat-list>
-                  @for (r of searchResults(); track r.productName) {
-                    <mat-list-item class="result-item" (click)="selectResult(r)">
-                      <span matListItemTitle>{{ r.productName }}</span>
-                      <span matListItemLine>
-                        {{ r.energyKcal | number:'1.0-0' }} kcal · {{ r.proteinG | number:'1.0-1' }}g protein · {{ r.carbsG | number:'1.0-1' }}g carbs · {{ r.fatG | number:'1.0-1' }}g fat
-                      </span>
-                    </mat-list-item>
-                  }
-                </mat-list>
+  <mat-dialog-content>
+    <mat-tab-group>
+      <!-- Search Tab -->
+      <mat-tab [label]="t('common.search')">
+        <div class="tab-content">
+          <div class="search-row">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>{{ t('common.search') }}</mat-label>
+              <input
+                matInput
+                [(ngModel)]="searchQuery"
+                (keyup.enter)="search()"
+                [placeholder]="data.ingredientName"
+              />
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="search()" [disabled]="searching()">
+              @if (searching()) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>search</mat-icon>
               }
-
-              @if (noResults()) {
-                <div class="empty">
-                  <mat-icon>search_off</mat-icon>
-                  <p>{{ t('common.noResults') }}</p>
-                </div>
-              }
-            </div>
-          </mat-tab>
-
-          <!-- Manual Input Tab -->
-          <mat-tab label="Manual">
-            <div class="tab-content manual-form">
-              <p class="hint">{{ t('nutrition.per100g') }}</p>
-              <div class="form-grid">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.calories') }} (kcal)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.energyKcal" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.protein') }} (g)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.proteinG" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.carbs') }} (g)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.carbsG" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.fat') }} (g)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.fatG" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.fiber') }} (g)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.fiberG" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.sugar') }} (g)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.sugarG" min="0" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ t('nutrition.sodium') }} (mg)</mat-label>
-                  <input matInput type="number" [(ngModel)]="manual.sodiumMg" min="0" />
-                </mat-form-field>
-              </div>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
-
-        <!-- Selected Preview -->
-        @if (selected()) {
-          <div class="selected-preview">
-            <mat-chip-set>
-              <mat-chip color="primary" highlighted>
-                <mat-icon matChipAvatar>check</mat-icon>
-                {{ selected()!.energyKcal | number:'1.0-0' }} kcal
-              </mat-chip>
-              <mat-chip>{{ selected()!.proteinG | number:'1.0-1' }}g {{ t('nutrition.protein') }}</mat-chip>
-              <mat-chip>{{ selected()!.carbsG | number:'1.0-1' }}g {{ t('nutrition.carbs') }}</mat-chip>
-              <mat-chip>{{ selected()!.fatG | number:'1.0-1' }}g {{ t('nutrition.fat') }}</mat-chip>
-            </mat-chip-set>
+            </button>
           </div>
-        }
-      </mat-dialog-content>
 
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>{{ t('common.cancel') }}</button>
-        <button mat-raised-button color="primary" (click)="saveManual()" *ngIf="activeTab === 1">
-          <mat-icon>save</mat-icon>
-          {{ t('common.save') }}
-        </button>
-        <button mat-raised-button color="primary" (click)="saveSelected()" [disabled]="!selected()" *ngIf="activeTab === 0">
-          <mat-icon>save</mat-icon>
-          {{ t('common.save') }}
-        </button>
-      </mat-dialog-actions>
-    </div>
+          @if (searchResults().length > 0) {
+            <p class="hint">{{ t('nutrition.per100g') }}</p>
+            <mat-list>
+              @for (r of searchResults(); track r.productName) {
+                <mat-list-item class="result-item" (click)="selectResult(r)">
+                  <span matListItemTitle>{{ r.productName }}</span>
+                  <span matListItemLine>
+                    {{ r.energyKcal | number: '1.0-0' }} kcal · {{ r.proteinG | number: '1.0-1' }}g
+                    protein · {{ r.carbsG | number: '1.0-1' }}g carbs ·
+                    {{ r.fatG | number: '1.0-1' }}g fat
+                  </span>
+                </mat-list-item>
+              }
+            </mat-list>
+          }
+
+          @if (noResults()) {
+            <div class="empty">
+              <mat-icon>search_off</mat-icon>
+              <p>{{ t('common.noResults') }}</p>
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Manual Input Tab -->
+      <mat-tab label="Manual">
+        <div class="tab-content manual-form">
+          <p class="hint">{{ t('nutrition.per100g') }}</p>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.calories') }} (kcal)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.energyKcal" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.protein') }} (g)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.proteinG" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.carbs') }} (g)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.carbsG" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.fat') }} (g)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.fatG" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.fiber') }} (g)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.fiberG" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.sugar') }} (g)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.sugarG" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t('nutrition.sodium') }} (mg)</mat-label>
+              <input matInput type="number" [(ngModel)]="manual.sodiumMg" min="0" />
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+
+    <!-- Selected Preview -->
+    @if (selected()) {
+      <div class="selected-preview">
+        <mat-chip-set>
+          <mat-chip color="primary" highlighted>
+            <mat-icon matChipAvatar>check</mat-icon>
+            {{ selected()!.energyKcal | number: '1.0-0' }} kcal
+          </mat-chip>
+          <mat-chip
+            >{{ selected()!.proteinG | number: '1.0-1' }}g {{ t('nutrition.protein') }}</mat-chip
+          >
+          <mat-chip
+            >{{ selected()!.carbsG | number: '1.0-1' }}g {{ t('nutrition.carbs') }}</mat-chip
+          >
+          <mat-chip>{{ selected()!.fatG | number: '1.0-1' }}g {{ t('nutrition.fat') }}</mat-chip>
+        </mat-chip-set>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>{{ t('common.cancel') }}</button>
+    @if (activeTab === 1) {
+      <button mat-raised-button color="primary" (click)="saveManual()">
+        <mat-icon>save</mat-icon>
+        {{ t('common.save') }}
+      </button>
+    }
+    @if (activeTab === 0) {
+      <button mat-raised-button color="primary" (click)="saveSelected()" [disabled]="!selected()">
+        <mat-icon>save</mat-icon>
+        {{ t('common.save') }}
+      </button>
+    }
+  </mat-dialog-actions>
+</div>

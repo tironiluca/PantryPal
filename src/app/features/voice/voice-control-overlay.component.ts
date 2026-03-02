@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -14,7 +14,6 @@ import { Subscription } from 'rxjs';
   selector: 'pp-voice-control-overlay',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
@@ -35,12 +34,7 @@ export class VoiceControlOverlayComponent implements OnInit, OnDestroy {
   isProcessing = signal(false);
   lastCommand = signal<ParsedCommand | null>(null);
 
-  suggestions = [
-    'Go to recipes',
-    'Add ingredient',
-    'Search for milk',
-    'Show inventory',
-  ];
+  suggestions = ['Go to recipes', 'Add ingredient', 'Search for milk', 'Show inventory'];
 
   private subscriptions: Subscription[] = [];
 

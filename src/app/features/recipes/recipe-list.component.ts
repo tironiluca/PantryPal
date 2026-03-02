@@ -1,5 +1,5 @@
 import { Component, inject, signal, DestroyRef, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +26,6 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
   standalone: true,
   selector: 'pp-recipe-list',
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     MatButtonModule,
@@ -62,21 +61,21 @@ export class RecipeListComponent {
 
   constructor() {
     this.refresh();
-    this.dataEvents.on('recipes', 'recipe_ingredients', 'inventory')
+    this.dataEvents
+      .on('recipes', 'recipe_ingredients', 'inventory')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
 
-    this.keyboard.addNew$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.add());
+    this.keyboard.addNew$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.add());
 
     this.keyboard.focusSearch$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.searchInput?.nativeElement.focus());
 
-    this.keyboard.escape$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => { this.searchTerm = ''; this.applyFilters(); });
+    this.keyboard.escape$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.searchTerm = '';
+      this.applyFilters();
+    });
   }
 
   refresh() {
@@ -154,7 +153,12 @@ export class RecipeListComponent {
   remove(r: any) {
     this.dialog
       .open(ConfirmDialog, {
-        data: { title: 'Delete Recipe', message: `Delete "${r.name}"?`, confirmColor: 'warn', icon: 'delete' },
+        data: {
+          title: 'Delete Recipe',
+          message: `Delete "${r.name}"?`,
+          confirmColor: 'warn',
+          icon: 'delete',
+        },
       })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -16,7 +16,6 @@ import { TranslocoModule } from '@jsverse/transloco';
   selector: 'pp-register',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterLink,
     MatCardModule,
@@ -54,7 +53,6 @@ export class RegisterComponent {
     return strongRegex.test(this.password);
   }
 
-  
   isFormValid(): boolean {
     return !!(
       this.email &&
@@ -74,7 +72,11 @@ export class RegisterComponent {
     this.loading.set(true);
 
     try {
-      const result = await this.auth.signUp(this.email, this.password, this.displayName || undefined);
+      const result = await this.auth.signUp(
+        this.email,
+        this.password,
+        this.displayName || undefined
+      );
 
       if (result.success) {
         // Redirect to login with success message

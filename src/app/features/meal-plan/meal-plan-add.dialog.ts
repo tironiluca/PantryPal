@@ -1,5 +1,5 @@
 import { Component, inject, Inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -32,7 +32,6 @@ interface Recipe {
   selector: 'pp-meal-plan-add-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -86,7 +85,10 @@ export class MealPlanAddDialog implements OnInit {
       date: [this.parseDate(date), Validators.required],
       mealType: [mealPlan?.mealType || this.data.mealType || 'dinner', Validators.required],
       recipeId: [mealPlan?.recipeId || '', Validators.required],
-      servings: [mealPlan?.servings || 1, [Validators.required, Validators.min(1), Validators.max(20)]],
+      servings: [
+        mealPlan?.servings || 1,
+        [Validators.required, Validators.min(1), Validators.max(20)],
+      ],
       notes: [mealPlan?.notes || ''],
       completed: [mealPlan?.completed || false],
     });
@@ -138,7 +140,9 @@ export class MealPlanAddDialog implements OnInit {
       this.dialogRef.close(true);
     } catch (error) {
       console.error('Failed to save meal plan:', error);
-      this.snackbar.error(this.transloco.translate('mealPlan.failedSave') || 'Failed to save meal plan');
+      this.snackbar.error(
+        this.transloco.translate('mealPlan.failedSave') || 'Failed to save meal plan'
+      );
     }
   }
 

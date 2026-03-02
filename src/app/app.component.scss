@@ -33,6 +33,12 @@
   gap: 12px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  // reset native button styles
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
 
   &:hover {
     transform: scale(1.02);

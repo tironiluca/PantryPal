@@ -686,3 +686,23 @@ button, a, [role="button"] {
     margin-right: 0px;
   }
 }
+
+// ============================================================================
+// Navigation dropdown (mat-menu rendered in overlay portal)
+// ============================================================================
+.nav-dropdown .mat-mdc-menu-panel {
+  min-width: 220px;
+}
+
+.nav-dropdown a.mat-mdc-menu-item.nav-active {
+  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
+  color: #fff;
+
+  .mat-icon {
+    color: #fff;
+  }
+}
+
+.dark-theme .nav-dropdown a.mat-mdc-menu-item.nav-active {
+  background: linear-gradient(135deg, #b03a14 0%, #d4542a 100%);
+}

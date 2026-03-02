@@ -1,5 +1,6 @@
 import { Component, inject, effect } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { NAV_TABS } from './core/nav-tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +22,7 @@ import { TranslocoModule } from '@jsverse/transloco';
   imports: [
     RouterOutlet,
     RouterLink,
+    RouterLinkActive,
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
@@ -34,6 +36,8 @@ import { TranslocoModule } from '@jsverse/transloco';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  readonly tabs = NAV_TABS;
+
   theme = inject(ThemeService);
   auth = inject(AuthService);
   private migration = inject(MigrationService);

@@ -1,9 +1,15 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .app-toolbar {
   background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%) !important;
   box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
   height: 64px;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 100;
 }
 

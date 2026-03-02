@@ -1,12 +1,13 @@
 :host {
   display: block;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .home-shell {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
 }
 
 // Modern navigation bar with glassmorphism effect

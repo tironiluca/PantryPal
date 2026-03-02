@@ -1,0 +1,17 @@
+.confirm-dialog { min-width: 280px; max-width: 400px; }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+    }
+
+    .icon-warn  { color: var(--mat-warn-color, #f44336); }
+    .icon-primary { color: var(--mat-primary-color, #43a047); }
+
+    [mat-dialog-content] p {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }

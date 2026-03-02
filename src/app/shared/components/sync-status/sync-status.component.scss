@@ -1,0 +1,44 @@
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.sync-button {
+  position: relative;
+
+  &.syncing {
+    mat-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &.error mat-icon {
+    color: var(--warn-color, #f44336);
+  }
+
+  &.offline mat-icon {
+    color: var(--text-secondary, #757575);
+  }
+
+  mat-icon {
+    transition: color 0.3s ease;
+  }
+
+  &:not(.error):not(.offline):not(.syncing) mat-icon {
+    color: var(--primary-color, #1976d2);
+  }
+}
+
+.signin-button {
+  mat-icon {
+    color: var(--text-secondary);
+  }
+
+  &:hover mat-icon {
+    color: var(--primary-color);
+  }
+}

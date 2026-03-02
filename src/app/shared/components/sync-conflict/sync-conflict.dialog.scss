@@ -1,0 +1,130 @@
+mat-dialog-content {
+      width: 90vw;
+      max-width: 700px;
+      padding: var(--spacing-md);
+    }
+
+    .conflict-icon {
+      color: #ff9800;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .conflict-description {
+      margin-bottom: var(--spacing-lg);
+      color: var(--text-secondary);
+    }
+
+    .versions-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .version-card {
+      &.local {
+        border-left: 4px solid var(--primary-color);
+      }
+
+      &.remote {
+        border-left: 4px solid var(--accent-color);
+      }
+
+      mat-card-header {
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-xs);
+          font-size: 16px;
+        }
+
+        mat-card-subtitle {
+          margin-top: var(--spacing-xs);
+          font-size: 12px;
+        }
+      }
+    }
+
+    .field-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .field-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-xs);
+      border-radius: 4px;
+
+      &.changed {
+        background-color: rgba(255, 152, 0, 0.1);
+        border-left: 2px solid #ff9800;
+        padding-left: calc(var(--spacing-xs) - 2px);
+      }
+
+      .field-label {
+        font-weight: 500;
+        color: var(--text-secondary);
+        min-width: 100px;
+      }
+
+      .field-value {
+        flex: 1;
+        text-align: right;
+        color: var(--text-primary);
+      }
+
+      .change-indicator {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: #ff9800;
+        margin-left: var(--spacing-xs);
+      }
+    }
+
+    .resolution-hint {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background-color: rgba(33, 150, 243, 0.1);
+      border-radius: 4px;
+      margin-top: var(--spacing-md);
+
+      mat-icon {
+        color: #2196f3;
+      }
+
+      p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+    }
+
+    mat-dialog-actions {
+      padding: var(--spacing-md);
+
+      button {
+        margin-left: var(--spacing-sm);
+
+        mat-icon {
+          margin-right: var(--spacing-xs);
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
+
+      .versions-container {
+        grid-template-columns: 1fr;
+      }
+    }

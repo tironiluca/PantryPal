@@ -1,0 +1,157 @@
+
+<h2 mat-dialog-title>
+  <mat-icon>photo_camera</mat-icon>
+  Recognize Food Item
+</h2>
+
+<mat-dialog-content>
+  <div class="recognition-container">
+    <!-- Camera/Upload Options -->
+    @if (!imageSource() && !cameraActive()) {
+      <div class="capture-options">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="startCamera()"
+          class="option-button"
+        >
+          <mat-icon>photo_camera</mat-icon>
+          Use Camera
+        </button>
+
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="fileInput.click()"
+          class="option-button"
+        >
+          <mat-icon>upload_file</mat-icon>
+          Upload Image
+        </button>
+
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+          hidden
+        />
+      </div>
+    }
+
+    <!-- Camera View -->
+    @if (cameraActive()) {
+      <div class="camera-container">
+        <video
+          #videoElement
+          class="camera-preview"
+          autoplay
+          playsinline
+        ></video>
+
+        <div class="camera-controls">
+          <button
+            mat-fab
+            color="primary"
+            (click)="captureImage()"
+            [disabled]="recognizing()"
+          >
+            <mat-icon>camera</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            (click)="stopCamera()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Image Preview -->
+    @if (imageSource() && !cameraActive()) {
+      <div class="image-preview">
+        <img [src]="imageSource()" alt="Captured image" />
+      </div>
+    }
+
+    <!-- Recognition Status -->
+    @if (recognizing()) {
+      <div class="recognition-status">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Analyzing image...</p>
+      </div>
+    }
+
+    <!-- Predictions -->
+    @if (predictions().length > 0 && !recognizing()) {
+      <div class="predictions-container">
+        <h3>Detected Items:</h3>
+
+        <mat-list>
+          @for (pred of predictions(); track $index) {
+            <mat-list-item
+              class="prediction-item"
+              [class.selected]="selectedPrediction() === pred.className"
+              (click)="selectPrediction(pred)"
+            >
+              <mat-icon matListItemIcon>
+                {{ selectedPrediction() === pred.className ? 'check_circle' : 'radio_button_unchecked' }}
+              </mat-icon>
+              <div matListItemTitle class="prediction-name">
+                {{ pred.className }}
+              </div>
+              <div matListItemLine class="prediction-confidence">
+                {{ (pred.probability * 100).toFixed(1) }}% confidence
+              </div>
+            </mat-list-item>
+          }
+        </mat-list>
+
+        @if (predictions().length > 0 && !isFoodRelated()) {
+          <div class="warning-message">
+            <mat-icon>warning</mat-icon>
+            <span>These items don't seem to be food-related. You can still add them manually.</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- No Results -->
+    @if (!recognizing() && imageSource() && predictions().length === 0 && recognitionAttempted()) {
+      <div class="no-results">
+        <mat-icon>search_off</mat-icon>
+        <p>Could not recognize any food items in this image.</p>
+        <p class="hint">Try taking a clearer photo or upload a different image.</p>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    <mat-icon>close</mat-icon>
+    Cancel
+  </button>
+
+  @if (imageSource() && !cameraActive()) {
+    <button
+      mat-button
+      (click)="resetCapture()"
+    >
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  }
+
+  @if (selectedPrediction()) {
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onConfirm()"
+    >
+      <mat-icon>check</mat-icon>
+      Use "{{ selectedPrediction() }}"
+    </button>
+  }
+</mat-dialog-actions>

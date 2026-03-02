@@ -1,0 +1,31 @@
+<ng-container *transloco="let t">
+      <h2 mat-dialog-title>
+        <mat-icon>qr_code_scanner</mat-icon>
+        {{ t('inventory.scanBarcode') }}
+      </h2>
+      <mat-dialog-content>
+        <div class="scanner-container">
+          <video #videoEl autoplay playsinline muted></video>
+          @if (scanning) {
+            <div class="scanner-overlay">
+              <div class="scan-line"></div>
+            </div>
+          }
+          @if (error) {
+            <div class="error-overlay">
+              <mat-icon>error_outline</mat-icon>
+              <p>{{ error }}</p>
+            </div>
+          }
+        </div>
+        @if (scanning) {
+          <p class="hint">{{ t('inventory.pointCameraAtBarcode') }}</p>
+        }
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="cancel()">
+          <mat-icon>close</mat-icon>
+          {{ t('common.cancel') }}
+        </button>
+      </mat-dialog-actions>
+    </ng-container>

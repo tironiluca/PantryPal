@@ -1,0 +1,160 @@
+<div class="nutrition-container" *transloco="let t">
+      <mat-card class="header-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>restaurant</mat-icon>
+            {{ t('nutrition.dashboard') }}
+          </mat-card-title>
+          <mat-card-subtitle>{{ t('nutrition.trackDaily') }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="setGoals()">
+            <mat-icon>tune</mat-icon>
+            {{ hasGoals() ? t('nutrition.updateGoals') : t('nutrition.setGoals') }}
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <mat-tab-group>
+        <mat-tab [label]="t('common.today')">
+          @if (summary(); as daily) {
+            <div class="stats-grid">
+              <mat-card class="stat-card calories">
+                <mat-card-content>
+                  <div class="stat-header">
+                    <mat-icon>local_fire_department</mat-icon>
+                    <span class="stat-label">{{ t('nutrition.calories') }}</span>
+                  </div>
+                  <div class="stat-value">
+                    {{ daily.totalKcal | number:'1.0-0' }}
+                    @if (daily.goals) { <span class="stat-goal">/ {{ daily.goals.dailyKcalGoal }}</span> }
+                    <span class="stat-unit">{{ t('nutrition.kcal') }}</span>
+                  </div>
+                  @if (daily.percentKcal !== undefined) {
+                    <mat-progress-bar mode="determinate" [value]="daily.percentKcal" [color]="getProgressColor(daily.percentKcal)"></mat-progress-bar>
+                    <div class="stat-percent">{{ daily.percentKcal | number:'1.0-0' }}{{ t('nutrition.ofGoal') }}</div>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="stat-card protein">
+                <mat-card-content>
+                  <div class="stat-header">
+                    <mat-icon>fitness_center</mat-icon>
+                    <span class="stat-label">{{ t('nutrition.protein') }}</span>
+                  </div>
+                  <div class="stat-value">
+                    {{ daily.totalProtein | number:'1.0-1' }}
+                    @if (daily.goals) { <span class="stat-goal">/ {{ daily.goals.proteinGoal }}</span> }
+                    <span class="stat-unit">{{ t('nutrition.g') }}</span>
+                  </div>
+                  @if (daily.percentProtein !== undefined) {
+                    <mat-progress-bar mode="determinate" [value]="daily.percentProtein" [color]="getProgressColor(daily.percentProtein)"></mat-progress-bar>
+                    <div class="stat-percent">{{ daily.percentProtein | number:'1.0-0' }}{{ t('nutrition.ofGoal') }}</div>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="stat-card carbs">
+                <mat-card-content>
+                  <div class="stat-header">
+                    <mat-icon>grain</mat-icon>
+                    <span class="stat-label">{{ t('nutrition.carbs') }}</span>
+                  </div>
+                  <div class="stat-value">
+                    {{ daily.totalCarbs | number:'1.0-1' }}
+                    @if (daily.goals) { <span class="stat-goal">/ {{ daily.goals.carbsGoal }}</span> }
+                    <span class="stat-unit">{{ t('nutrition.g') }}</span>
+                  </div>
+                  @if (daily.percentCarbs !== undefined) {
+                    <mat-progress-bar mode="determinate" [value]="daily.percentCarbs" [color]="getProgressColor(daily.percentCarbs)"></mat-progress-bar>
+                    <div class="stat-percent">{{ daily.percentCarbs | number:'1.0-0' }}{{ t('nutrition.ofGoal') }}</div>
+                  }
+                </mat-card-content>
+              </mat-card>
+
+              <mat-card class="stat-card fat">
+                <mat-card-content>
+                  <div class="stat-header">
+                    <mat-icon>opacity</mat-icon>
+                    <span class="stat-label">{{ t('nutrition.fat') }}</span>
+                  </div>
+                  <div class="stat-value">
+                    {{ daily.totalFat | number:'1.0-1' }}
+                    @if (daily.goals) { <span class="stat-goal">/ {{ daily.goals.fatGoal }}</span> }
+                    <span class="stat-unit">{{ t('nutrition.g') }}</span>
+                  </div>
+                  @if (daily.percentFat !== undefined) {
+                    <mat-progress-bar mode="determinate" [value]="daily.percentFat" [color]="getProgressColor(daily.percentFat)"></mat-progress-bar>
+                    <div class="stat-percent">{{ daily.percentFat | number:'1.0-0' }}{{ t('nutrition.ofGoal') }}</div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <mat-card class="details-card">
+              <mat-card-header><mat-card-title>{{ t('nutrition.additionalNutrients') }}</mat-card-title></mat-card-header>
+              <mat-card-content>
+                <div class="nutrients-grid">
+                  <div class="nutrient-item">
+                    <mat-icon>eco</mat-icon>
+                    <span class="nutrient-label">{{ t('nutrition.fiber') }}</span>
+                    <span class="nutrient-value">{{ daily.totalFiber | number:'1.0-1' }} {{ t('nutrition.g') }}</span>
+                  </div>
+                  <div class="nutrient-item">
+                    <mat-icon>cake</mat-icon>
+                    <span class="nutrient-label">{{ t('nutrition.sugar') }}</span>
+                    <span class="nutrient-value">{{ daily.totalSugar | number:'1.0-1' }} {{ t('nutrition.g') }}</span>
+                  </div>
+                  <div class="nutrient-item">
+                    <mat-icon>water_drop</mat-icon>
+                    <span class="nutrient-label">{{ t('nutrition.sodium') }}</span>
+                    <span class="nutrient-value">{{ daily.totalSodium | number:'1.0-0' }} {{ t('nutrition.mg') }}</span>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            @if (daily.totalKcal > 0) {
+              <mat-card class="breakdown-card">
+                <mat-card-header><mat-card-title>{{ t('nutrition.calorieBreakdown') }}</mat-card-title></mat-card-header>
+                <mat-card-content>
+                  <div class="breakdown-chart">
+                    <div class="breakdown-bar">
+                      <div class="breakdown-segment protein" [style.width.%]="getCaloriePercent(daily.totalProtein, 4)"></div>
+                      <div class="breakdown-segment carbs" [style.width.%]="getCaloriePercent(daily.totalCarbs, 4)"></div>
+                      <div class="breakdown-segment fat" [style.width.%]="getCaloriePercent(daily.totalFat, 9)"></div>
+                    </div>
+                    <div class="breakdown-legend">
+                      <div class="legend-item"><span class="legend-color protein"></span><span>{{ t('nutrition.protein') }} ({{ (daily.totalProtein * 4) | number:'1.0-0' }} {{ t('nutrition.kcal') }})</span></div>
+                      <div class="legend-item"><span class="legend-color carbs"></span><span>{{ t('nutrition.carbs') }} ({{ (daily.totalCarbs * 4) | number:'1.0-0' }} {{ t('nutrition.kcal') }})</span></div>
+                      <div class="legend-item"><span class="legend-color fat"></span><span>{{ t('nutrition.fat') }} ({{ (daily.totalFat * 9) | number:'1.0-0' }} {{ t('nutrition.kcal') }})</span></div>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          } @else {
+            <mat-card class="empty-state">
+              <mat-card-content>
+                <mat-icon>restaurant_menu</mat-icon>
+                <h3>{{ t('nutrition.noDataYet') }}</h3>
+                <p>{{ t('nutrition.startTracking') }}</p>
+                <button mat-raised-button color="primary" (click)="setGoals()">
+                  <mat-icon>tune</mat-icon>
+                  {{ t('nutrition.setYourGoals') }}
+                </button>
+              </mat-card-content>
+            </mat-card>
+          }
+        </mat-tab>
+
+        <mat-tab [label]="t('nutrition.reports')">
+          <pp-nutrition-reports></pp-nutrition-reports>
+        </mat-tab>
+
+        <mat-tab [label]="t('nutrition.advice')">
+          <pp-diet-advice></pp-diet-advice>
+        </mat-tab>
+      </mat-tab-group>
+    </div>

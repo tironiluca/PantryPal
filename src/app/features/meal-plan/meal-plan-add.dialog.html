@@ -1,0 +1,97 @@
+    <ng-container *transloco="let t">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode ? t('mealPlan.editMealPlan') : t('mealPlan.addMealToPlan') }}
+      </h2>
+
+      <mat-dialog-content>
+        <form [formGroup]="form" class="meal-plan-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.date') }}</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="date" required />
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            @if (form.get('date')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.dateRequired') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.mealType') }}</mat-label>
+            <mat-select formControlName="mealType" required>
+              <mat-option value="breakfast">{{ t('mealPlan.breakfast') }}</mat-option>
+              <mat-option value="lunch">{{ t('mealPlan.lunch') }}</mat-option>
+              <mat-option value="dinner">{{ t('mealPlan.dinner') }}</mat-option>
+              <mat-option value="snack">{{ t('mealPlan.snack') }}</mat-option>
+            </mat-select>
+            @if (form.get('mealType')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.mealTypeRequired') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.recipe') }}</mat-label>
+            <mat-select formControlName="recipeId" required>
+              @if (recipes().length === 0) {
+                <mat-option disabled>{{ t('mealPlan.noRecipesAvailable') }}</mat-option>
+              } @else {
+                @for (recipe of recipes(); track recipe.id) {
+                  <mat-option [value]="recipe.id">{{ recipe.name }}</mat-option>
+                }
+              }
+            </mat-select>
+            <mat-hint>{{ t('mealPlan.selectRecipe') }}</mat-hint>
+            @if (form.get('recipeId')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.recipeRequired') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.servings') }}</mat-label>
+            <input matInput type="number" formControlName="servings" min="1" max="20" required />
+            <mat-hint>{{ t('mealPlan.numberOfServings') }}</mat-hint>
+            @if (form.get('servings')?.hasError('required')) {
+              <mat-error>{{ t('mealPlan.servingsRequired') }}</mat-error>
+            }
+            @if (form.get('servings')?.hasError('min')) {
+              <mat-error>{{ t('mealPlan.minServing') }}</mat-error>
+            }
+            @if (form.get('servings')?.hasError('max')) {
+              <mat-error>{{ t('mealPlan.maxServing') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('mealPlan.notesOptional') }}</mat-label>
+            <textarea matInput formControlName="notes" rows="3" [placeholder]="t('mealPlan.notesPlaceholder')"></textarea>
+          </mat-form-field>
+
+          @if (isEditMode) {
+            <mat-checkbox formControlName="completed">
+              {{ t('mealPlan.markAsCompleted') }}
+            </mat-checkbox>
+          }
+        </form>
+
+        @if (selectedRecipe(); as recipe) {
+          <div class="recipe-preview">
+            <h3>{{ t('mealPlan.recipePreview') }}</h3>
+            <p class="recipe-name">{{ recipe.name }}</p>
+            @if (recipe.steps) {
+              <p class="recipe-steps">{{ recipe.steps }}</p>
+            }
+          </div>
+        }
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="onCancel()">
+          <mat-icon>close</mat-icon>
+          {{ t('common.cancel') }}
+        </button>
+        <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid || recipes().length === 0">
+          <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+          {{ isEditMode ? t('mealPlan.update') : t('mealPlan.addToPlan') }}
+        </button>
+      </mat-dialog-actions>
+    </ng-container>

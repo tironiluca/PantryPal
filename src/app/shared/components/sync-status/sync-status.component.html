@@ -1,0 +1,38 @@
+
+<div class="sync-status">
+  @if (isAuthenticated()) {
+    <button
+      mat-icon-button
+      [matTooltip]="tooltipText()"
+      (click)="onSyncClick()"
+      [disabled]="syncService.isSyncing()"
+      class="sync-button"
+      [class.syncing]="syncService.isSyncing()"
+      [class.error]="syncService.syncStatus() === 'error'"
+      [class.offline]="syncService.syncStatus() === 'offline'"
+    >
+      @if (syncService.isSyncing()) {
+        <mat-spinner diameter="24"></mat-spinner>
+      } @else {
+        <mat-icon
+          [matBadge]="unsyncedCount()"
+          [matBadgeHidden]="unsyncedCount() === 0"
+          matBadgeColor="warn"
+          matBadgeSize="small"
+        >
+          {{ syncIcon() }}
+        </mat-icon>
+      }
+    </button>
+  } @else {
+    <!-- Sign In Button -->
+    <button
+      mat-icon-button
+      [matTooltip]="'Sign in to sync across devices'"
+      routerLink="/auth/login"
+      class="signin-button"
+    >
+      <mat-icon>login</mat-icon>
+    </button>
+  }
+</div>

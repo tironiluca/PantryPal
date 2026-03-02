@@ -1,0 +1,19 @@
+<div class="confirm-dialog">
+      <h2 mat-dialog-title class="title">
+        @if (data.icon) {
+          <mat-icon [class]="'icon-' + (data.confirmColor ?? 'primary')">{{ data.icon }}</mat-icon>
+        }
+        {{ data.title }}
+      </h2>
+      <div mat-dialog-content>
+        <p>{{ data.message }}</p>
+      </div>
+      <div mat-dialog-actions align="end">
+        <button mat-button (click)="cancel()">
+          {{ data.cancelLabel ?? 'Cancel' }}
+        </button>
+        <button mat-flat-button [color]="data.confirmColor ?? 'primary'" (click)="confirm()">
+          {{ data.confirmLabel ?? 'Confirm' }}
+        </button>
+      </div>
+    </div>

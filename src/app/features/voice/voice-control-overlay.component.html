@@ -1,0 +1,62 @@
+
+@if (isListening()) {
+  <div class="voice-overlay" (click)="onOverlayClick()">
+    <div class="voice-container" (click)="$event.stopPropagation()">
+      <!-- Microphone Icon with Animation -->
+      <div class="mic-container">
+        <div class="pulse-ring"></div>
+        <div class="mic-icon" [class.active]="isProcessing()">
+          <mat-icon>mic</mat-icon>
+        </div>
+      </div>
+
+      <!-- Transcript Display -->
+      <div class="transcript-container">
+        @if (currentTranscript()) {
+          <div class="transcript" [class.final]="isFinalTranscript()">
+            {{ currentTranscript() }}
+          </div>
+        } @else {
+          <div class="listening-text">Listening...</div>
+        }
+
+        @if (lastCommand(); as cmd) {
+          <div class="command-info">
+            <mat-icon class="command-icon">{{ getCommandIcon(cmd.action) }}</mat-icon>
+            <span>{{ getCommandLabel(cmd) }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Suggestions -->
+      <div class="suggestions">
+        <div class="suggestions-title">Try saying:</div>
+        <div class="suggestions-list">
+          @for (suggestion of suggestions; track $index) {
+            <mat-chip>{{ suggestion }}</mat-chip>
+          }
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button
+          mat-icon-button
+          (click)="stopListening()"
+          matTooltip="Stop listening"
+          color="warn"
+        >
+          <mat-icon>stop</mat-icon>
+        </button>
+        <button
+          mat-button
+          (click)="showHelp()"
+          matTooltip="Show all commands"
+        >
+          <mat-icon>help</mat-icon>
+          Help
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -18,46 +18,8 @@ export interface ConfirmDialogData {
   standalone: true,
   selector: 'pp-confirm-dialog',
   imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
-  template: `
-    <div class="confirm-dialog">
-      <h2 mat-dialog-title class="title">
-        @if (data.icon) {
-          <mat-icon [class]="'icon-' + (data.confirmColor ?? 'primary')">{{ data.icon }}</mat-icon>
-        }
-        {{ data.title }}
-      </h2>
-      <div mat-dialog-content>
-        <p>{{ data.message }}</p>
-      </div>
-      <div mat-dialog-actions align="end">
-        <button mat-button (click)="cancel()">
-          {{ data.cancelLabel ?? 'Cancel' }}
-        </button>
-        <button mat-flat-button [color]="data.confirmColor ?? 'primary'" (click)="confirm()">
-          {{ data.confirmLabel ?? 'Confirm' }}
-        </button>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .confirm-dialog { min-width: 280px; max-width: 400px; }
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 18px;
-    }
-
-    .icon-warn  { color: var(--mat-warn-color, #f44336); }
-    .icon-primary { color: var(--mat-primary-color, #43a047); }
-
-    [mat-dialog-content] p {
-      margin: 0;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-  `]
+  templateUrl: './confirm.dialog.html',
+  styleUrls: ['./confirm.dialog.scss']
 })
 export class ConfirmDialog {
   data: ConfirmDialogData = inject(MAT_DIALOG_DATA);

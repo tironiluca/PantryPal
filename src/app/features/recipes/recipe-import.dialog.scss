@@ -1,0 +1,232 @@
+mat-dialog-content {
+  width: 100%;
+  max-width: 650px;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+mat-stepper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.url-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  box-sizing: border-box;
+
+  mat-form-field {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+
+    mat-spinner {
+      display: inline-block;
+    }
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 4px solid #f44336;
+  border-radius: 4px;
+  color: #f44336;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.recipe-preview {
+  padding: var(--spacing-md);
+
+  .recipe-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 24px;
+  }
+
+  .description {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .recipe-meta {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-md);
+
+    mat-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  .recipe-source {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: var(--spacing-md);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  h4 {
+    margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .ingredient-list {
+    padding: 0;
+    margin-bottom: var(--spacing-md);
+
+    mat-list-item {
+      height: auto;
+      min-height: 36px;
+      padding: var(--spacing-xs) 0;
+    }
+  }
+
+  .instructions {
+    white-space: pre-wrap;
+    padding: var(--spacing-md);
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+}
+
+.ingredient-mapping {
+  padding: var(--spacing-md);
+
+  .mapping-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: rgba(33, 150, 243, 0.1);
+    border-radius: 4px;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-secondary);
+
+    mat-icon {
+      color: #2196f3;
+    }
+  }
+}
+
+.mapping-card {
+  margin-bottom: var(--spacing-md);
+
+  &.needs-review {
+    border-left: 4px solid #ff9800;
+  }
+
+  .mapping-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+
+    .original-ingredient {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    mat-chip {
+      height: 24px;
+      font-size: 12px;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .mapping-details {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    font-size: 14px;
+    color: var(--text-secondary);
+
+    .quantity-unit {
+      font-weight: 600;
+    }
+
+    .ingredient-name {
+      font-style: italic;
+    }
+  }
+
+  .ingredient-select {
+    width: 100%;
+
+    .match-score {
+      margin-left: var(--spacing-xs);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  mat-dialog-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .recipe-preview {
+    padding: var(--spacing-sm);
+  }
+
+  .ingredient-mapping {
+    padding: var(--spacing-sm);
+  }
+}

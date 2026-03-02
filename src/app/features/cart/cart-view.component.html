@@ -1,0 +1,99 @@
+<div class="container" *transloco="let t">
+      <div class="header">
+        <h2>{{ t('cart.title') }}</h2>
+        <div class="header-right">
+          <span class="stat">
+            {{ uncheckedCount() }} / {{ items().length }} {{ t('inventory.items') }}
+          </span>
+          @if (checkedIds().size > 0) {
+            <button mat-stroked-button class="clear-btn" (click)="clearChecked()">
+              <mat-icon>delete_sweep</mat-icon>
+              {{ t('cart.clearBought') }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (loading()) {
+        <pp-skeleton [count]="4" />
+      } @else if (items().length === 0) {
+        <div class="empty-state">
+          <mat-icon>shopping_cart</mat-icon>
+          <h3>{{ t('cart.nothingToBuy') }} 🎉</h3>
+          <p>{{ t('cart.allStocked') }}</p>
+        </div>
+      } @else {
+
+        @if (uncheckedMinRestock().length > 0) {
+          <div class="group-header">
+            <mat-icon>inventory_2</mat-icon>
+            <span>{{ t('cart.lowStock') }}</span>
+          </div>
+          <div class="list-card-grid">
+            @for (item of uncheckedMinRestock(); track item.ingredientId) {
+              <div class="list-card cart-card" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
+                  <mat-chip-set>
+                    <mat-chip>{{ item.suggestedQty | number:'1.0-2' }} {{ item.unit }}</mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (uncheckedExpired().length > 0) {
+          <div class="group-header">
+            <mat-icon>event_busy</mat-icon>
+            <span>{{ t('cart.expiredReplacements') }}</span>
+          </div>
+          <div class="list-card-grid">
+            @for (item of uncheckedExpired(); track item.ingredientId) {
+              <div class="list-card cart-card" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
+                  <mat-chip-set>
+                    <mat-chip class="expiry-expired">{{ t('inventory.expired') }}</mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (checkedIds().size > 0) {
+          <mat-divider />
+          <div class="group-header bought-header">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ t('cart.bought') }} ({{ checkedIds().size }})</span>
+          </div>
+          <div class="list-card-grid">
+            @for (item of checkedItems(); track item.ingredientId) {
+              <div class="list-card cart-card checked" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>check_circle</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
+                  <mat-chip-set>
+                    <mat-chip>
+                      {{ item.reason === 'min-restock'
+                          ? (item.suggestedQty | number:'1.0-2') + ' ' + item.unit
+                          : t('inventory.expired') }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      }
+    </div>

@@ -1,0 +1,193 @@
+    <div class="shopping-list-container">
+      <mat-card class="header-card">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="title-with-nav">
+              <button mat-icon-button routerLink="/home/meal-plan" matTooltip="Back to Calendar">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+              <div class="title-content">
+                <mat-icon>shopping_basket</mat-icon>
+                Shopping List from Meal Plan
+              </div>
+            </div>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Generate a shopping list based on your planned meals
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <form [formGroup]="dateForm" class="date-range-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date</mat-label>
+              <input
+                matInput
+                [matDatepicker]="startPicker"
+                formControlName="startDate"
+                (dateChange)="onDateChange()"
+              />
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End Date</mat-label>
+              <input
+                matInput
+                [matDatepicker]="endPicker"
+                formControlName="endDate"
+                (dateChange)="onDateChange()"
+              />
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+
+            <div class="quick-select">
+              <button mat-button (click)="selectThisWeek()">This Week</button>
+              <button mat-button (click)="selectNextWeek()">Next Week</button>
+              <button mat-button (click)="selectThisMonth()">This Month</button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      @if (shoppingList().length === 0) {
+        <mat-card class="empty-state">
+          <mat-card-content>
+            <mat-icon>event_busy</mat-icon>
+            <h3>No Meal Plans Found</h3>
+            <p>Add meals to your meal plan calendar to generate a shopping list.</p>
+            <button mat-raised-button color="primary" routerLink="/home/meal-plan">
+              <mat-icon>event</mat-icon>
+              Go to Meal Plan
+            </button>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <div class="summary-stats">
+              <div class="stat">
+                <mat-icon>shopping_cart</mat-icon>
+                <div>
+                  <span class="stat-value">{{ totalItems() }}</span>
+                  <span class="stat-label">Total Items</span>
+                </div>
+              </div>
+              <div class="stat">
+                <mat-icon>inventory_2</mat-icon>
+                <div>
+                  <span class="stat-value">{{ itemsInStock() }}</span>
+                  <span class="stat-label">In Stock</span>
+                </div>
+              </div>
+              <div class="stat">
+                <mat-icon>add_shopping_cart</mat-icon>
+                <div>
+                  <span class="stat-value">{{ itemsNeeded() }}</span>
+                  <span class="stat-label">Need to Buy</span>
+                </div>
+              </div>
+              <div class="stat">
+                <mat-icon>check_circle</mat-icon>
+                <div>
+                  <span class="stat-value">{{ checkedItems() }}/{{ totalItems() }}</span>
+                  <span class="stat-label">Checked Off</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="list-card">
+          <mat-card-header>
+            <mat-card-title>Shopping List</mat-card-title>
+            <div class="actions">
+              <button mat-button (click)="clearChecked()">
+                <mat-icon>clear_all</mat-icon>
+                Clear Checked
+              </button>
+              <button mat-raised-button color="primary" [matMenuTriggerFor]="exportMenu">
+                <mat-icon>download</mat-icon>
+                Export
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #exportMenu="matMenu">
+                <button mat-menu-item (click)="exportToPdf()">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  <span>Export as PDF</span>
+                </button>
+                <button mat-menu-item (click)="exportToCsv()">
+                  <mat-icon>table_chart</mat-icon>
+                  <span>Export as CSV</span>
+                </button>
+                <button mat-menu-item (click)="print()">
+                  <mat-icon>print</mat-icon>
+                  <span>Print</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="copyToClipboard()">
+                  <mat-icon>content_copy</mat-icon>
+                  <span>Copy to Clipboard</span>
+                </button>
+              </mat-menu>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <mat-list class="shopping-list">
+              @for (item of shoppingList(); track item.ingredientId) {
+                <mat-list-item
+                  class="list-item"
+                  [class.checked]="isChecked(item.ingredientId)"
+                  [class.in-stock]="item.needed === 0"
+                >
+                  <mat-checkbox
+                    matListItemMeta
+                    [checked]="isChecked(item.ingredientId)"
+                    (change)="toggleCheck(item.ingredientId)"
+                  ></mat-checkbox>
+
+                  <div class="item-content" matListItemTitle>
+                    <div class="item-header">
+                      <span class="item-name">{{ item.ingredientName }}</span>
+                      @if (item.needed > 0) {
+                        <mat-chip class="need-chip" color="warn">
+                          Need: {{ formatQuantity(item.needed, item.unit) }}
+                        </mat-chip>
+                      } @else {
+                        <mat-chip class="stock-chip" color="primary">
+                          In Stock
+                        </mat-chip>
+                      }
+                    </div>
+
+                    <div class="item-details" matListItemLine>
+                      <div class="quantity-info">
+                        <span class="label">Total needed:</span>
+                        <span class="value">{{ formatQuantity(item.totalQuantity, item.unit) }}</span>
+                      </div>
+                      @if (item.inventoryQuantity > 0) {
+                        <div class="quantity-info">
+                          <span class="label">In inventory:</span>
+                          <span class="value">{{ formatQuantity(item.inventoryQuantity, item.unit) }}</span>
+                        </div>
+                      }
+                    </div>
+
+                    @if (item.mealPlans.length > 0) {
+                      <div class="meal-plans" matListItemLine>
+                        <mat-icon class="meal-icon">restaurant</mat-icon>
+                        <span class="recipes">{{ item.mealPlans.join(', ') }}</span>
+                      </div>
+                    }
+                  </div>
+                </mat-list-item>
+                <mat-divider></mat-divider>
+              }
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>

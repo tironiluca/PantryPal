@@ -1,0 +1,81 @@
+.app-toolbar {
+  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%) !important;
+  box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+:host-context(.dark-theme) .app-toolbar {
+  background: linear-gradient(135deg, #2d1105 0%, #4a1e0a 100%) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 150, 100, 0.12);
+}
+
+.toolbar-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+.brand-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.theme-toggle {
+  transition: transform 0.3s ease, background-color 0.3s ease;
+
+  &:hover {
+    transform: rotate(180deg);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.voice-button,
+.user-menu-button,
+.login-button {
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}

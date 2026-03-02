@@ -1,0 +1,80 @@
+mat-dialog-content {
+      width: 90vw;
+      max-width: 500px;
+      padding: var(--spacing-md);
+    }
+
+    .meal-plan-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) 0;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    mat-option {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .recipe-preview {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      background-color: var(--surface-color);
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-color);
+
+      h3 {
+        margin: 0 0 var(--spacing-sm) 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .recipe-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0 0 var(--spacing-xs) 0;
+      }
+
+      .recipe-steps {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0;
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+    }
+
+    mat-dialog-actions {
+      padding: var(--spacing-md);
+
+      button {
+        margin-left: var(--spacing-sm);
+
+        mat-icon {
+          margin-right: var(--spacing-xs);
+        }
+      }
+    }
+
+    mat-checkbox {
+      margin-top: var(--spacing-sm);
+    }
+
+    @media (max-width: 768px) {
+      mat-dialog-content {
+        width: 95vw;
+        max-width: 95vw;
+      }
+    }

@@ -1,0 +1,15 @@
+.household-container { display: flex; flex-direction: column; gap: var(--spacing-md); }
+    .loading { display: flex; justify-content: center; padding: var(--spacing-xl); }
+    .full-width { width: 100%; }
+    mat-card-title { display: flex; align-items: center; gap: 8px; }
+    mat-card-content { padding: var(--spacing-md); }
+    h4 { margin: 0 0 var(--spacing-sm); font-size: 13px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
+    mat-divider { margin: var(--spacing-md) 0; }
+    .invite-row {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: center;
+      margin-top: var(--spacing-sm);
+    }
+    .invite-field { flex: 1; }
+    .description { color: var(--text-secondary); font-size: 14px; margin-bottom: var(--spacing-md); }

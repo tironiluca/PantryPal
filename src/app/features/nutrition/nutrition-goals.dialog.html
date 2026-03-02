@@ -1,0 +1,72 @@
+<div *transloco="let t">
+  <h2 mat-dialog-title>
+    <mat-icon>tune</mat-icon>
+    {{ data.isEdit ? t('nutrition.updateNutritionGoals') : t('nutrition.setNutritionGoals') }}
+  </h2>
+  <mat-dialog-content>
+    <div class="goals-form">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('nutrition.goalPreset') }}</mat-label>
+        <mat-select [(value)]="goals.goalType" (selectionChange)="onPresetChange($event.value)">
+          <mat-option value="custom">{{ t('nutrition.custom') }}</mat-option>
+          <mat-option value="weight_loss">{{ t('nutrition.weightLoss') }}</mat-option>
+          <mat-option value="muscle_gain">{{ t('nutrition.muscleGain') }}</mat-option>
+          <mat-option value="maintenance">{{ t('nutrition.maintenance') }}</mat-option>
+        </mat-select>
+        <mat-icon matSuffix>auto_fix_high</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('nutrition.dailyCalories') }}</mat-label>
+        <input matInput type="number" [(ngModel)]="goals.dailyKcalGoal" min="500" max="10000" />
+        <mat-icon matSuffix>local_fire_department</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('nutrition.proteinG') }}</mat-label>
+        <input matInput type="number" [(ngModel)]="goals.proteinGoal" min="0" max="500" />
+        <mat-icon matSuffix>fitness_center</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('nutrition.carbohydratesG') }}</mat-label>
+        <input matInput type="number" [(ngModel)]="goals.carbsGoal" min="0" max="1000" />
+        <mat-icon matSuffix>grain</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t('nutrition.fatG') }}</mat-label>
+        <input matInput type="number" [(ngModel)]="goals.fatGoal" min="0" max="500" />
+        <mat-icon matSuffix>opacity</mat-icon>
+      </mat-form-field>
+
+      <div class="optional-section">
+        <mat-slide-toggle [(ngModel)]="goals.trackFiber">{{ t('nutrition.trackFiber') }}</mat-slide-toggle>
+        @if (goals.trackFiber) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('nutrition.fiberG') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="goals.fiberGoal" min="0" max="100" />
+          </mat-form-field>
+        }
+        <mat-slide-toggle [(ngModel)]="goals.trackSugar">{{ t('nutrition.trackSugar') }}</mat-slide-toggle>
+        @if (goals.trackSugar) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('nutrition.sugarG') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="goals.sugarGoal" min="0" max="200" />
+          </mat-form-field>
+        }
+        <mat-slide-toggle [(ngModel)]="goals.trackSodium">{{ t('nutrition.trackSodium') }}</mat-slide-toggle>
+        @if (goals.trackSodium) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('nutrition.sodiumMg') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="goals.sodiumGoal" min="0" max="5000" />
+          </mat-form-field>
+        }
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>{{ t('common.cancel') }}</button>
+    <button mat-raised-button color="primary" (click)="save()">
+      <mat-icon>save</mat-icon>
+      {{ t('nutrition.saveGoals') }}
+    </button>
+  </mat-dialog-actions>
+</div>

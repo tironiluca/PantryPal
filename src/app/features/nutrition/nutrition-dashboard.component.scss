@@ -1,0 +1,89 @@
+.nutrition-container {
+      padding: 0;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    .header-card {
+      mat-card-header mat-card-title {
+        display: flex; align-items: center; gap: var(--spacing-sm); font-size: 24px;
+        mat-icon { font-size: 28px; width: 28px; height: 28px; }
+      }
+      mat-card-actions { padding: 0 var(--spacing-md) var(--spacing-md); }
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+    .stat-card {
+      &.calories { border-left: 4px solid #ff5722; }
+      &.protein { border-left: 4px solid #2196f3; }
+      &.carbs { border-left: 4px solid #4caf50; }
+      &.fat { border-left: 4px solid #ff9800; }
+      mat-card-content { padding: var(--spacing-md); }
+      .stat-header {
+        display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);
+        mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--text-secondary); }
+        .stat-label { font-size: 14px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; }
+      }
+      .stat-value {
+        font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--spacing-sm);
+        .stat-goal { font-size: 18px; color: var(--text-secondary); font-weight: 400; }
+        .stat-unit { font-size: 16px; color: var(--text-secondary); font-weight: 400; margin-left: var(--spacing-xs); }
+      }
+      mat-progress-bar { margin-bottom: var(--spacing-xs); }
+      .stat-percent { font-size: 12px; color: var(--text-secondary); text-align: right; }
+    }
+    .details-card {
+      mat-card-content { padding: var(--spacing-md); }
+      .nutrients-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-md); }
+      .nutrient-item {
+        display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md);
+        background-color: var(--surface-color); border-radius: 8px;
+        mat-icon { font-size: 24px; width: 24px; height: 24px; color: var(--primary-color); }
+        .nutrient-label { flex: 1; font-weight: 500; }
+        .nutrient-value { font-weight: 700; color: var(--primary-color); }
+      }
+    }
+    .breakdown-card {
+      .breakdown-chart { padding: var(--spacing-md); }
+      .breakdown-bar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: var(--spacing-md); }
+      .breakdown-segment {
+        transition: all 0.3s ease;
+        &.protein { background-color: #2196f3; }
+        &.carbs { background-color: #4caf50; }
+        &.fat { background-color: #ff9800; }
+      }
+      .breakdown-legend { display: flex; justify-content: center; gap: var(--spacing-lg); flex-wrap: wrap; }
+      .legend-item {
+        display: flex; align-items: center; gap: var(--spacing-xs); font-size: 14px;
+        .legend-color {
+          width: 16px; height: 16px; border-radius: 4px;
+          &.protein { background-color: #2196f3; }
+          &.carbs { background-color: #4caf50; }
+          &.fat { background-color: #ff9800; }
+        }
+      }
+    }
+    .empty-state mat-card-content {
+      display: flex; flex-direction: column; align-items: center; gap: var(--spacing-md);
+      padding: var(--spacing-xl); text-align: center;
+      mat-icon { font-size: 64px; width: 64px; height: 64px; color: var(--text-secondary); opacity: 0.5; }
+      h3 { margin: 0; font-size: 20px; }
+      p { margin: 0; color: var(--text-secondary); }
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; } // 2-col on tablet/large phone
+      .breakdown-legend { flex-direction: column; align-items: flex-start; gap: var(--spacing-sm); }
+      .stat-value { font-size: 26px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; } // 1-col on small phones
+      .stat-value { font-size: 22px; }
+      .stat-percent { text-align: left; }
+      .nutrients-grid { grid-template-columns: 1fr; }
+    }

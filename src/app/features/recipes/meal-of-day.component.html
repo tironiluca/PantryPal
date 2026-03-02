@@ -1,0 +1,56 @@
+
+<div class="meal-container">
+  <mat-card *ngIf="recipe; else noRec" class="meal-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>restaurant</mat-icon>
+        {{ recipe.name }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        <span class="score-badge">Score: {{ score }}/100</span>
+        <span class="availability-badge" [class.all-available]="missing.length === 0">
+          {{ availableCount }}/{{ totalCount }} ingredients available
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="missing.length === 0" class="status success">
+        <mat-icon>check_circle</mat-icon>
+        <span>All ingredients available! Ready to cook.</span>
+      </div>
+
+      <div *ngIf="missing.length > 0" class="status warning">
+        <mat-icon>warning</mat-icon>
+        <span>Missing {{ missing.length }} ingredient(s)</span>
+      </div>
+
+      <div *ngIf="missing.length > 0" class="missing-ingredients">
+        <h4>Missing Ingredients:</h4>
+        <mat-chip-set>
+          <mat-chip *ngFor="let ing of missing">{{ ing }}</mat-chip>
+        </mat-chip-set>
+      </div>
+
+      <div *ngIf="expiringIngredients.length > 0" class="expiring-info">
+        <mat-icon>schedule</mat-icon>
+        <span>Uses {{ expiringIngredients.length }} ingredient(s) expiring soon</span>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="refreshSuggestion()">
+        <mat-icon>refresh</mat-icon>
+        Get Another Suggestion
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <ng-template #noRec>
+    <mat-card class="empty-card">
+      <mat-icon>no_meals</mat-icon>
+      <h3>No recipes yet</h3>
+      <p>Add some recipes to get personalized meal suggestions!</p>
+    </mat-card>
+  </ng-template>
+</div>

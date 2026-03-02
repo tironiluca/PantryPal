@@ -15,7 +15,18 @@
     <mat-form-field appearance="outline">
       <mat-label>{{ t('inventory.ingredientName') }}</mat-label>
       <mat-icon matPrefix>eco</mat-icon>
-      <input matInput [(ngModel)]="model.ingredientId" [placeholder]="t('inventory.ingredientNameHint')" />
+      <input matInput
+             [(ngModel)]="ingredientSearch"
+             [placeholder]="t('inventory.ingredientNameHint')"
+             [matAutocomplete]="ingAuto"
+             (ngModelChange)="filterIngredients($event)" />
+      <mat-autocomplete #ingAuto="matAutocomplete"
+                        [displayWith]="displayIngredient"
+                        (optionSelected)="onIngredientSelected($event)">
+        @for (ing of filteredIngredients; track ing.id) {
+          <mat-option [value]="ing">{{ ing.name }}</mat-option>
+        }
+      </mat-autocomplete>
     </mat-form-field>
 
     <div class="two-col">

@@ -10,6 +10,7 @@ import { FormsModule } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from "@angular/material/autocomplete";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatDividerModule } from "@angular/material/divider";
@@ -36,6 +37,7 @@ import { BarcodeScannerDialog } from "../barcode-scanner.dialog";
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatAutocompleteModule,
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
@@ -158,6 +160,11 @@ export class InventoryEditDialog implements OnInit {
     expiry: "",
   };
 
+  // Autocomplete state for ingredient picker
+  allIngredients: { id: string; name: string }[] = [];
+  filteredIngredients: { id: string; name: string }[] = [];
+  ingredientSearch = '';
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: InventoryItem | null,
     private ref: MatDialogRef<InventoryEditDialog>
@@ -167,12 +174,50 @@ export class InventoryEditDialog implements OnInit {
   }
 
   ngOnInit(): void {
+    // Load ingredient list for autocomplete
+    try {
+      this.allIngredients = this.db.query<{ id: string; name: string }>(
+        'SELECT id, name FROM ingredients ORDER BY name'
+      );
+    } catch {
+      this.allIngredients = [];
+    }
+
+    // Pre-populate display value from current ingredientId
+    if (this.model.ingredientId) {
+      const found = this.allIngredients.find(i => i.id === this.model.ingredientId);
+      this.ingredientSearch = found?.name ?? this.model.ingredientId;
+    }
+    this.filteredIngredients = this.allIngredients.slice(0, 8);
+
     // Auto-fetch product info when dialog is opened with a pre-scanned barcode
     if (this.model.barcode && !this.model.id) {
       this.snackbar.info(this.transloco.translate('inventory.fetchingProduct'));
       this.doFetchProduct();
     }
   }
+
+  filterIngredients(search: string) {
+    const term = search.toLowerCase();
+    this.filteredIngredients = this.allIngredients
+      .filter(i => i.name.toLowerCase().includes(term))
+      .slice(0, 8);
+    // Treat free-form text as ingredientId fallback
+    const exact = this.allIngredients.find(i => i.name.toLowerCase() === term);
+    this.model.ingredientId = exact ? exact.id : search;
+  }
+
+  onIngredientSelected(event: MatAutocompleteSelectedEvent) {
+    const ing = event.option.value as { id: string; name: string };
+    this.model.ingredientId = ing.id;
+    this.ingredientSearch = ing.name;
+  }
+
+  displayIngredient = (ing: { id: string; name: string } | string): string => {
+    if (!ing) return '';
+    if (typeof ing === 'string') return ing;
+    return ing.name;
+  };
 
   save() {
     try {
@@ -322,10 +367,17 @@ export class InventoryEditDialog implements OnInit {
 
         // Only fill ingredientId if currently empty
         if (name && !this.model.ingredientId) {
-          this.model.ingredientId = name
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .slice(0, 30);
+          // Try to match existing ingredient by name
+          const term = name.toLowerCase();
+          const match = this.allIngredients.find(i => i.name.toLowerCase() === term);
+          if (match) {
+            this.model.ingredientId = match.id;
+            this.ingredientSearch = match.name;
+          } else {
+            const slug = name.toLowerCase().replace(/\s+/g, "-").slice(0, 30);
+            this.model.ingredientId = slug;
+            this.ingredientSearch = name;
+          }
           this.snackbar.success(this.transloco.translate('inventory.productLoaded'));
         } else if (name) {
           this.snackbar.info(this.transloco.translate('inventory.productFoundIngredientSet'));

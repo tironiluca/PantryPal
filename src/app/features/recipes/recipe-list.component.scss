@@ -140,6 +140,17 @@ mat-chip mat-icon {
   box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
 }
 
+@media (max-width: 600px) {
+  .btn-label {
+    display: none;
+  }
+
+  .header-actions button[mat-stroked-button] {
+    min-width: unset;
+    padding: 0 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;

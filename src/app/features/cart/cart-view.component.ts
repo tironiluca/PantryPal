@@ -3,6 +3,8 @@ import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { TranslocoModule } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DbService } from '../../core/services/db.service';
@@ -25,6 +27,8 @@ interface CartItem {
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
+    MatTooltipModule,
+    MatDividerModule,
     TranslocoModule,
     SkeletonComponent,
   ],
@@ -32,7 +36,17 @@ interface CartItem {
     <div class="container" *transloco="let t">
       <div class="header">
         <h2>{{ t('cart.title') }}</h2>
-        <span class="stat">{{ items().length }} {{ t('inventory.items') }}</span>
+        <div class="header-right">
+          <span class="stat">
+            {{ uncheckedCount() }} / {{ items().length }} {{ t('inventory.items') }}
+          </span>
+          @if (checkedIds().size > 0) {
+            <button mat-stroked-button class="clear-btn" (click)="clearChecked()">
+              <mat-icon>delete_sweep</mat-icon>
+              {{ t('cart.clearBought') }}
+            </button>
+          }
+        </div>
       </div>
 
       @if (loading()) {
@@ -41,18 +55,23 @@ interface CartItem {
         <div class="empty-state">
           <mat-icon>shopping_cart</mat-icon>
           <h3>{{ t('cart.nothingToBuy') }} 🎉</h3>
+          <p>{{ t('cart.allStocked') }}</p>
         </div>
       } @else {
-        @if (minRestockItems().length > 0) {
+
+        @if (uncheckedMinRestock().length > 0) {
           <div class="group-header">
             <mat-icon>inventory_2</mat-icon>
             <span>{{ t('cart.lowStock') }}</span>
           </div>
           <div class="list-card-grid">
-            @for (item of minRestockItems(); track item.ingredientId) {
-              <div class="list-card">
-                <div class="list-card__title">{{ item.ingredientName }}</div>
-                <div class="list-card__meta">
+            @for (item of uncheckedMinRestock(); track item.ingredientId) {
+              <div class="list-card cart-card" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
                   <mat-chip-set>
                     <mat-chip>{{ item.suggestedQty | number:'1.0-2' }} {{ item.unit }}</mat-chip>
                   </mat-chip-set>
@@ -62,16 +81,19 @@ interface CartItem {
           </div>
         }
 
-        @if (expiredItems().length > 0) {
+        @if (uncheckedExpired().length > 0) {
           <div class="group-header">
             <mat-icon>event_busy</mat-icon>
             <span>{{ t('cart.expiredReplacements') }}</span>
           </div>
           <div class="list-card-grid">
-            @for (item of expiredItems(); track item.ingredientId) {
-              <div class="list-card">
-                <div class="list-card__title">{{ item.ingredientName }}</div>
-                <div class="list-card__meta">
+            @for (item of uncheckedExpired(); track item.ingredientId) {
+              <div class="list-card cart-card" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>radio_button_unchecked</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
                   <mat-chip-set>
                     <mat-chip class="expiry-expired">{{ t('inventory.expired') }}</mat-chip>
                   </mat-chip-set>
@@ -80,6 +102,34 @@ interface CartItem {
             }
           </div>
         }
+
+        @if (checkedIds().size > 0) {
+          <mat-divider />
+          <div class="group-header bought-header">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ t('cart.bought') }} ({{ checkedIds().size }})</span>
+          </div>
+          <div class="list-card-grid">
+            @for (item of checkedItems(); track item.ingredientId) {
+              <div class="list-card cart-card checked" (click)="toggleChecked(item.ingredientId)">
+                <div class="cart-card__check">
+                  <mat-icon>check_circle</mat-icon>
+                </div>
+                <div class="cart-card__body">
+                  <div class="list-card__title">{{ item.ingredientName }}</div>
+                  <mat-chip-set>
+                    <mat-chip>
+                      {{ item.reason === 'min-restock'
+                          ? (item.suggestedQty | number:'1.0-2') + ' ' + item.unit
+                          : t('inventory.expired') }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
       }
     </div>
   `,
@@ -97,6 +147,8 @@ interface CartItem {
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
       border-bottom: 2px solid rgba(230, 74, 25, 0.2);
+      flex-wrap: wrap;
+      gap: 8px;
 
       h2 {
         margin: 0;
@@ -108,6 +160,13 @@ interface CartItem {
         background-clip: text;
       }
 
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       .stat {
         padding: 6px 16px;
         border-radius: 20px;
@@ -115,6 +174,10 @@ interface CartItem {
         font-weight: 600;
         background: rgba(230, 74, 25, 0.1);
         color: #b03a14;
+      }
+
+      .clear-btn {
+        font-size: 0.8rem;
       }
     }
 
@@ -128,6 +191,58 @@ interface CartItem {
       margin: 1.5rem 0 0.75rem;
 
       mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+      &.bought-header {
+        color: #558b2f;
+        margin-top: 1.5rem;
+      }
+    }
+
+    mat-divider {
+      margin-top: 1.5rem;
+    }
+
+    .cart-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+
+      .cart-card__check {
+        flex-shrink: 0;
+        padding-top: 2px;
+
+        mat-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+          color: var(--mat-sys-on-surface-variant);
+          transition: color 0.2s ease, transform 0.2s ease;
+        }
+      }
+
+      .cart-card__body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      &:hover .cart-card__check mat-icon {
+        color: #e64a19;
+        transform: scale(1.15);
+      }
+
+      &.checked {
+        opacity: 0.5;
+
+        .list-card__title {
+          text-decoration: line-through;
+        }
+
+        .cart-card__check mat-icon {
+          color: #558b2f;
+        }
+      }
     }
 
     .empty-state {
@@ -143,10 +258,15 @@ interface CartItem {
       }
 
       h3 {
-        margin: 0;
+        margin: 0 0 0.5rem;
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--mat-sys-on-surface);
+      }
+
+      p {
+        margin: 0;
+        color: var(--mat-sys-on-surface-variant);
       }
     }
 
@@ -155,13 +275,19 @@ interface CartItem {
       color: var(--color-error);
     }
 
-    :host-context(.dark-theme) .header {
-      border-bottom: 2px solid rgba(255, 112, 67, 0.3);
-      .stat { background: rgba(255, 112, 67, 0.15); color: #ff8a65; }
-    }
+    :host-context(.dark-theme) {
+      .header {
+        border-bottom: 2px solid rgba(255, 112, 67, 0.3);
+        .stat { background: rgba(255, 112, 67, 0.15); color: #ff8a65; }
+      }
 
-    :host-context(.dark-theme) .empty-state mat-icon {
-      color: rgba(255, 255, 255, 0.2);
+      .empty-state mat-icon { color: rgba(255, 255, 255, 0.2); }
+
+      .cart-card:hover .cart-card__check mat-icon { color: #ff7043; }
+
+      .group-header.bought-header { color: #8bc34a; }
+
+      .cart-card.checked .cart-card__check mat-icon { color: #8bc34a; }
     }
   `],
 })
@@ -172,15 +298,37 @@ export class CartViewComponent implements OnInit {
 
   items = signal<CartItem[]>([]);
   loading = signal(false);
+  checkedIds = signal(new Set<string>());
 
-  minRestockItems = computed(() => this.items().filter(i => i.reason === 'min-restock'));
-  expiredItems    = computed(() => this.items().filter(i => i.reason === 'expired-replacement'));
+  uncheckedMinRestock = computed(() =>
+    this.items().filter(i => i.reason === 'min-restock' && !this.checkedIds().has(i.ingredientId))
+  );
+  uncheckedExpired = computed(() =>
+    this.items().filter(i => i.reason === 'expired-replacement' && !this.checkedIds().has(i.ingredientId))
+  );
+  checkedItems = computed(() =>
+    this.items().filter(i => this.checkedIds().has(i.ingredientId))
+  );
+  uncheckedCount = computed(() =>
+    this.items().filter(i => !this.checkedIds().has(i.ingredientId)).length
+  );
 
   ngOnInit(): void {
     this.loadItems();
     this.dataEvents.on('inventory', 'ingredients')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadItems());
+  }
+
+  toggleChecked(ingredientId: string) {
+    const next = new Set(this.checkedIds());
+    if (next.has(ingredientId)) next.delete(ingredientId);
+    else next.add(ingredientId);
+    this.checkedIds.set(next);
+  }
+
+  clearChecked() {
+    this.checkedIds.set(new Set());
   }
 
   loadItems(): void {
@@ -234,6 +382,10 @@ export class CartViewComponent implements OnInit {
       }
 
       this.items.set(out);
+      // Remove stale checked items that are no longer in the list
+      const ids = new Set(out.map(i => i.ingredientId));
+      const cleaned = new Set([...this.checkedIds()].filter(id => ids.has(id)));
+      this.checkedIds.set(cleaned);
     } finally {
       this.loading.set(false);
     }

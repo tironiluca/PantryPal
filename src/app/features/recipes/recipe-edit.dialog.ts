@@ -84,6 +84,13 @@ interface Ingredient {
             <mat-icon matPrefix>image</mat-icon>
           </mat-form-field>
 
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('recipes.notes') }}</mat-label>
+            <textarea matInput formControlName="notes" rows="2"
+                      [placeholder]="t('recipes.notesPlaceholder')"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+
           <!-- Ingredients Section -->
           <div class="section-header">
             <h3><mat-icon>shopping_basket</mat-icon>{{ t('recipes.ingredients') }}</h3>
@@ -200,7 +207,7 @@ interface Ingredient {
     mat-dialog-content {
       width: 100%;
       max-width: 600px;
-      max-height: 75dvh; // Ensure fits on mobile viewport
+      max-height: 75dvh; 
       padding: var(--spacing-md);
       box-sizing: border-box;
       overflow-x: hidden;
@@ -378,7 +385,7 @@ interface Ingredient {
       }
 
       .details-row {
-        grid-template-columns: 1fr 1fr; // 2-col on mobile (servings + time side-by-side)
+        grid-template-columns: 1fr;
       }
 
       // Keep ingredient name full width, qty + unit on same row
@@ -438,6 +445,7 @@ export class RecipeEditDialog implements OnInit {
       prepTime: [null],
       cookTime: [null],
       imageUrl: [''],
+      notes: [''],
       ingredients: this.fb.array([]),
       steps: this.fb.array([]),
     });
@@ -497,6 +505,7 @@ export class RecipeEditDialog implements OnInit {
       prepTime: recipe.prepTime,
       cookTime: recipe.cookTime,
       imageUrl: recipe.imageUrl,
+      notes: recipe.notes || '',
     });
   }
 
@@ -554,7 +563,7 @@ export class RecipeEditDialog implements OnInit {
         // Update existing recipe
         this.db.exec(
           `UPDATE recipes
-           SET name = ?, steps = ?, servings = ?, prepTime = ?, cookTime = ?, imageUrl = ?,
+           SET name = ?, steps = ?, servings = ?, prepTime = ?, cookTime = ?, imageUrl = ?, notes = ?,
                updatedAt = ?, version = version + 1
            WHERE id = ?`,
           [
@@ -564,6 +573,7 @@ export class RecipeEditDialog implements OnInit {
             formValue.prepTime || null,
             formValue.cookTime || null,
             formValue.imageUrl || null,
+            formValue.notes || null,
             now,
             recipeId,
           ]
@@ -577,8 +587,8 @@ export class RecipeEditDialog implements OnInit {
       } else {
         // Create new recipe
         this.db.exec(
-          `INSERT INTO recipes (id, name, steps, servings, prepTime, cookTime, imageUrl, userId, version, isDeleted, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO recipes (id, name, steps, servings, prepTime, cookTime, imageUrl, notes, userId, version, isDeleted, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             recipeId,
             formValue.name,
@@ -587,6 +597,7 @@ export class RecipeEditDialog implements OnInit {
             formValue.prepTime || null,
             formValue.cookTime || null,
             formValue.imageUrl || null,
+            formValue.notes || null,
             userId,
             1,
             0,

@@ -2,13 +2,15 @@
   <div class="header">
     <h2>{{ t('recipes.title') }}</h2>
     <div class="header-actions">
-      <button mat-stroked-button [routerLink]="['/recipes/meal']">
+      <button mat-stroked-button [routerLink]="['/recipes/meal']"
+              [matTooltip]="t('recipes.mealOfTheDay')">
         <mat-icon>restaurant_menu</mat-icon>
-        {{ t('recipes.mealOfTheDay') }}
+        <span class="btn-label">{{ t('recipes.mealOfTheDay') }}</span>
       </button>
-      <button mat-stroked-button (click)="importRecipe()">
+      <button mat-stroked-button (click)="importRecipe()"
+              [matTooltip]="t('recipes.importRecipe')">
         <mat-icon>download</mat-icon>
-        {{ t('recipes.importRecipe') }}
+        <span class="btn-label">{{ t('recipes.importRecipe') }}</span>
       </button>
     </div>
   </div>
@@ -34,14 +36,20 @@
 
           <div class="list-card__meta">
             <mat-chip-set>
+              @if (r.servings > 1) {
+                <mat-chip>
+                  <mat-icon>people</mat-icon>
+                  {{ r.servings }} {{ t('recipes.servings') }}
+                </mat-chip>
+              }
               <mat-chip>
                 <mat-icon>menu_book</mat-icon>
-                {{ r.ingredientCount }} {{ t('recipes.ingredientsAvailable') }}
+                {{ r.ingredientCount }} {{ t('recipes.ingredientsLabel') }}
               </mat-chip>
               @if (canCookMap.get(r.id)) {
                 <mat-chip class="can-cook-chip">
                   <mat-icon>check_circle</mat-icon>
-                  {{ t('recipes.allIngredientsAvailable') }}
+                  {{ t('recipes.canCook') }}
                 </mat-chip>
               }
             </mat-chip-set>

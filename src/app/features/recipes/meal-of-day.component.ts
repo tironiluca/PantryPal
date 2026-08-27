@@ -46,7 +46,7 @@ export class MealOfDayComponent {
   }
 
   private selectBestRecipe(): void {
-    const recipes = this.db.query<any>('SELECT * FROM recipes');
+    const recipes = this.db.queryByUser<any>('recipes');
     if (recipes.length === 0) return;
 
     // Score all recipes
@@ -85,10 +85,7 @@ export class MealOfDayComponent {
     const expiringUsed: string[] = [];
     let availableCount = 0;
 
-    const ingredients = this.db.query<any>(
-      'SELECT ingredientId, quantity, unit FROM recipe_ingredients WHERE recipeId = ?',
-      [recipe.id]
-    );
+    const ingredients = this.db.getRecipeIngredients(recipe.id);
 
     const totalCount = ingredients.length;
 
@@ -165,19 +162,16 @@ export class MealOfDayComponent {
 
   private findExpiringIngredients(recipeId: string): void {
     this.expiringIngredients = [];
-    const ingredients = this.db.query<any>(
-      'SELECT ingredientId FROM recipe_ingredients WHERE recipeId = ?',
-      [recipeId]
-    );
+    const ingredients = this.db.getRecipeIngredients(recipeId);
 
     for (const ing of ingredients) {
-      const inventory = this.db.query<any>(
-        'SELECT MIN(expiry) as soonest FROM inventory WHERE ingredientId = ? AND expiry IS NOT NULL',
-        [ing.ingredientId]
-      )[0];
+      const inventory = this.db
+        .getIngredientInventory(ing.ingredientId)
+        .inventory.filter(item => item.expiry)
+        .sort((a, b) => (a.expiry ?? '').localeCompare(b.expiry ?? ''))[0];
 
-      if (inventory?.soonest) {
-        const daysUntilExpiry = this.getDaysUntil(inventory.soonest);
+      if (inventory?.expiry) {
+        const daysUntilExpiry = this.getDaysUntil(inventory.expiry);
         if (daysUntilExpiry < 7 && daysUntilExpiry >= 0) {
           this.expiringIngredients.push(ing.ingredientId);
         }

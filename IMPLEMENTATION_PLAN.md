@@ -61,6 +61,7 @@ Some components still construct raw SQL for related data and know the database s
 
 - Meal-plan ingredient and inventory deduction lookups now use typed, user-scoped `DbService` methods; the existing ingredient inventory lookup is user-scoped as well, with focused service tests.
 - Inventory ingredient-name lookups now use a typed, user-scoped `DbService` method with empty-input handling and focused service tests.
+- Meal-of-day recipe, ingredient, and expiry lookups now use user-scoped `DbService` methods instead of raw SQL in the component.
 - Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
 - Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
 - Preserve user and household scoping when replacing direct queries.

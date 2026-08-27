@@ -121,16 +121,28 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 11. Expand regression coverage
+#### 11. Cover the entire codebase with Vitest and Playwright
 
-**Status:** Partial
+**Status:** Not started
 
-There are no focused tests for most security fixes, database migrations, sync allowlists, caching readiness, barcode cleanup, filtering, cart conversion, or keyboard shortcuts.
+The current suite covers only a small subset of the production code. Every production feature and shared service must be covered by both the Vitest unit/component suite and at least one Playwright browser workflow.
 
-- Add unit tests for P0/P1 items before deployment.
-- Add migration and sync integration coverage, including household isolation.
-- Playwright tests are a release requirement for inventory, barcode failure, recipe import, and household permissions.
-- Run unit tests, production build, and Playwright E2E tests in CI; a passing unit suite alone is insufficient.
+- Add Vitest tests for every production TypeScript service, component, guard, model, and utility, including success, failure, loading, empty, and permission branches where applicable.
+- Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
+- Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
+- Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
+- Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
+
+#### 12. Define the full-coverage test matrix
+
+**Status:** Not started
+
+Maintain a checked-in test matrix mapping every `src/app` production file and route to its Vitest and Playwright coverage. The matrix must be reviewed whenever production code changes.
+
+- Inventory all production files, routes, dialogs, services, guards, and shared components.
+- Record the owning Vitest spec and Playwright spec for each area.
+- Track uncovered branches and workflows as backlog entries with an owner and acceptance test.
+- Require the matrix and coverage reports in pull-request checks.
 
 ## Recommended Order
 
@@ -139,14 +151,15 @@ There are no focused tests for most security fixes, database migrations, sync al
 3. Finish scanner cleanup, subscription cleanup, and error handling.
 4. Make barcode uniqueness authoritative.
 5. Complete cart conversion tests and visible list controls.
-6. Decide analytics and navigation scope, then fill the associated unit and Playwright tests.
+6. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
 
 ## Verification Commands
 
 ```text
 npm test
+npm run test:coverage
 npm run build
 npm run e2e
 ```
 
-The repository requires all three commands for release. Playwright coverage must include the inventory workflow, barcode failure cleanup, recipe import privacy behavior, and household permissions; security, sync, persistence-fallback, scanner, cart, and filtering still need focused unit coverage.
+The repository requires unit tests, full Vitest coverage, a production build, and Playwright for release. Vitest and Playwright coverage must span the entire production codebase and all routes; security, sync, persistence-fallback, scanner, cart, filtering, and household isolation require dedicated tests rather than incidental coverage.

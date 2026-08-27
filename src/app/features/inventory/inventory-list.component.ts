@@ -141,6 +141,10 @@ export class InventoryListComponent {
     return icons[location ?? 'other'] ?? 'inventory_2';
   }
 
+  isLowStock(item: InventoryItem): boolean {
+    return item.quantity <= item.minRestock;
+  }
+
   applyFilters() {
     let filtered = [...this.rows];
 

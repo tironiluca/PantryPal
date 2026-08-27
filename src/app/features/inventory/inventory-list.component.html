@@ -85,6 +85,10 @@
             <mat-chip-set>
               <mat-chip class="qty-chip">{{ r.quantity }} {{ r.unit }}</mat-chip>
 
+              <mat-chip [class.low-stock-chip]="isLowStock(r)">
+                {{ t('inventory.minRestock') }}: {{ r.minRestock }} {{ r.unit }}
+              </mat-chip>
+
               @if (r.barcode) {
                 <mat-chip class="barcode-chip" [matTooltip]="r.barcode">
                   <mat-icon>qr_code</mat-icon>

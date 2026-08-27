@@ -53,15 +53,12 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 ### P2 - Feature Completion
 
-#### 5. Complete list controls and meal-of-day labels
+#### 5. Resolve meal-of-day ingredient labels
 
 **Status:** Partial
 
-Inventory has filter/sort state and active filter counting, but visible sort controls and some planned details are missing. Ingredient and recipe lists primarily support search. Meal-of-day missing ingredients display IDs rather than resolved names.
+Inventory list controls and minimum-stock details are implemented. Meal-of-day missing ingredients still display IDs rather than resolved names.
 
-- Add visible sort controls and preserve state accessibly.
-- Add the missing inventory minimum-stock detail and filter affordances.
-- Implement only filters supported by each data model.
 - Resolve ingredient IDs to names in meal-of-day output.
 
 #### 6. Decide and implement analytics scope

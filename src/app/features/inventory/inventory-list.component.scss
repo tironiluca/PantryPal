@@ -120,6 +120,11 @@
   color: var(--color-success);
 }
 
+.low-stock-chip {
+  --mdc-chip-elevated-container-color: rgba(198, 40, 40, 0.15);
+  color: var(--color-error);
+}
+
 // Empty state
 .empty-state {
   text-align: center;

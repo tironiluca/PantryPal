@@ -34,6 +34,17 @@ export const DB_TABLE_COLUMNS: Record<string, readonly string[]> = {
 
 const ALLOWED_TABLES = new Set(Object.keys(DB_TABLE_COLUMNS));
 
+export interface IngredientInventoryRow {
+  quantity: number;
+  unit: string;
+  expiry?: string;
+}
+
+export interface IngredientInventory {
+  name: string | null;
+  inventory: IngredientInventoryRow[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DbService {
   private auth = inject(AuthService);
@@ -402,6 +413,19 @@ export class DbService {
     stmt.free();
 
     return rows as T[];
+  }
+
+  getIngredientInventory(ingredientId: string): IngredientInventory {
+    const ingredient = this.query<{ name: string }>(
+      'SELECT name FROM ingredients WHERE id = ?',
+      [ingredientId]
+    )[0];
+    const inventory = this.query<IngredientInventoryRow>(
+      'SELECT quantity, unit, expiry FROM inventory WHERE ingredientId = ?',
+      [ingredientId]
+    );
+
+    return { name: ingredient?.name ?? null, inventory };
   }
 
   exec(sql: string, params: any[] = []) {

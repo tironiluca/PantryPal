@@ -48,6 +48,19 @@ describe('DbService SQL identifier validation', () => {
     expect(DB_TABLE_COLUMNS.inventory).toContain('barcode');
     expect(DB_TABLE_COLUMNS['users']).toBeUndefined();
   });
+
+  it('loads an ingredient name and its inventory through one service method', () => {
+    const query = vi.spyOn(service, 'query')
+      .mockReturnValueOnce([{ name: 'Milk' }])
+      .mockReturnValueOnce([{ quantity: 2, unit: 'l', expiry: '2026-09-01' }]);
+
+    expect(service.getIngredientInventory('ingredient-1')).toEqual({
+      name: 'Milk',
+      inventory: [{ quantity: 2, unit: 'l', expiry: '2026-09-01' }],
+    });
+    expect(query).toHaveBeenNthCalledWith(1, 'SELECT name FROM ingredients WHERE id = ?', ['ingredient-1']);
+    expect(query).toHaveBeenNthCalledWith(2, 'SELECT quantity, unit, expiry FROM inventory WHERE ingredientId = ?', ['ingredient-1']);
+  });
 });
 
 describe('DbService persistence fallback', () => {

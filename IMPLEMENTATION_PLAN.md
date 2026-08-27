@@ -1,6 +1,16 @@
-# PantryPal - Current Implementation Plan
+# PantryPal - Implementation Plan
 
-This document reflects the repository as of 2026-08-27. Completed work has been removed from the active backlog; the remaining items below are based on the current source and tests.
+Updated 2026-08-27. This document tracks remaining product, security, and release work. Completed repository changes are summarized below; detailed test ownership is maintained in [TEST_MATRIX.md](TEST_MATRIX.md).
+
+## Completed In Repository
+
+- Environment files use placeholders; build-time Supabase values come from variables or CI secrets.
+- Recipe import displays and documents third-party proxy privacy limitations.
+- Voice subscriptions use `takeUntilDestroyed()`.
+- Ingredient barcode failures use shared error handling and have regression coverage.
+- Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
+- CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
+- Playwright covers unauthenticated access to every protected route.
 
 ## Current State
 
@@ -16,10 +26,8 @@ PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabas
 
 Environment files now contain placeholders only. `npm start` and `npm run build` generate them from `SUPABASE_URL` and `SUPABASE_ANON_KEY`, loaded from a local `.env` or CI variables, and fail when either value is missing.
 
-- A committed `environment.template.ts` containing placeholders is now available.
-- Rotate the exposed Supabase key in the Supabase project and deployment history.
+- Rotate any previously exposed Supabase key in the Supabase project and deployment history.
 - Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
-- Repository-side protection is documented in `README.md`; CI receives Supabase values only through secrets.
 
 #### 2. Make recipe import privacy explicit
 
@@ -27,10 +35,7 @@ Environment files now contain placeholders only. `npm start` and `npm run build`
 
 Recipe URLs are still sent to third-party CORS proxies, even though encoding and private-network rejection are implemented. A privacy notice is now shown beside the import action.
 
-- Add a concise privacy notice beside the import action.
-- Document the third-party proxy dependency and its limitations.
 - Prefer a first-party Supabase Edge Function proxy when the backend is available.
-- The dialog notice and repository documentation now explain third-party proxy disclosure and sensitive-URL limitations.
 
 ### P1 - Correctness and Resource Safety
 
@@ -40,8 +45,6 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 Several dialog and voice flows still have unmanaged subscriptions, and some async operations still use silent catches or lack user feedback.
 
-- The voice control overlay now uses `takeUntilDestroyed()` for transcript and error streams instead of manually tracking subscriptions.
-- Ingredient barcode lookup failures now go through the shared error handler, with regression coverage for the fallback editor flow.
 - Apply `takeUntilDestroyed()` to remaining component subscriptions.
 - Route HTTP and database failures through the existing error and snackbar services.
 - Replace silent catches with intentional handling and logging.
@@ -61,9 +64,6 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 Some components still construct raw SQL for related data and know the database schema directly. For example, meal-of-day logic now uses `DbService.getIngredientInventory()`, but similar ingredient, inventory, recipe, and meal-plan lookups remain in component code or are duplicated across services.
 
-- Meal-plan ingredient and inventory deduction lookups now use typed, user-scoped `DbService` methods; the existing ingredient inventory lookup is user-scoped as well, with focused service tests.
-- Inventory ingredient-name lookups now use a typed, user-scoped `DbService` method with empty-input handling and focused service tests.
-- Meal-of-day recipe, ingredient, and expiry lookups now use user-scoped `DbService` methods instead of raw SQL in the component.
 - Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
 - Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
 - Preserve user and household scoping when replacing direct queries.
@@ -96,21 +96,19 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 
 #### 8. Cover the entire codebase with Vitest and Playwright
 
-**Status:** Not started
+**Status:** Partial
 
 The current suite covers only a small subset of the production code. Every production feature and shared service must be covered by both the Vitest unit/component suite and at least one Playwright browser workflow.
 
 - Add Vitest tests for every production TypeScript service, component, guard, model, and utility, including success, failure, loading, empty, and permission branches where applicable.
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
-- Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
-- Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
-- `.github/workflows/ci.yml` now runs unit tests, coverage, production build, and Playwright, and uploads coverage and browser artifacts.
-- Full production-area coverage remains blocked by the missing specs listed in `TEST_MATRIX.md`.
+- CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
+- Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix
 
-**Status:** Not started
+**Status:** Partial
 
 Maintain a checked-in test matrix mapping every `src/app` production file and route to its Vitest and Playwright coverage. The matrix must be reviewed whenever production code changes.
 
@@ -118,7 +116,14 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 - Record the owning Vitest spec and Playwright spec for each area.
 - Track uncovered branches and workflows as backlog entries with an owner and acceptance test.
 - Require the matrix and coverage reports in pull-request checks.
-- `TEST_MATRIX.md` now records the current Vitest and Playwright ownership map and marks uncovered areas as release blockers.
+- `TEST_MATRIX.md` records current Vitest and Playwright ownership and marks uncovered areas as release blockers.
+
+## External Blockers
+
+- Credential rotation and history cleanup require Supabase and GitHub administration.
+- A first-party recipe proxy requires a deployed Supabase Edge Function and its operational policy.
+- Analytics requires product approval for metrics, retention, and scope.
+- Mobile navigation requires a product decision between the existing toolbar and bottom navigation.
 
 ## Recommended Order
 

@@ -2,6 +2,8 @@
 
 This matrix is the release checklist for production areas. A row is complete only when the named Vitest and Playwright workflows exist and pass in CI.
 
+Current measured Vitest coverage is 47.44% statements, 37.25% branches, 49.82% functions, and 47.54% lines. The release target is 90% for each metric; Playwright coverage is tracked by workflow and route, not source-line percentage.
+
 | Area                   | Production surface                                           | Vitest coverage                                                                                                               | Playwright coverage                                                                                        | Status    |
 | ---------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------- |
 | Authentication         | Login, register, forgot password, auth guard                 | `src/app/features/auth/login/login.component.spec.ts`, `src/app/core/guards/auth.guard.spec.ts`                               | `e2e/login.spec.ts`, `e2e/register.spec.ts`, `e2e/forgot-password.spec.ts`, `e2e/protected-routes.spec.ts` | Partial   |

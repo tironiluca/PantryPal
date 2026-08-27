@@ -104,6 +104,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
+- The current Vitest report measures 47.44% statements, 37.25% branches, 49.82% functions, and 47.54% lines; 90% remains the release target.
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix

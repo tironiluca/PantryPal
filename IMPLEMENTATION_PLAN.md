@@ -59,6 +59,7 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 Some components still construct raw SQL for related data and know the database schema directly. For example, meal-of-day logic now uses `DbService.getIngredientInventory()`, but similar ingredient, inventory, recipe, and meal-plan lookups remain in component code or are duplicated across services.
 
+- Meal-plan ingredient and inventory deduction lookups now use typed, user-scoped `DbService` methods; the existing ingredient inventory lookup is user-scoped as well, with focused service tests.
 - Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
 - Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
 - Preserve user and household scoping when replacing direct queries.

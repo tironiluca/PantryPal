@@ -244,13 +244,7 @@ export class MealPlanCalendarComponent implements OnInit {
 
   private deductIngredients(meal: MealPlanWithRecipe): void {
     try {
-      const recipeIngredients = this.db.query<any>(
-        `SELECT ri.ingredientId, ri.quantity, ri.unit, ing.name
-         FROM recipe_ingredients ri
-         JOIN ingredients ing ON ing.id = ri.ingredientId
-         WHERE ri.recipeId = ? AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)`,
-        [meal.recipeId]
-      );
+      const recipeIngredients = this.db.getRecipeIngredients(meal.recipeId);
 
       if (recipeIngredients.length === 0) {
         this.snackbar.success('Marked as complete (no ingredients to deduct)');
@@ -267,13 +261,7 @@ export class MealPlanCalendarComponent implements OnInit {
         const neededUnit = ri.unit as Unit;
 
         // Fetch inventory rows ordered by earliest expiry first (FIFO)
-        const invRows = this.db.query<any>(
-          `SELECT id, quantity, unit FROM inventory
-           WHERE ingredientId = ? AND quantity > 0
-             AND (isDeleted IS NULL OR isDeleted = 0)
-           ORDER BY CASE WHEN expiry IS NULL THEN '9999-12-31' ELSE expiry END ASC`,
-          [ri.ingredientId]
-        );
+        const invRows = this.db.getInventoryForIngredient(ri.ingredientId);
 
         let fullyDeducted = false;
 

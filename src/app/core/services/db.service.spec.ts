@@ -50,7 +50,7 @@ describe('DbService SQL identifier validation', () => {
   });
 
   it('loads an ingredient name and its inventory through one service method', () => {
-    const query = vi.spyOn(service, 'query')
+    const queryByUser = vi.spyOn(service, 'queryByUser')
       .mockReturnValueOnce([{ name: 'Milk' }])
       .mockReturnValueOnce([{ quantity: 2, unit: 'l', expiry: '2026-09-01' }]);
 
@@ -58,8 +58,35 @@ describe('DbService SQL identifier validation', () => {
       name: 'Milk',
       inventory: [{ quantity: 2, unit: 'l', expiry: '2026-09-01' }],
     });
-    expect(query).toHaveBeenNthCalledWith(1, 'SELECT name FROM ingredients WHERE id = ?', ['ingredient-1']);
-    expect(query).toHaveBeenNthCalledWith(2, 'SELECT quantity, unit, expiry FROM inventory WHERE ingredientId = ?', ['ingredient-1']);
+    expect(queryByUser).toHaveBeenNthCalledWith(1, 'ingredients', 'id = ?', ['ingredient-1']);
+    expect(queryByUser).toHaveBeenNthCalledWith(2, 'inventory', 'ingredientId = ?', ['ingredient-1']);
+  });
+
+  it('loads recipe ingredients and names through user-scoped queries', () => {
+    const queryByUser = vi.spyOn(service, 'queryByUser')
+      .mockReturnValueOnce([{ id: 'ingredient-1', name: 'Milk' }])
+      .mockReturnValueOnce([{ ingredientId: 'ingredient-1', quantity: 2, unit: 'l' }]);
+
+    expect(service.getRecipeIngredients('recipe-1')).toEqual([
+      { ingredientId: 'ingredient-1', quantity: 2, unit: 'l', name: 'Milk' },
+    ]);
+    expect(queryByUser).toHaveBeenNthCalledWith(1, 'ingredients');
+    expect(queryByUser).toHaveBeenNthCalledWith(2, 'recipe_ingredients', 'recipeId = ?', ['recipe-1']);
+  });
+
+  it('loads only positive inventory through a user-scoped query', () => {
+    const queryByUser = vi.spyOn(service, 'queryByUser').mockReturnValue([
+      { id: 'inventory-1', quantity: 2, unit: 'l' },
+    ]);
+
+    expect(service.getInventoryForIngredient('ingredient-1')).toEqual([
+      { id: 'inventory-1', quantity: 2, unit: 'l' },
+    ]);
+    expect(queryByUser).toHaveBeenCalledWith(
+      'inventory',
+      'ingredientId = ? AND quantity > 0',
+      ['ingredient-1']
+    );
   });
 });
 

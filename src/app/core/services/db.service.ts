@@ -45,6 +45,13 @@ export interface IngredientInventory {
   inventory: IngredientInventoryRow[];
 }
 
+export interface RecipeIngredientRow {
+  ingredientId: string;
+  quantity: number;
+  unit: string;
+  name: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DbService {
   private auth = inject(AuthService);
@@ -416,16 +423,38 @@ export class DbService {
   }
 
   getIngredientInventory(ingredientId: string): IngredientInventory {
-    const ingredient = this.query<{ name: string }>(
-      'SELECT name FROM ingredients WHERE id = ?',
-      [ingredientId]
-    )[0];
-    const inventory = this.query<IngredientInventoryRow>(
-      'SELECT quantity, unit, expiry FROM inventory WHERE ingredientId = ?',
+    const ingredient = this.queryByUser<{ name: string }>('ingredients', 'id = ?', [ingredientId])[0];
+    const inventory = this.queryByUser<IngredientInventoryRow>(
+      'inventory',
+      'ingredientId = ?',
       [ingredientId]
     );
 
     return { name: ingredient?.name ?? null, inventory };
+  }
+
+  getRecipeIngredients(recipeId: string): RecipeIngredientRow[] {
+    const ingredients = new Map(
+      this.queryByUser<{ id: string; name: string }>('ingredients')
+        .map(ingredient => [ingredient.id, ingredient.name])
+    );
+
+    return this.queryByUser<Omit<RecipeIngredientRow, 'name'>>(
+      'recipe_ingredients',
+      'recipeId = ?',
+      [recipeId]
+    ).map(ingredient => ({
+      ...ingredient,
+      name: ingredients.get(ingredient.ingredientId) ?? null,
+    }));
+  }
+
+  getInventoryForIngredient(ingredientId: string): Array<{ id: string; quantity: number; unit: string }> {
+    return this.queryByUser<{ id: string; quantity: number; unit: string }>(
+      'inventory',
+      'ingredientId = ? AND quantity > 0',
+      [ingredientId]
+    );
   }
 
   exec(sql: string, params: any[] = []) {

@@ -159,7 +159,10 @@ export class IngredientListComponent {
           .byBarcode(code)
           .pipe(
             takeUntilDestroyed(this.destroyRef),
-            catchError(() => of(null))
+            catchError(error => {
+              this.errorHandler.handleWithMessage(error, 'Could not look up product', 'Product lookup');
+              return of(null);
+            })
           )
           .subscribe((res: any) => {
             const name: string =

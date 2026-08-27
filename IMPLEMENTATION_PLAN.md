@@ -68,12 +68,11 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 
 #### 6. Make duplicate barcode prevention authoritative
 
-**Status:** Partial
+**Status:** In progress
 
-The inventory dialog checks for duplicates, but the check is not user-scoped and there is no database constraint.
+The inventory dialog and database now enforce user-scoped barcode uniqueness, including a shared guest scope. Existing databases with conflicting legacy data need cleanup before the index can be created.
 
-- Scope the check to the current user, including guest data behavior.
-- Add a uniqueness strategy that permits separate users to use the same barcode.
+- Clean up conflicting legacy barcode rows and verify the migration index.
 - Handle constraint errors with a translated user-facing message.
 - Add tests for create, edit, guest, and cross-user cases.
 

@@ -145,8 +145,9 @@ export class InventoryEditDialog implements OnInit {
       }
 
       if (this.model.barcode) {
-        const existing = this.db.query<any>(
-          'SELECT id FROM inventory WHERE barcode = ? AND id != ?',
+        const existing = this.db.queryByUser<any>(
+          'inventory',
+          'barcode = ? AND id != ?',
           [this.model.barcode, this.model.id || '']
         );
         if (existing.length > 0) {
@@ -196,6 +197,10 @@ export class InventoryEditDialog implements OnInit {
       }
       this.ref.close(true);
     } catch (error) {
+      if (String(error).toLowerCase().includes('unique')) {
+        this.snackbar.error(this.transloco.translate('inventory.barcodeAlreadyInUse'));
+        return;
+      }
       this.errorHandler.handle(error, this.transloco.translate('inventory.failedSaveItem'));
     }
   }

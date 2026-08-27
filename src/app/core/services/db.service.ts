@@ -276,6 +276,15 @@ export class DbService {
     this.addColumnIfNotExists('inventory', 'syncedAt', 'TEXT');
     this.addColumnIfNotExists('inventory', 'version', 'INTEGER DEFAULT 1');
     this.addColumnIfNotExists('inventory', 'isDeleted', 'INTEGER DEFAULT 0');
+    try {
+      this.db.run(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_user_barcode
+          ON inventory (COALESCE(userId, ''), barcode)
+          WHERE barcode IS NOT NULL AND barcode != ''
+      `);
+    } catch (error) {
+      console.warn('Could not create the inventory barcode uniqueness index', error);
+    }
 
     this.addColumnIfNotExists('recipes', 'userId', 'TEXT');
     this.addColumnIfNotExists('recipes', 'syncedAt', 'TEXT');

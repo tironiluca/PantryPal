@@ -8,6 +8,8 @@ Updated 2026-08-27. This document tracks remaining product, security, and releas
 - Recipe import displays and documents third-party proxy privacy limitations.
 - Voice subscriptions use `takeUntilDestroyed()`.
 - Ingredient barcode failures use shared error handling and have regression coverage.
+- Recipe URL validation now rejects private and local network targets before proxy access, with parser and proxy-fallback regression coverage.
+- Cache, voice-command, and recipe-import service behavior now have inferred unit specifications.
 - Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
 - CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
 - Playwright covers unauthenticated access to every protected route.

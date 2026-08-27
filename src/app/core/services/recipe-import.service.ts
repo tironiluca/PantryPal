@@ -407,7 +407,7 @@ export class RecipeImportService {
   isValidUrl(url: string): boolean {
     try {
       new URL(url);
-      return true;
+      return !this.isSsrfTarget(url);
     } catch {
       return false;
     }

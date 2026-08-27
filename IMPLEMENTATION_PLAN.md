@@ -20,18 +20,7 @@ Environment files now contain placeholders only. `npm start` and `npm run build`
 - Rotate the exposed Supabase key in the Supabase project and deployment history.
 - Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
 
-#### 2. Replace the localStorage database fallback
-
-**Status:** Partial
-
-When OPFS cannot create a writable handle, the database must remain durable without using localStorage.
-
-- IndexedDB fallback is implemented for database reads and writes.
-- Use memory-only mode only when both OPFS and IndexedDB are unavailable.
-- Expose a user-visible warning when persistence is unavailable. (Implemented via `DbService.persistenceAvailable` and a one-time snackbar.)
-- Add focused IndexedDB and memory-only fallback tests.
-
-#### 3. Make recipe import privacy explicit
+#### 2. Make recipe import privacy explicit
 
 **Status:** Partial
 
@@ -43,7 +32,7 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 ### P1 - Correctness and Resource Safety
 
-#### 4. Finish observable and async error cleanup
+#### 3. Finish observable and async error cleanup
 
 **Status:** Partial
 
@@ -54,28 +43,17 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 - Replace silent catches with intentional handling and logging.
 - Add tests for failed product lookup, save, scanner, and dialog workflows.
 
-#### 5. Make duplicate barcode prevention authoritative
+#### 4. Make duplicate barcode prevention authoritative
 
 **Status:** Partial
 
 The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index.
 
-- Handle constraint errors with a translated user-facing message.
 - Add database migration tests and tests for create, edit, guest, and cross-user cases.
 
 ### P2 - Feature Completion
 
-#### 6. Finish unit-aware shopping cart calculations
-
-**Status:** Completed
-
-Cart calculations now aggregate compatible units through `UnitConverterService`, report shortages explicitly, and keep incompatible unit families separate. Focused cart tests cover these cases.
-
-- [x] Keep the conversion behavior covered by focused cart tests.
-- [x] Keep incompatible units separate and make the shortage explicit.
-- [x] Add cart conversion and mixed-unit tests.
-
-#### 7. Complete list controls and meal-of-day labels
+#### 5. Complete list controls and meal-of-day labels
 
 **Status:** Partial
 
@@ -86,7 +64,7 @@ Inventory has filter/sort state and active filter counting, but visible sort con
 - Implement only filters supported by each data model.
 - Resolve ingredient IDs to names in meal-of-day output.
 
-#### 8. Decide and implement analytics scope
+#### 6. Decide and implement analytics scope
 
 **Status:** Not started
 
@@ -98,7 +76,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 ### P3 - UX and Test Coverage
 
-#### 9. Finish responsive navigation and dialog consistency
+#### 7. Finish responsive navigation and dialog consistency
 
 **Status:** Partial
 
@@ -108,7 +86,7 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 10. Cover the entire codebase with Vitest and Playwright
+#### 8. Cover the entire codebase with Vitest and Playwright
 
 **Status:** Not started
 
@@ -120,7 +98,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
 - Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
 
-#### 11. Define the full-coverage test matrix
+#### 9. Define the full-coverage test matrix
 
 **Status:** Not started
 
@@ -134,11 +112,10 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 ## Recommended Order
 
 1. Rotate credentials and remove them from build inputs.
-2. Complete IndexedDB fallback warnings and tests.
-3. Finish scanner cleanup, subscription cleanup, and error handling.
-4. Make barcode uniqueness authoritative.
-5. Complete cart conversion tests and visible list controls.
-6. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
+2. Finish subscription cleanup and error handling.
+3. Add authoritative barcode migration tests.
+4. Complete visible list controls and meal-of-day labels.
+5. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
 
 ## Verification Commands
 

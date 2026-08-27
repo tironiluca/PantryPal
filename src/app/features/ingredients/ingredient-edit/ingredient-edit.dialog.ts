@@ -1,4 +1,5 @@
-import { Component, Inject, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +27,7 @@ import { NutritionService, NutritionData } from '../../../core/services/nutritio
 export class IngredientEditDialog implements OnInit {
   private db = inject(DbService);
   private dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
   private dataEvents = inject(DataEventsService);
   private nutritionService = inject(NutritionService);
 
@@ -77,7 +79,7 @@ export class IngredientEditDialog implements OnInit {
       },
       width: '520px',
       maxWidth: '95vw',
-    }).afterClosed().subscribe((nutrition: NutritionData | null) => {
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((nutrition: NutritionData | null) => {
       if (nutrition) {
         // Store for later — will be persisted in save()
         this.pendingNutrition = nutrition;

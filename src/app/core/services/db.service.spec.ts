@@ -1,6 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { DB_TABLE_COLUMNS, DbService } from './db.service';
+import { SnackbarService } from './snackbar.service';
+
+const storage = vi.hoisted(() => new Map<string, Uint8Array>());
+const openDbMock = vi.hoisted(() => vi.fn(async () => ({
+  get: vi.fn(async (_store: string, key: string) => storage.get(key)),
+  put: vi.fn(async (_store: string, value: Uint8Array, key: string) => {
+    storage.set(key, value);
+  }),
+  close: vi.fn(),
+})));
+
+vi.mock('idb', () => ({ openDB: openDbMock }));
 
 describe('DbService SQL identifier validation', () => {
   let service: DbService;
@@ -34,5 +47,50 @@ describe('DbService SQL identifier validation', () => {
   it('keeps the shared allowlist limited to known schema tables', () => {
     expect(DB_TABLE_COLUMNS.inventory).toContain('barcode');
     expect(DB_TABLE_COLUMNS['users']).toBeUndefined();
+  });
+});
+
+describe('DbService persistence fallback', () => {
+  let service: DbService;
+  let snackbar: { warning: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    storage.clear();
+    openDbMock.mockClear();
+    snackbar = { warning: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        DbService,
+        {
+          provide: AuthService,
+          useValue: { getCurrentUserId: () => null },
+        },
+        { provide: SnackbarService, useValue: snackbar },
+      ],
+    });
+    service = TestBed.inject(DbService);
+  });
+
+  it('reads and writes the database through IndexedDB when OPFS is unavailable', async () => {
+    const db = service as any;
+    db.db = { export: () => new Uint8Array([1, 2, 3]) };
+
+    await db.writeToOPFS('pantrypal.db', new Uint8Array([4, 5]));
+    expect(storage.get('pantrypal.db')).toEqual(new Uint8Array([4, 5]));
+
+    await expect(db.readFromOPFS('pantrypal.db')).resolves.toEqual(new Uint8Array([4, 5]));
+    expect(service.persistenceAvailable()).toBe(true);
+  });
+
+  it('marks persistence unavailable and warns once when both backends fail', async () => {
+    openDbMock.mockRejectedValue(new Error('IndexedDB unavailable'));
+    const db = service as any;
+    db.db = { export: () => new Uint8Array([1, 2, 3]) };
+
+    await service.persist();
+    await service.persist();
+
+    expect(service.persistenceAvailable()).toBe(false);
+    expect(snackbar.warning).toHaveBeenCalledTimes(1);
   });
 });

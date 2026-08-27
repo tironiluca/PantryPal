@@ -1,4 +1,5 @@
-import { Component, inject, Inject, signal, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Inject, signal, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -55,6 +56,7 @@ export class MealPlanAddDialog implements OnInit {
   private transloco = inject(TranslocoService);
   private dialogRef = inject(MatDialogRef<MealPlanAddDialog>);
   private dataEvents = inject(DataEventsService);
+  private destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   isEditMode = false;
@@ -71,7 +73,7 @@ export class MealPlanAddDialog implements OnInit {
     this.initForm();
 
     // Watch for recipe selection changes
-    this.form.get('recipeId')?.valueChanges.subscribe(recipeId => {
+    this.form.get('recipeId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(recipeId => {
       const recipe = this.recipes().find(r => r.id === recipeId);
       this.selectedRecipe.set(recipe || null);
     });

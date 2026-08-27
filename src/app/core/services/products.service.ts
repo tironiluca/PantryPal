@@ -9,10 +9,10 @@ interface OFFResponse { status: number; product?: any; }
 export class ProductsService {
   private cache = inject(CacheService);
   private http = inject(HttpClient);
+  private cacheReady: Promise<void>;
 
   constructor() {
-    // Initialize cache on service creation
-    this.cache.init();
+    this.cacheReady = this.cache.init();
   }
 
   /**
@@ -22,7 +22,8 @@ export class ProductsService {
    * @returns Observable of product data
    */
   byBarcode(barcode: string): Observable<OFFResponse> {
-    return from(this.cache.get(barcode)).pipe(
+    return from(this.cacheReady).pipe(
+      switchMap(() => from(this.cache.get(barcode))),
       switchMap(cached => {
         // Return cached data if available
         if (cached) {

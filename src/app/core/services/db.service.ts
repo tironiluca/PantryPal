@@ -1,8 +1,37 @@
 import { Injectable, inject } from '@angular/core';
 import initSqlJs from 'sql.js/dist/sql-wasm.js';
+import { openDB } from 'idb';
 import { AuthService } from './auth.service';
 
 const DB_FILE = 'pantrypal.db';
+const DB_FALLBACK = 'pantrypal-storage';
+const DB_STORE = 'database';
+
+export const DB_TABLE_COLUMNS: Record<string, readonly string[]> = {
+  ingredient_categories: ['id', 'name', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+  ingredients: ['id', 'name', 'categoryId', 'defaultShelfLifeDays', 'notifyStartDays', 'notifyRepeatDays', 'barcode',
+    'nutritionData', 'energyKcal', 'proteinG', 'carbsG', 'fatG', 'fiberG', 'sugarG', 'sodiumMg',
+    'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+  inventory: ['id', 'ingredientId', 'quantity', 'unit', 'minRestock', 'expiry', 'location', 'barcode',
+    'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
+  recipes: ['id', 'name', 'steps', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt',
+    'sourceUrl', 'sourceName', 'importedAt', 'imageUrl', 'prepTime', 'cookTime', 'servings', 'notes'],
+  recipe_ingredients: ['recipeId', 'ingredientId', 'quantity', 'unit', 'userId', 'syncedAt', 'version', 'isDeleted',
+    'createdAt', 'updatedAt'],
+  meal_plans: ['id', 'userId', 'date', 'mealType', 'recipeId', 'servings', 'notes', 'completed', 'syncedAt',
+    'version', 'isDeleted', 'createdAt', 'updatedAt'],
+  nutrition_goals: ['userId', 'dailyKcalGoal', 'proteinGoal', 'carbsGoal', 'fatGoal', 'fiberGoal', 'sugarGoal',
+    'sodiumGoal', 'trackFiber', 'trackSugar', 'trackSodium', 'goalType', 'updatedAt'],
+  nutrition_logs: ['id', 'userId', 'date', 'recipeId', 'mealType', 'servings', 'totalKcal', 'totalProtein',
+    'totalCarbs', 'totalFat', 'totalFiber', 'totalSugar', 'totalSodium', 'notes', 'createdAt'],
+  voice_settings: ['userId', 'enabled', 'language', 'continuousMode', 'updatedAt'],
+  voice_command_log: ['id', 'userId', 'transcript', 'command', 'success', 'timestamp'],
+  image_recognition_log: ['id', 'userId', 'imagePath', 'predictions', 'selectedLabel', 'confidence', 'userCorrected', 'timestamp'],
+  sync_log: ['id', 'tableName', 'operation', 'recordId', 'timestamp', 'success', 'errorMessage'],
+  user_settings: ['userId', 'language', 'updatedAt'],
+};
+
+const ALLOWED_TABLES = new Set(Object.keys(DB_TABLE_COLUMNS));
 
 @Injectable({ providedIn: 'root' })
 export class DbService {
@@ -296,6 +325,8 @@ export class DbService {
    */
   private addColumnIfNotExists(table: string, column: string, type: string): void {
     try {
+      this.assertAllowedTable(table);
+      this.assertAllowedColumn(table, column);
       // Check if column exists
       // NOTE: PRAGMA statements cannot use parameterized binding — the table
       // name must be a string literal. Callers must never pass user-controlled
@@ -444,6 +475,7 @@ export class DbService {
    * @returns Promise that resolves when all rows are inserted
    */
   bulkInsert(table: string, rows: any[], columns: string[]): Promise<void> {
+    this.assertAllowedColumns(table, columns);
     const statements = rows.map(row => {
       const placeholders = columns.map(() => '?').join(',');
       const values = columns.map(col => row[col] ?? null);
@@ -466,6 +498,8 @@ export class DbService {
    * @returns Promise that resolves when all rows are updated
    */
   bulkUpdate(table: string, rows: any[], columns: string[], idColumn = 'id'): Promise<void> {
+    this.assertAllowedColumns(table, columns);
+    this.assertAllowedColumn(table, idColumn);
     const statements = rows.map(row => {
       const setClause = columns.map(col => `${col}=?`).join(',');
       const values = [...columns.map(col => row[col] ?? null), row[idColumn]];
@@ -487,6 +521,8 @@ export class DbService {
    * @returns Promise that resolves when all rows are deleted
    */
   bulkDelete(table: string, ids: string[], idColumn = 'id'): Promise<void> {
+    this.assertAllowedTable(table);
+    this.assertAllowedColumn(table, idColumn);
     const statements = ids.map(id => ({
       sql: `DELETE FROM ${table} WHERE ${idColumn}=?`,
       params: [id]
@@ -508,27 +544,54 @@ export class DbService {
       const handle = await dir.getFileHandle(name, { create: false });
       const file = await handle.getFile();
       return new Uint8Array(await file.arrayBuffer());
-    } catch { return null; }
+    } catch (opfsError) {
+      try {
+        const fallback = await openDB(DB_FALLBACK, 1, {
+          upgrade(db) { db.createObjectStore(DB_STORE); },
+        });
+        const data = await fallback.get(DB_STORE, name) as Uint8Array | undefined;
+        fallback.close();
+        return data ?? null;
+      } catch (indexedDbError) {
+        console.warn('Database storage could not be read', { opfsError, indexedDbError });
+        return null;
+      }
+    }
   }
   private async writeToOPFS(name: string, data: Uint8Array) {
-    const dir = await this.rootDir();
-    const handle = await dir.getFileHandle(name, { create: true });
-    // @ts-ignore
-    if ('createSyncAccessHandle' in (handle as any)) {
+    try {
+      const dir = await this.rootDir();
+      const handle = await dir.getFileHandle(name, { create: true });
       // @ts-ignore
-      const access = await (handle as any).createSyncAccessHandle();
-      await access.truncate(0);
-      await access.write(data, { at: 0 });
-      await access.flush();
-      await access.close();
-    } else if ('createWritable' in handle) {
-      // @ts-ignore
-      const writable = await (handle as any).createWritable();
-      await writable.write(data as Uint8Array);
-      await writable.close();
-    } else {
-      // Fallback: localStorage (very small, last resort)
-      localStorage.setItem('pp-db', btoa(String.fromCharCode(...data)));
+      if ('createSyncAccessHandle' in (handle as any)) {
+        // @ts-ignore
+        const access = await (handle as any).createSyncAccessHandle();
+        await access.truncate(0);
+        await access.write(data, { at: 0 });
+        await access.flush();
+        await access.close();
+      } else if ('createWritable' in handle) {
+        // @ts-ignore
+        const writable = await (handle as any).createWritable();
+        await writable.write(data as Uint8Array);
+        await writable.close();
+      } else {
+        throw new Error('OPFS writable handle unavailable');
+      }
+    } catch (opfsError) {
+      try {
+        const fallback = await openDB(DB_FALLBACK, 1, {
+          upgrade(db) { db.createObjectStore(DB_STORE); },
+        });
+        await fallback.put(DB_STORE, data, name);
+        fallback.close();
+      } catch (indexedDbError) {
+        this.memOnly = true;
+        console.warn('Database persistence unavailable; using memory-only mode', {
+          opfsError,
+          indexedDbError,
+        });
+      }
     }
   }
 
@@ -554,6 +617,7 @@ export class DbService {
     params: any[] = [],
     includeDeleted = false
   ): T[] {
+    this.assertAllowedTable(table);
     const userId = this.getCurrentUserId();
 
     // If no user is logged in, return guest data (userId IS NULL)
@@ -576,6 +640,7 @@ export class DbService {
    * @param lastSyncTime ISO timestamp of last successful sync
    */
   getChangedRecords<T = any>(table: string, lastSyncTime: string): T[] {
+    this.assertAllowedTable(table);
     const userId = this.getCurrentUserId();
 
     if (!userId) {
@@ -602,6 +667,7 @@ export class DbService {
    * @param syncTime ISO timestamp of sync
    */
   markAsSynced(table: string, ids: string[], syncTime: string): void {
+    this.assertAllowedTable(table);
     if (ids.length === 0) return;
 
     const placeholders = ids.map(() => '?').join(',');
@@ -620,6 +686,7 @@ export class DbService {
    * @param id Record ID
    */
   softDelete(table: string, id: string): void {
+    this.assertAllowedTable(table);
     const now = new Date().toISOString();
     const sql = `
       UPDATE ${table}
@@ -636,6 +703,7 @@ export class DbService {
    * @param id Record ID
    */
   hardDelete(table: string, id: string): void {
+    this.assertAllowedTable(table);
     const sql = `DELETE FROM ${table} WHERE id = ?`;
     this.exec(sql, [id]);
   }
@@ -657,6 +725,27 @@ export class DbService {
 
     this.execBatch(statements);
     console.log(`Migrated local data to user ${userId}`);
+  }
+
+  private assertAllowedTable(table: string): void {
+    if (!ALLOWED_TABLES.has(table)) {
+      throw new Error(`Invalid database table: ${table}`);
+    }
+  }
+
+  private assertAllowedColumn(table: string, column: string): void {
+    this.assertAllowedTable(table);
+    if (!DB_TABLE_COLUMNS[table].includes(column)) {
+      throw new Error(`Invalid database column: ${table}.${column}`);
+    }
+  }
+
+  private assertAllowedColumns(table: string, columns: string[]): void {
+    this.assertAllowedTable(table);
+    if (columns.length === 0 || new Set(columns).size !== columns.length) {
+      throw new Error(`Invalid database columns for table: ${table}`);
+    }
+    columns.forEach(column => this.assertAllowedColumn(table, column));
   }
 
   /**

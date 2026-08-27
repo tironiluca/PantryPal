@@ -9,6 +9,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DbService } from '../../core/services/db.service';
 import { DataEventsService } from '../../core/services/data-events.service';
+import { Unit, UnitConverterService } from '../../core/services/unit-converter.service';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 
 interface CartItem {
@@ -39,6 +40,7 @@ export class CartViewComponent implements OnInit {
   private db = inject(DbService);
   private dataEvents = inject(DataEventsService);
   private destroyRef = inject(DestroyRef);
+  private unitConverter = inject(UnitConverterService);
 
   items = signal<CartItem[]>([]);
   loading = signal(false);
@@ -78,51 +80,62 @@ export class CartViewComponent implements OnInit {
   loadItems(): void {
     this.loading.set(true);
     try {
-      const low = this.db.query<any>(`
-        SELECT ing.id AS ingredientId,
-               ing.name AS ingredientName,
-               SUM(inv.quantity) AS qty,
-               MIN(inv.minRestock) AS minRestock,
-               inv.unit
-        FROM ingredients ing
-        LEFT JOIN inventory inv ON inv.ingredientId = ing.id
-          AND (inv.isDeleted IS NULL OR inv.isDeleted = 0)
-        WHERE inv.minRestock IS NOT NULL AND inv.minRestock > 0
-        GROUP BY ing.id, inv.unit
-        HAVING (SUM(inv.quantity) IS NULL OR SUM(inv.quantity) < MIN(inv.minRestock))
-      `);
-
-      const expired = this.db.query<any>(`
-        SELECT inv.ingredientId,
-               ing.name AS ingredientName,
-               inv.unit
-        FROM inventory inv
-        JOIN ingredients ing ON ing.id = inv.ingredientId
-        WHERE inv.expiry IS NOT NULL
-          AND DATE(inv.expiry) <= DATE('now')
-          AND (inv.isDeleted IS NULL OR inv.isDeleted = 0)
-      `);
-
+      const inventory = this.db.queryByUser<any>('inventory');
+      const ingredients = new Map(
+        this.db.queryByUser<{ id: string; name: string }>('ingredients').map(ingredient => [ingredient.id, ingredient.name])
+      );
       const out: CartItem[] = [];
 
-      for (const l of low) {
-        out.push({
-          ingredientId: l.ingredientId,
-          ingredientName: l.ingredientName ?? l.ingredientId,
-          suggestedQty: Math.max(0, (l.minRestock ?? 0) - (l.qty ?? 0)),
-          unit: l.unit || 'pcs',
-          reason: 'min-restock',
-        });
+      const byIngredient = new Map<string, any[]>();
+      for (const row of inventory) {
+        const rows = byIngredient.get(row.ingredientId) ?? [];
+        rows.push(row);
+        byIngredient.set(row.ingredientId, rows);
       }
 
-      for (const e of expired) {
-        out.push({
-          ingredientId: e.ingredientId,
-          ingredientName: e.ingredientName ?? e.ingredientId,
-          suggestedQty: 1,
-          unit: e.unit || 'pcs',
-          reason: 'expired-replacement',
-        });
+      for (const [ingredientId, rows] of byIngredient) {
+        const unitGroups = new Map<string, any[]>();
+        for (const row of rows) {
+          const unit = row.unit as Unit;
+          const groupKey = this.unitConverter.getUnitType(unit) ?? unit;
+          const group = unitGroups.get(groupKey) ?? [];
+          group.push(row);
+          unitGroups.set(groupKey, group);
+        }
+
+        for (const group of unitGroups.values()) {
+          const targetUnit = (group[0].unit || 'pcs') as Unit;
+          const needed = group.reduce((maximum, row) => {
+            const restock = this.unitConverter.convert(row.minRestock ?? 0, row.unit as Unit, targetUnit);
+            return restock === null ? maximum : Math.max(maximum, restock);
+          }, 0);
+          const available = this.unitConverter.sumQuantities(
+            group.map(row => ({ quantity: row.quantity ?? 0, unit: row.unit as Unit })),
+            targetUnit
+          );
+
+          if (available !== null && needed > available) {
+            out.push({
+              ingredientId,
+              ingredientName: ingredients.get(ingredientId) ?? ingredientId,
+              suggestedQty: needed - available,
+              unit: targetUnit,
+              reason: 'min-restock',
+            });
+          }
+        }
+
+        for (const row of rows) {
+          if (row.expiry && new Date(row.expiry).getTime() <= Date.now()) {
+            out.push({
+              ingredientId,
+              ingredientName: ingredients.get(ingredientId) ?? ingredientId,
+              suggestedQty: 1,
+              unit: row.unit || 'pcs',
+              reason: 'expired-replacement',
+            });
+          }
+        }
       }
 
       this.items.set(out);

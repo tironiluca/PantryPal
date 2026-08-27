@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import { DbService } from './db.service';
+import { DB_TABLE_COLUMNS, DbService } from './db.service';
 import { UserProfileService } from './user-profile.service';
 import { SnackbarService } from './snackbar.service';
 import { ErrorHandlerService } from './error-handler.service';
@@ -48,19 +48,6 @@ export class SyncService {
     'recipe_ingredients',
     'meal_plans',
   ];
-
-  // Allowlist of valid columns per table — protects against SQL injection via remote column names (BUG-12)
-  private readonly TABLE_COLUMNS: Record<string, string[]> = {
-    ingredient_categories: ['id', 'name', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-    ingredients: ['id', 'name', 'categoryId', 'defaultShelfLifeDays', 'notifyStartDays', 'notifyRepeatDays',
-                  'energyKcal', 'proteinG', 'carbsG', 'fatG', 'fiberG', 'sugarG', 'sodiumMg',
-                  'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-    inventory: ['id', 'ingredientId', 'quantity', 'unit', 'location', 'expiry', 'barcode', 'minStock',
-                'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-    recipes: ['id', 'name', 'steps', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-    recipe_ingredients: ['recipeId', 'ingredientId', 'quantity', 'unit', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-    meal_plans: ['id', 'date', 'mealType', 'recipeId', 'notes', 'userId', 'syncedAt', 'version', 'isDeleted', 'createdAt', 'updatedAt'],
-  };
 
   /**
    * Sync now - push local changes and pull remote changes
@@ -370,8 +357,11 @@ export class SyncService {
         // Insert/update non-conflicting records
         if (safeRecords.length > 0) {
           // Filter columns against allowlist to prevent SQL injection via remote column names (BUG-12)
-          const allowedCols = this.TABLE_COLUMNS[table] ?? [];
+          const allowedCols = DB_TABLE_COLUMNS[table] ?? [];
           const columns = Object.keys(safeRecords[0]).filter(c => allowedCols.includes(c));
+          if (columns.length === 0) {
+            throw new Error(`No allowed columns received for sync table: ${table}`);
+          }
 
           for (const record of safeRecords) {
             const placeholders = columns.map(() => '?').join(',');

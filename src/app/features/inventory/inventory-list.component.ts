@@ -211,6 +211,11 @@ export class InventoryListComponent {
     this.applyFilters();
   }
 
+  toggleSortDirection() {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    this.applyFilters();
+  }
+
   clearFilters() {
     this.searchTerm = '';
     this.locationFilter = null;

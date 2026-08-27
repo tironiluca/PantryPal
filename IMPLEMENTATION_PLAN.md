@@ -6,63 +6,37 @@ This document reflects the repository as of 2026-08-27. Completed work has been 
 
 PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabase for authentication and sync, Material UI, barcode/OCR features, recipes, meal planning, nutrition, household sharing, and IndexedDB product caching.
 
-## Completed Work
-
-The following items are implemented and are no longer active tasks:
-
-- Database tables and migrations for recipes, meal plans, nutrition, voice, image recognition, sync, and user settings.
-- Database initialization de-duplication with `initPromise`.
-- User-scoped inventory, ingredient, recipe, and notification queries, including guest `NULL` handling.
-- Household member ownership checks and source RLS migration for `users` and `household_members`.
-- Print HTML escaping, invitation email validation, proxy URL encoding, and private-network URL rejection.
-- Household recipe-ingredient sync, typed auto-sync cleanup, and migration timeout error handling.
-- In-memory nutrition staging for new ingredients, voice-service reset behavior, nutrition unit conversion, and batch database helpers.
-- Native barcode-detector stream cleanup, product caching with IndexedDB, and reusable skeleton loading states.
-- Smart meal-of-day scoring, inventory search/filter/sort logic, confirmation dialogs, and keyboard shortcuts.
-- Responsive navigation, refreshed Material theme, and card-based inventory, ingredient, recipe, and cart views.
-- Focused unit/component tests for diet advice, ingredient matching, nutrition, unit conversion, login, and confirmation dialogs.
-
 ## Active Backlog
 
 ### P0 - Security and Data Protection
 
 #### 1. Remove credentials from environment files
 
-**Status:** Outstanding
+**Status:** In progress
 
 The Supabase URL and anon key remain in `src/environments/environment.ts` and `environment.prod.ts`. They are ignored for future changes, but remain in the working tree/history.
 
-- Rotate the exposed Supabase key.
-- Add a committed `environment.template.ts` containing placeholders only.
+- A committed `environment.template.ts` containing placeholders is now available.
+- Rotate the exposed Supabase key in the Supabase project and deployment history.
 - Generate environment files during CI/build with separate development and production values.
 - Verify the production bundle and git history contain no active credentials.
 
-#### 2. Allowlist all dynamic SQL identifiers
+#### 2. Replace the localStorage database fallback
 
-**Status:** Partial
+**Status:** In progress
 
-Remote sync columns are filtered, but `db.service.ts` still interpolates table and column names in query, bulk-operation, delete, sync, and migration helpers. Sync table names also need an explicit allowlist.
+When OPFS cannot create a writable handle, the database must remain durable without using localStorage.
 
-- Define one database table allowlist and per-table column allowlists.
-- Validate table and column arguments before constructing SQL.
-- Reject unknown or empty column lists.
-- Add tests covering malicious table and column identifiers from sync data.
-
-#### 3. Replace the localStorage database fallback
-
-**Status:** Outstanding
-
-When OPFS cannot create a writable handle, the complete SQLite database is stored in localStorage.
-
-- Use IndexedDB for the persistence fallback.
+- IndexedDB fallback is implemented for database reads and writes.
 - Use memory-only mode only when both OPFS and IndexedDB are unavailable.
 - Expose a user-visible warning when persistence is unavailable.
+- Add focused IndexedDB and memory-only fallback tests.
 
-#### 4. Make recipe import privacy explicit
+#### 3. Make recipe import privacy explicit
 
 **Status:** Partial
 
-Recipe URLs are still sent to third-party CORS proxies, even though encoding and private-network rejection are implemented.
+Recipe URLs are still sent to third-party CORS proxies, even though encoding and private-network rejection are implemented. A privacy notice is now shown beside the import action.
 
 - Add a concise privacy notice beside the import action.
 - Document the third-party proxy dependency and its limitations.
@@ -70,17 +44,18 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 ### P1 - Correctness and Resource Safety
 
-#### 5. Guarantee cleanup for the ZXing scanner path
+#### 4. Guarantee cleanup for the ZXing scanner path
 
-**Status:** Partial
+**Status:** In progress
 
 The native `BarcodeDetector` path uses `finally`; the ZXing fallback relies on dialog cleanup.
 
+- ZXing reader cleanup now runs from timeout, successful decode, and initialization failure paths.
 - Keep reader and camera cleanup inside the service promise lifecycle.
-- Ensure timeout, successful decode, initialization failure, and cancellation all call `reset()` and stop tracks.
+- Ensure cancellation and camera-track cleanup are covered as well.
 - Add focused scanner cleanup tests with mocked media streams.
 
-#### 6. Finish observable and async error cleanup
+#### 5. Finish observable and async error cleanup
 
 **Status:** Partial
 
@@ -91,7 +66,7 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 - Replace silent catches with intentional handling and logging.
 - Add tests for failed product lookup, save, scanner, and dialog workflows.
 
-#### 7. Make duplicate barcode prevention authoritative
+#### 6. Make duplicate barcode prevention authoritative
 
 **Status:** Partial
 
@@ -102,28 +77,19 @@ The inventory dialog checks for duplicates, but the check is not user-scoped and
 - Handle constraint errors with a translated user-facing message.
 - Add tests for create, edit, guest, and cross-user cases.
 
-#### 8. Close the product-cache initialization race
-
-**Status:** Partial
-
-`ProductsService` starts `CacheService.init()` without awaiting it, so an early lookup can race cache setup.
-
-- Make cache readiness part of the lookup flow.
-- Add a test proving the first lookup is deterministic during initialization.
-
 ### P2 - Feature Completion
 
-#### 9. Finish unit-aware shopping cart calculations
+#### 7. Finish unit-aware shopping cart calculations
 
-**Status:** Outstanding
+**Status:** In progress
 
-Cart calculations still aggregate quantities by raw unit and do not use `UnitConverterService`.
+Cart calculations now aggregate compatible units through `UnitConverterService`.
 
-- Convert compatible units before summing stock and calculating shortages.
+- Keep the conversion behavior covered by focused cart tests.
 - Keep incompatible units separate and make the shortage explicit.
 - Add cart conversion and mixed-unit tests.
 
-#### 10. Complete list controls and meal-of-day labels
+#### 8. Complete list controls and meal-of-day labels
 
 **Status:** Partial
 
@@ -134,7 +100,7 @@ Inventory has filter/sort state and active filter counting, but visible sort con
 - Implement only filters supported by each data model.
 - Resolve ingredient IDs to names in meal-of-day output.
 
-#### 11. Decide and implement analytics scope
+#### 9. Decide and implement analytics scope
 
 **Status:** Not started
 
@@ -146,7 +112,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 ### P3 - UX and Test Coverage
 
-#### 12. Finish responsive navigation and dialog consistency
+#### 10. Finish responsive navigation and dialog consistency
 
 **Status:** Partial
 
@@ -156,7 +122,7 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 13. Expand regression coverage
+#### 11. Expand regression coverage
 
 **Status:** Partial
 
@@ -164,17 +130,17 @@ There are no focused tests for most security fixes, database migrations, sync al
 
 - Add unit tests for P0/P1 items before deployment.
 - Add migration and sync integration coverage, including household isolation.
-- Extend Playwright coverage for inventory, barcode failure, recipe import, and household permissions.
-- Run production build, unit tests, and E2E tests in CI.
+- Playwright tests are a release requirement for inventory, barcode failure, recipe import, and household permissions.
+- Run unit tests, production build, and Playwright E2E tests in CI; a passing unit suite alone is insufficient.
 
 ## Recommended Order
 
 1. Rotate credentials and remove them from build inputs.
-2. Harden SQL identifier validation and replace the localStorage fallback.
+2. Complete IndexedDB fallback warnings and tests.
 3. Finish scanner cleanup, subscription cleanup, and error handling.
-4. Make barcode uniqueness and product-cache readiness deterministic.
-5. Complete cart conversions and visible list controls.
-6. Decide analytics and navigation scope, then fill the associated tests.
+4. Make barcode uniqueness authoritative.
+5. Complete cart conversion tests and visible list controls.
+6. Decide analytics and navigation scope, then fill the associated unit and Playwright tests.
 
 ## Verification Commands
 
@@ -184,4 +150,4 @@ npm run build
 npm run e2e
 ```
 
-The repository currently has focused unit tests, but security, sync, persistence-fallback, scanner, and broader workflow areas still need dedicated coverage.
+The repository requires all three commands for release. Playwright coverage must include the inventory workflow, barcode failure cleanup, recipe import privacy behavior, and household permissions; security, sync, persistence-fallback, scanner, cart, and filtering still need focused unit coverage.

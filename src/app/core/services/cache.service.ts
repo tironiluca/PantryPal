@@ -15,14 +15,24 @@ interface CacheSchema extends DBSchema {
 @Injectable({ providedIn: 'root' })
 export class CacheService {
   private db: IDBPDatabase<CacheSchema> | null = null;
+  private initPromise: Promise<void> | null = null;
   private readonly DB_NAME = 'pantrypal-cache';
   private readonly DB_VERSION = 1;
 
   async init(): Promise<void> {
+    if (this.db) return;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = this.openDatabase().finally(() => {
+      this.initPromise = null;
+    });
+    return this.initPromise;
+  }
+
+  private async openDatabase(): Promise<void> {
     try {
       this.db = await openDB<CacheSchema>(this.DB_NAME, this.DB_VERSION, {
         upgrade(db) {
-          // Create object store for products
           if (!db.objectStoreNames.contains('products')) {
             db.createObjectStore('products', { keyPath: 'barcode' });
           }

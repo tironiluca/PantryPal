@@ -60,29 +60,36 @@ export class BarcodeService {
       const codeReader = new BrowserMultiFormatReader();
 
       return new Promise<string | null>((resolve, reject) => {
+        let settled = false;
         const timeout = setTimeout(() => {
-          codeReader.reset();
-          resolve(null);
+          finish(null);
         }, 10000);
+        const cleanup = () => {
+          clearTimeout(timeout);
+          codeReader.reset();
+        };
+        const finish = (value: string | null, error?: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (error) reject(error);
+          else resolve(value);
+        };
 
         codeReader.decodeFromVideoDevice(null, videoEl, (result, error) => {
           if (result) {
-            clearTimeout(timeout);
-            codeReader.reset();
-            resolve(result.getText());
+            finish(result.getText());
           } else if (error) {
             // Not found yet, keep scanning
           }
         }).catch(err => {
-          clearTimeout(timeout);
           console.error('ZXing initialization error:', err);
-          reject(new Error('Failed to initialize barcode scanner'));
+          finish(null, new Error('Failed to initialize barcode scanner'));
         });
       });
     } catch (error) {
       console.error('Barcode scan failed:', error);
       throw new Error('Failed to access camera. Please check camera permissions.');
     }
-    // Note: stream cleanup is handled by the caller (BarcodeScannerDialog)
   }
 }

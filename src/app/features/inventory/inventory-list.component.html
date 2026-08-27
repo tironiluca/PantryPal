@@ -43,6 +43,22 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Sort by</mat-label>
+      <mat-select [value]="sortColumn" (selectionChange)="onSortChange($event.value)">
+        <mat-option value="expiry">Expiration</mat-option>
+        <mat-option value="quantity">Quantity</mat-option>
+        <mat-option value="minRestock">Minimum stock</mat-option>
+        <mat-option value="location">Location</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-icon-button type="button" (click)="toggleSortDirection()"
+            [matTooltip]="sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'"
+            [attr.aria-label]="sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'">
+      <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+    </button>
+
     @if (activeFilterCount > 0) {
       <button mat-stroked-button (click)="clearFilters()">
         <mat-icon>clear</mat-icon>

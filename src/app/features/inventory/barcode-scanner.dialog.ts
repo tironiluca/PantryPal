@@ -45,6 +45,7 @@ export class BarcodeScannerDialog implements AfterViewInit, OnDestroy {
   }
 
   private cleanup(): void {
+    this.barcode.cancel();
     const video = this.videoRef?.nativeElement;
     if (video?.srcObject) {
       const stream = video.srcObject as MediaStream;

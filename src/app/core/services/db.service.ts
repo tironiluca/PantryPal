@@ -283,9 +283,22 @@ export class DbService {
     this.addColumnIfNotExists('inventory', 'isDeleted', 'INTEGER DEFAULT 0');
     try {
       this.db.run(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_user_barcode
+        UPDATE inventory
+        SET barcode = NULL
+        WHERE barcode IS NOT NULL AND barcode != ''
+          AND rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM inventory
+            WHERE barcode IS NOT NULL AND barcode != ''
+            GROUP BY COALESCE(userId, ''), barcode
+          )
+      `);
+      this.db.run('DROP INDEX IF EXISTS idx_inventory_user_barcode');
+      this.db.run(`
+        CREATE UNIQUE INDEX idx_inventory_user_barcode
           ON inventory (COALESCE(userId, ''), barcode)
           WHERE barcode IS NOT NULL AND barcode != ''
+            AND (isDeleted IS NULL OR isDeleted = 0)
       `);
     } catch (error) {
       console.warn('Could not create the inventory barcode uniqueness index', error);

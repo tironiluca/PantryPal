@@ -43,18 +43,7 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 ### P1 - Correctness and Resource Safety
 
-#### 4. Guarantee cleanup for the ZXing scanner path
-
-**Status:** In progress
-
-The native `BarcodeDetector` path uses `finally`; the ZXing fallback relies on dialog cleanup.
-
-- ZXing reader cleanup now runs from timeout, successful decode, and initialization failure paths.
-- Keep reader and camera cleanup inside the service promise lifecycle.
-- Ensure cancellation and camera-track cleanup are covered as well.
-- Add focused scanner cleanup tests with mocked media streams.
-
-#### 5. Finish observable and async error cleanup
+#### 4. Finish observable and async error cleanup
 
 **Status:** Partial
 
@@ -65,19 +54,18 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 - Replace silent catches with intentional handling and logging.
 - Add tests for failed product lookup, save, scanner, and dialog workflows.
 
-#### 6. Make duplicate barcode prevention authoritative
+#### 5. Make duplicate barcode prevention authoritative
 
-**Status:** In progress
+**Status:** Partial
 
-The inventory dialog and database now enforce user-scoped barcode uniqueness, including a shared guest scope. Existing databases with conflicting legacy data need cleanup before the index can be created.
+The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index.
 
-- Clean up conflicting legacy barcode rows and verify the migration index.
 - Handle constraint errors with a translated user-facing message.
-- Add tests for create, edit, guest, and cross-user cases.
+- Add database migration tests and tests for create, edit, guest, and cross-user cases.
 
 ### P2 - Feature Completion
 
-#### 7. Finish unit-aware shopping cart calculations
+#### 6. Finish unit-aware shopping cart calculations
 
 **Status:** In progress
 
@@ -87,7 +75,7 @@ Cart calculations now aggregate compatible units through `UnitConverterService`.
 - Keep incompatible units separate and make the shortage explicit.
 - Add cart conversion and mixed-unit tests.
 
-#### 8. Complete list controls and meal-of-day labels
+#### 7. Complete list controls and meal-of-day labels
 
 **Status:** Partial
 
@@ -98,7 +86,7 @@ Inventory has filter/sort state and active filter counting, but visible sort con
 - Implement only filters supported by each data model.
 - Resolve ingredient IDs to names in meal-of-day output.
 
-#### 9. Decide and implement analytics scope
+#### 8. Decide and implement analytics scope
 
 **Status:** Not started
 
@@ -110,7 +98,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 ### P3 - UX and Test Coverage
 
-#### 10. Finish responsive navigation and dialog consistency
+#### 9. Finish responsive navigation and dialog consistency
 
 **Status:** Partial
 
@@ -120,7 +108,7 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 11. Cover the entire codebase with Vitest and Playwright
+#### 10. Cover the entire codebase with Vitest and Playwright
 
 **Status:** Not started
 
@@ -132,7 +120,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
 - Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
 
-#### 12. Define the full-coverage test matrix
+#### 11. Define the full-coverage test matrix
 
 **Status:** Not started
 

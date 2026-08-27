@@ -51,6 +51,22 @@ describe('BarcodeService', () => {
     expect(reset).toHaveBeenCalledOnce();
   });
 
+  it('cancels ZXing and stops its camera tracks', async () => {
+    const stop = vi.fn();
+    const stream = { getTracks: () => [{ stop }] };
+    decodeFromVideoDevice.mockImplementation((_device, videoElement) => {
+      videoElement.srcObject = stream as unknown as MediaStream;
+      return new Promise(() => undefined);
+    });
+
+    const scan = service.scan(video);
+    service.cancel();
+
+    expect(reset).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledOnce();
+    await expect(scan).resolves.toBeNull();
+  });
+
   it('stops every native camera track after a successful decode', async () => {
     const stop = vi.fn();
     const stream = { getTracks: () => [{ stop }] };
@@ -75,5 +91,32 @@ describe('BarcodeService', () => {
 
     vi.unstubAllGlobals();
     delete (window as any).BarcodeDetector;
+  });
+
+  it('cancels native scanning and stops every camera track', async () => {
+    const stop = vi.fn();
+    const stream = { getTracks: () => [{ stop }] };
+    const detect = vi.fn().mockResolvedValue([]);
+    const play = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+
+    Object.defineProperty(window, 'BarcodeDetector', {
+      configurable: true,
+      value: class {
+        detect = detect;
+      },
+    });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({}));
+
+    const scan = service.scan(video);
+    await vi.waitFor(() => expect(detect).toHaveBeenCalled());
+    service.cancel();
+
+    await expect(scan).resolves.toBeNull();
+    expect(stop).toHaveBeenCalledOnce();
+    expect(play).toHaveBeenCalledOnce();
   });
 });

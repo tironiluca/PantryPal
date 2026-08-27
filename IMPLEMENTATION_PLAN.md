@@ -25,11 +25,11 @@ PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabas
 
 #### 1. Remove credentials from environment files
 
-**Status:** Partial
+**Status:** Complete
 
 Environment files now contain placeholders only. `npm start` and `npm run build` generate them from `SUPABASE_URL` and `SUPABASE_ANON_KEY`, loaded from a local `.env` or CI variables, and fail when either value is missing.
 
-- Rotate any previously exposed Supabase key in the Supabase project and deployment history.
+- Supabase key rotation and credential-bearing history cleanup were completed administratively on 2026-08-27.
 - Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
 
 #### 2. Make recipe import privacy explicit
@@ -124,7 +124,6 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 ## External Blockers
 
-- Credential rotation and history cleanup require Supabase and GitHub administration.
 - A first-party recipe proxy requires a deployed Supabase Edge Function and its operational policy.
 - Analytics requires product approval for metrics, retention, and scope.
 - Mobile navigation requires a product decision between the existing toolbar and bottom navigation.
@@ -142,7 +141,7 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 ### External Decisions And Operations
 
-1. Rotate the exposed Supabase key and clean credential-bearing history in Supabase/GitHub administration.
+1. Verify the production bundle and git history contain no active credentials after the completed rotation and cleanup.
 2. Decide whether analytics is in scope, then define metrics, retention, ownership/RLS, and acceptance tests before implementing it.
 3. Decide whether the current mobile toolbar replaces fixed bottom navigation.
 4. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.

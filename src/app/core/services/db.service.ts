@@ -433,6 +433,17 @@ export class DbService {
     return { name: ingredient?.name ?? null, inventory };
   }
 
+  getIngredientsByIds(ingredientIds: readonly string[]): Array<{ id: string; name: string }> {
+    if (ingredientIds.length === 0) return [];
+
+    const placeholders = ingredientIds.map(() => '?').join(',');
+    return this.queryByUser<{ id: string; name: string }>(
+      'ingredients',
+      `id IN (${placeholders})`,
+      [...ingredientIds]
+    );
+  }
+
   getRecipeIngredients(recipeId: string): RecipeIngredientRow[] {
     const ingredients = new Map(
       this.queryByUser<{ id: string; name: string }>('ingredients')

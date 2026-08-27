@@ -107,12 +107,8 @@ export class InventoryListComponent {
       this.ingredientNames = new Map();
       return;
     }
-    const placeholders = ids.map(() => '?').join(',');
     try {
-      const ingredients = this.db.query<{ id: string; name: string }>(
-        `SELECT id, name FROM ingredients WHERE id IN (${placeholders})`,
-        ids
-      );
+      const ingredients = this.db.getIngredientsByIds(ids);
       this.ingredientNames = new Map(ingredients.map(i => [i.id, i.name]));
     } catch {
       this.ingredientNames = new Map();

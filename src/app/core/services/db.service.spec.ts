@@ -88,6 +88,28 @@ describe('DbService SQL identifier validation', () => {
       ['ingredient-1']
     );
   });
+
+  it('loads selected ingredient names through a user-scoped query', () => {
+    const queryByUser = vi.spyOn(service, 'queryByUser').mockReturnValue([
+      { id: 'ingredient-1', name: 'Milk' },
+    ]);
+
+    expect(service.getIngredientsByIds(['ingredient-1', 'ingredient-2'])).toEqual([
+      { id: 'ingredient-1', name: 'Milk' },
+    ]);
+    expect(queryByUser).toHaveBeenCalledWith(
+      'ingredients',
+      'id IN (?,?)',
+      ['ingredient-1', 'ingredient-2']
+    );
+  });
+
+  it('does not query when no ingredient names are requested', () => {
+    const queryByUser = vi.spyOn(service, 'queryByUser');
+
+    expect(service.getIngredientsByIds([])).toEqual([]);
+    expect(queryByUser).not.toHaveBeenCalled();
+  });
 });
 
 describe('DbService persistence fallback', () => {

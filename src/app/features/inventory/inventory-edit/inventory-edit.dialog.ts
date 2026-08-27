@@ -238,7 +238,7 @@ export class InventoryEditDialog implements OnInit {
       maxWidth: '450px',
     });
 
-    ref.afterClosed().subscribe(code => {
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(code => {
       if (code) {
         this.model.barcode = code;
         this.snackbar.info(this.transloco.translate('inventory.fetchingProduct'));

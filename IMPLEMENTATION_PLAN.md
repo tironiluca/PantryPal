@@ -12,24 +12,23 @@ PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabas
 
 #### 1. Remove credentials from environment files
 
-**Status:** In progress
+**Status:** Partial
 
-The Supabase URL and anon key remain in `src/environments/environment.ts` and `environment.prod.ts`. They are ignored for future changes, but remain in the working tree/history.
+Environment files now contain placeholders only. `npm start` and `npm run build` generate them from `SUPABASE_URL` and `SUPABASE_ANON_KEY`, loaded from a local `.env` or CI variables, and fail when either value is missing.
 
 - A committed `environment.template.ts` containing placeholders is now available.
 - Rotate the exposed Supabase key in the Supabase project and deployment history.
-- Generate environment files during CI/build with separate development and production values.
-- Verify the production bundle and git history contain no active credentials.
+- Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
 
 #### 2. Replace the localStorage database fallback
 
-**Status:** In progress
+**Status:** Partial
 
 When OPFS cannot create a writable handle, the database must remain durable without using localStorage.
 
 - IndexedDB fallback is implemented for database reads and writes.
 - Use memory-only mode only when both OPFS and IndexedDB are unavailable.
-- Expose a user-visible warning when persistence is unavailable.
+- Expose a user-visible warning when persistence is unavailable. (Implemented via `DbService.persistenceAvailable` and a one-time snackbar.)
 - Add focused IndexedDB and memory-only fallback tests.
 
 #### 3. Make recipe import privacy explicit

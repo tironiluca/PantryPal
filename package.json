@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prestart": "node scripts/generate-environments.mjs",
     "start": "ng serve",
     "start:stable": "ng serve --configuration stable-live",
+    "prebuild": "node scripts/generate-environments.mjs",
     "build": "ng build --configuration production",
     "test": "ng test",
     "test:watch": "ng test --watch",

@@ -28,20 +28,11 @@ This guide will walk you through setting up Supabase for PantryPal's multi-user 
 
 ## Step 3: Configure PantryPal
 
-1. Open `src/environments/environment.ts`
-2. Replace the placeholder values with your actual credentials:
+1. Copy `.env.example` to `.env`.
+2. Set `SUPABASE_URL` to your project URL and `SUPABASE_ANON_KEY` to the public anon/client key.
+3. Run `npm start` for development or `npm run build` for a production build.
 
-```typescript
-export const environment = {
-  production: false,
-  supabase: {
-    url: 'https://xxxxx.supabase.co', // Your Project URL
-    anonKey: 'eyJhb...', // Your anon key
-  },
-};
-```
-
-3. Do the same for `src/environments/environment.prod.ts` (production environment)
+The Angular environment files are generated from these variables and are ignored by git. Do not commit credentials or add them to source files. Configure the same variables as protected build or deployment secrets in CI.
 
 ## Step 4: Set Up Database Tables
 

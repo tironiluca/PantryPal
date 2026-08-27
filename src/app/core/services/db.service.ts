@@ -1,7 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import initSqlJs from 'sql.js/dist/sql-wasm.js';
 import { openDB } from 'idb';
 import { AuthService } from './auth.service';
+import { SnackbarService } from './snackbar.service';
 
 const DB_FILE = 'pantrypal.db';
 const DB_FALLBACK = 'pantrypal-storage';
@@ -36,11 +37,15 @@ const ALLOWED_TABLES = new Set(Object.keys(DB_TABLE_COLUMNS));
 @Injectable({ providedIn: 'root' })
 export class DbService {
   private auth = inject(AuthService);
+  private snackbar = inject(SnackbarService, { optional: true });
 
   private SQL!: any;
   private db!: any;
   private memOnly = false;
+  private persistenceWarningShown = false;
   private initialized = false;
+  private persistenceAvailableSignal = signal(true);
+  readonly persistenceAvailable = this.persistenceAvailableSignal.asReadonly();
   // Deduplicates concurrent init() calls (BUG-02)
   private initPromise: Promise<void> | null = null;
 
@@ -595,12 +600,22 @@ export class DbService {
         await fallback.put(DB_STORE, data, name);
         fallback.close();
       } catch (indexedDbError) {
-        this.memOnly = true;
+        this.markMemoryOnly();
         console.warn('Database persistence unavailable; using memory-only mode', {
           opfsError,
           indexedDbError,
         });
       }
+    }
+  }
+
+  private markMemoryOnly(): void {
+    this.memOnly = true;
+    this.persistenceAvailableSignal.set(false);
+
+    if (!this.persistenceWarningShown) {
+      this.persistenceWarningShown = true;
+      this.snackbar?.warning('Persistence is unavailable. Changes will be lost when this session ends.');
     }
   }
 

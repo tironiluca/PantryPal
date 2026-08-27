@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "NODE_OPTIONS=--max-old-space-size=4096 ng build --configuration production",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=4096 npm run build",
   "outputDirectory": "dist/pantrypal",
   "installCommand": "npm install --include=dev",
   "framework": null,

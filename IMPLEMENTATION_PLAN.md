@@ -10,6 +10,7 @@ Updated 2026-08-27. This document tracks remaining product, security, and releas
 - Ingredient barcode failures use shared error handling and have regression coverage.
 - Recipe URL validation now rejects private and local network targets before proxy access, with parser and proxy-fallback regression coverage.
 - Cache, voice-command, and recipe-import service behavior now have inferred unit specifications.
+- Keyboard, language, theme, snackbar, data-event, auth-guard, and error-handler behavior now have inferred unit specifications.
 - Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
 - CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
 - Playwright covers unauthenticated access to every protected route.
@@ -106,7 +107,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The current Vitest report measures 47.44% statements, 37.25% branches, 49.82% functions, and 47.54% lines; 90% remains the release target.
+- The latest Vitest report measures 52.28% statements, 39.90% branches, 55.82% functions, and 52.64% lines; 90% remains the release target.
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix
@@ -128,13 +129,27 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 - Analytics requires product approval for metrics, retention, and scope.
 - Mobile navigation requires a product decision between the existing toolbar and bottom navigation.
 
-## Recommended Order
+## Next Steps
 
-1. Rotate credentials and remove them from build inputs.
-2. Finish subscription cleanup and error handling.
-3. Add authoritative barcode migration tests.
-4. Move remaining component database access into typed service methods.
-5. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
+### Local Implementation Queue
+
+1. Add migration tests for duplicate barcode preservation and user/guest isolation.
+2. Extract remaining recipe, ingredient, nutrition, and meal-plan relationship queries into typed service methods.
+3. Add component/dialog Vitest specs for inventory, ingredients, recipes, meal planning, nutrition, settings, voice, and household sharing.
+4. Add authenticated Playwright workflows for inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, and household sharing using a dedicated test account or mocked backend.
+5. Raise Vitest coverage incrementally to 70%, then 80%, then 90% for statements, branches, functions, and lines; update `TEST_MATRIX.md` with every new spec.
+6. Add failure-path browser tests for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
+
+### External Decisions And Operations
+
+1. Rotate the exposed Supabase key and clean credential-bearing history in Supabase/GitHub administration.
+2. Decide whether analytics is in scope, then define metrics, retention, ownership/RLS, and acceptance tests before implementing it.
+3. Decide whether the current mobile toolbar replaces fixed bottom navigation.
+4. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.
+
+### Acceptance Gate
+
+The plan is complete when all external decisions are recorded, the matrix has no uncovered production areas, Vitest reaches at least 90% for all four metrics, authenticated and unauthenticated Playwright workflows pass, CI is green, and the production bundle contains no active credentials.
 
 ## Verification Commands
 

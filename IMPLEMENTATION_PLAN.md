@@ -91,9 +91,9 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 **Status:** Partial
 
-The refreshed UI is substantially implemented, but mobile navigation does not yet match the planned fixed bottom navigation and dialog patterns are not uniformly complete.
+The refreshed UI is substantially implemented. The existing mobile toolbar/dropdown is the chosen replacement for fixed bottom navigation; dialog patterns and async list states are not uniformly complete.
 
-- Decide whether the current mobile toolbar/dropdown replaces bottom navigation.
+- Keep the existing mobile toolbar/dropdown as the navigation pattern.
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
@@ -126,7 +126,6 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 - A first-party recipe proxy requires a deployed Supabase Edge Function and its operational policy.
 - Analytics requires product approval for metrics, retention, and scope.
-- Mobile navigation requires a product decision between the existing toolbar and bottom navigation.
 
 ## Next Steps
 
@@ -143,8 +142,7 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 1. Verify the production bundle and git history contain no active credentials after the completed rotation and cleanup.
 2. Decide whether analytics is in scope, then define metrics, retention, ownership/RLS, and acceptance tests before implementing it.
-3. Decide whether the current mobile toolbar replaces fixed bottom navigation.
-4. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.
+3. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.
 
 ### Acceptance Gate
 

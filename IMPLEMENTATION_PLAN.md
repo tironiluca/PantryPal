@@ -38,6 +38,7 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 Several dialog and voice flows still have unmanaged subscriptions, and some async operations still use silent catches or lack user feedback.
 
+- The voice control overlay now uses `takeUntilDestroyed()` for transcript and error streams instead of manually tracking subscriptions.
 - Apply `takeUntilDestroyed()` to remaining component subscriptions.
 - Route HTTP and database failures through the existing error and snackbar services.
 - Replace silent catches with intentional handling and logging.

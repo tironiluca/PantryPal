@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +9,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { VoiceService, VoiceTranscript } from '../../core/services/voice.service';
 import { VoiceCommandService, ParsedCommand } from '../../core/services/voice-command.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'pp-voice-control-overlay',
@@ -23,10 +23,11 @@ import { Subscription } from 'rxjs';
   templateUrl: './voice-control-overlay.component.html',
   styleUrls: ['./voice-control-overlay.component.scss'],
 })
-export class VoiceControlOverlayComponent implements OnInit, OnDestroy {
+export class VoiceControlOverlayComponent implements OnInit {
   private voiceService = inject(VoiceService);
   private commandService = inject(VoiceCommandService);
   private snackbar = inject(SnackbarService);
+  private destroyRef = inject(DestroyRef);
 
   isListening = this.voiceService.listening;
   currentTranscript = signal<string>('');
@@ -36,12 +37,10 @@ export class VoiceControlOverlayComponent implements OnInit, OnDestroy {
 
   suggestions = ['Go to recipes', 'Add ingredient', 'Search for milk', 'Show inventory'];
 
-  private subscriptions: Subscription[] = [];
-
   ngOnInit(): void {
-    // Subscribe to voice transcripts
-    this.subscriptions.push(
-      this.voiceService.transcript$.subscribe((transcript: VoiceTranscript) => {
+    this.voiceService.transcript$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((transcript: VoiceTranscript) => {
         this.currentTranscript.set(transcript.transcript);
         this.isFinalTranscript.set(transcript.isFinal);
 
@@ -50,19 +49,13 @@ export class VoiceControlOverlayComponent implements OnInit, OnDestroy {
         } else {
           this.isProcessing.set(true);
         }
-      })
-    );
+      });
 
-    // Subscribe to errors
-    this.subscriptions.push(
-      this.voiceService.error$.subscribe((error: string) => {
+    this.voiceService.error$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((error: string) => {
         this.snackbar.error(`Voice recognition error: ${error}`);
-      })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+      });
   }
 
   private async processTranscript(transcript: string): Promise<void> {

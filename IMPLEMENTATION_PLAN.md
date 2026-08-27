@@ -51,9 +51,21 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 - Add database migration tests and tests for create, edit, guest, and cross-user cases.
 
+#### 5. Move component database access into services
+
+**Status:** Partial
+
+Some components still construct raw SQL for related data and know the database schema directly. For example, meal-of-day logic now uses `DbService.getIngredientInventory()`, but similar ingredient, inventory, recipe, and meal-plan lookups remain in component code or are duplicated across services.
+
+- Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
+- Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
+- Preserve user and household scoping when replacing direct queries.
+- Add focused service tests for each extracted query and component tests for the resulting behavior.
+- Avoid creating a generic query wrapper that merely relocates raw SQL without defining a useful domain contract.
+
 ### P2 - Feature Completion
 
-#### 5. Decide and implement analytics scope
+#### 6. Decide and implement analytics scope
 
 **Status:** Not started
 
@@ -65,7 +77,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 ### P3 - UX and Test Coverage
 
-#### 6. Finish responsive navigation and dialog consistency
+#### 7. Finish responsive navigation and dialog consistency
 
 **Status:** Partial
 
@@ -75,7 +87,7 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 7. Cover the entire codebase with Vitest and Playwright
+#### 8. Cover the entire codebase with Vitest and Playwright
 
 **Status:** Not started
 
@@ -87,7 +99,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
 - Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
 
-#### 8. Define the full-coverage test matrix
+#### 9. Define the full-coverage test matrix
 
 **Status:** Not started
 
@@ -103,7 +115,8 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 1. Rotate credentials and remove them from build inputs.
 2. Finish subscription cleanup and error handling.
 3. Add authoritative barcode migration tests.
-4. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
+4. Move remaining component database access into typed service methods.
+5. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
 
 ## Verification Commands
 

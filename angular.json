@@ -64,6 +64,12 @@
               "forceEsbuild": true
             }
           }
+        },
+        "test": {
+          "builder": "@analogjs/vitest-angular:test",
+          "options": {
+            "configFile": "vitest.config.mts"
+          }
         }
       }
     }

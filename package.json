@@ -7,6 +7,12 @@
     "start:stable": "ng serve --configuration stable-live",
     "build": "ng build --configuration production",
     "test": "ng test",
+    "test:watch": "ng test --watch",
+    "test:coverage": "ng test --coverage",
+    "test:ui": "ng test --ui",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
     "postinstall": "node -e \"require('fs').cpSync('node_modules/sql.js/dist/sql-wasm.wasm','src/assets/sql-wasm.wasm')\""
@@ -47,14 +53,21 @@
     "node": "20.x"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.7.0",
+    "@analogjs/vitest-angular": "^2.7.0",
     "@angular-builders/custom-webpack": "^21.0.3",
     "@angular-devkit/build-angular": "^21.2.0",
     "@angular/cli": "^21.2.0",
     "@angular/compiler-cli": "^21.2.0",
+    "@playwright/test": "^1.62.1",
     "@types/sql.js": "^1.4.9",
+    "@vitest/coverage-v8": "^4.1.11",
     "baseline-browser-mapping": "^2.9.19",
     "cpy-cli": "^5.0.0",
+    "jsdom": "^29.1.1",
     "prettier": "^3.6.2",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

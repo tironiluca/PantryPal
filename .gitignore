@@ -7,6 +7,11 @@
 /.angular/
 .angular/
 
+# Test artifacts
+/playwright-report/
+/test-results/
+/blob-report/
+
 # Node modules and dependency files
 /node_modules/
 /package-lock.json

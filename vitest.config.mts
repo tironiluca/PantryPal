@@ -18,6 +18,12 @@ export default defineConfig(() => ({
       // trips up the coverage tool's parser on some Angular class-field
       // syntax, so we skip that broader "all files" scan.
       all: false,
+      thresholds: {
+        statements: Number(process.env['COVERAGE_THRESHOLD'] ?? 30),
+        branches: Number(process.env['COVERAGE_THRESHOLD'] ?? 25),
+        functions: Number(process.env['COVERAGE_THRESHOLD'] ?? 35),
+        lines: Number(process.env['COVERAGE_THRESHOLD'] ?? 30),
+      },
     },
   },
 }));

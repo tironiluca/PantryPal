@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import initSqlJs from 'sql.js/dist/sql-wasm.js';
 import { AuthService } from './auth.service';
 import { DB_TABLE_COLUMNS, DbService } from './db.service';
 import { SnackbarService } from './snackbar.service';
@@ -193,5 +194,84 @@ describe('DbService persistence fallback', () => {
 
     expect(service.persistenceAvailable()).toBe(false);
     expect(snackbar.warning).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DbService barcode migration', () => {
+  let service: DbService;
+  let SQL: any;
+  let currentUserId: string | null;
+
+  beforeAll(async () => {
+    SQL = await initSqlJs({
+      locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}`,
+    });
+  });
+
+  beforeEach(() => {
+    currentUserId = null;
+    TestBed.configureTestingModule({
+      providers: [
+        DbService,
+        { provide: AuthService, useValue: { getCurrentUserId: () => currentUserId } },
+      ],
+    });
+    service = TestBed.inject(DbService);
+    const db = new SQL.Database();
+    db.run(`
+      CREATE TABLE inventory (
+        id TEXT PRIMARY KEY, barcode TEXT, userId TEXT, isDeleted INTEGER DEFAULT 0
+      );
+      INSERT INTO inventory (id, barcode, userId, isDeleted) VALUES
+        ('guest-first', '111', NULL, 0),
+        ('guest-duplicate', '111', NULL, 0),
+        ('user-first', '111', 'user-1', 0),
+        ('other-user', '111', 'user-2', 0),
+        ('deleted', '222', NULL, 1),
+        ('empty', '', NULL, 0);
+    `);
+    (service as any).db = db;
+  });
+
+  it('preserves the first barcode per user or guest scope', () => {
+    (service as any).migrateInventoryBarcodeIndex();
+
+    const rows = (service as any).query<any>('SELECT id, barcode FROM inventory ORDER BY id');
+    expect(rows).toEqual([
+      { id: 'deleted', barcode: '222' },
+      { id: 'empty', barcode: '' },
+      { id: 'guest-duplicate', barcode: null },
+      { id: 'guest-first', barcode: '111' },
+      { id: 'other-user', barcode: '111' },
+      { id: 'user-first', barcode: '111' },
+    ]);
+  });
+
+  it('enforces uniqueness for active rows while allowing isolated scopes', () => {
+    (service as any).migrateInventoryBarcodeIndex();
+
+    expect(() => (service as any).db.run(
+      "INSERT INTO inventory (id, barcode, userId) VALUES ('same-guest', '111', NULL)"
+    )).toThrow();
+    expect(() => (service as any).db.run(
+      "INSERT INTO inventory (id, barcode, userId) VALUES ('same-user', '111', 'user-1')"
+    )).toThrow();
+    expect(() => (service as any).db.run(
+      "INSERT INTO inventory (id, barcode, userId) VALUES ('new-user', '111', 'user-3')"
+    )).not.toThrow();
+    expect(() => (service as any).db.run(
+      "INSERT INTO inventory (id, barcode, userId, isDeleted) VALUES ('deleted-copy', '222', NULL, 1)"
+    )).not.toThrow();
+  });
+
+  it('returns only guest or current-user inventory rows', () => {
+    (service as any).migrateInventoryBarcodeIndex();
+
+    expect((service as any).queryByUser('inventory').map((row: any) => row.id)).toEqual([
+      'guest-first', 'guest-duplicate', 'empty',
+    ]);
+
+    currentUserId = 'user-1';
+    expect((service as any).queryByUser('inventory').map((row: any) => row.id)).toEqual(['user-first']);
   });
 });

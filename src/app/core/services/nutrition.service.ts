@@ -170,13 +170,7 @@ export class NutritionService {
   }
 
   getRecipeNutrition(recipeId: string): NutritionData | null {
-    const ingredients = this.db.query<any>(
-      `SELECT ri.quantity, ri.unit, i.energyKcal, i.proteinG, i.carbsG, i.fatG, i.fiberG, i.sugarG, i.sodiumMg
-       FROM recipe_ingredients ri
-       JOIN ingredients i ON ri.ingredientId = i.id
-       WHERE ri.recipeId = ? AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)`,
-      [recipeId]
-    );
+    const ingredients = this.db.getRecipeNutritionIngredients(recipeId);
 
     if (ingredients.length === 0) return null;
 
@@ -246,10 +240,7 @@ export class NutritionService {
     const userId = this.auth.getCurrentUserId();
     if (!userId) return this.getEmptySummary(date);
 
-    const logs = this.db.query<NutritionLog>(
-      'SELECT * FROM nutrition_logs WHERE userId = ? AND date = ?',
-      [userId, date]
-    );
+    const logs = this.db.getNutritionLogs(date) as NutritionLog[];
 
     const summary: DailyNutritionSummary = {
       date,
@@ -328,14 +319,11 @@ export class NutritionService {
     const userId = this.auth.getCurrentUserId();
     if (!userId) return null;
 
-    const goals = this.db.query<any>(
-      'SELECT * FROM nutrition_goals WHERE userId = ?',
-      [userId]
-    );
+    const goals = this.db.getNutritionGoals();
 
-    if (goals.length === 0) return null;
+    if (!goals) return null;
 
-    const g = goals[0];
+    const g = goals;
     return {
       ...g,
       trackFiber: !!g.trackFiber,
@@ -383,10 +371,7 @@ export class NutritionService {
   getLogsForRange(startDate: string, endDate: string): NutritionLog[] {
     const userId = this.auth.getCurrentUserId();
     if (!userId) return [];
-    return this.db.query<NutritionLog>(
-      'SELECT * FROM nutrition_logs WHERE userId = ? AND date >= ? AND date <= ? ORDER BY date DESC, createdAt DESC',
-      [userId, startDate, endDate]
-    );
+    return this.db.getNutritionLogsForRange(startDate, endDate) as NutritionLog[];
   }
 
   deleteLog(logId: string): void {

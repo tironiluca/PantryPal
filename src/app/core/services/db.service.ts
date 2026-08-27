@@ -76,6 +76,28 @@ export interface RecipeEditRow {
   notes?: string;
 }
 
+export interface RecipeNutritionIngredientRow {
+  ingredientId: string;
+  quantity: number;
+  unit: string;
+  energyKcal?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  fiberG?: number;
+  sugarG?: number;
+  sodiumMg?: number;
+}
+
+export interface ExpiringInventoryRow {
+  id: string;
+  ingredientId: string;
+  expiry: string;
+  name: string | null;
+  notifyStartDays?: number;
+  notifyRepeatDays?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DbService {
   private auth = inject(AuthService);
@@ -323,28 +345,7 @@ export class DbService {
     this.addColumnIfNotExists('inventory', 'syncedAt', 'TEXT');
     this.addColumnIfNotExists('inventory', 'version', 'INTEGER DEFAULT 1');
     this.addColumnIfNotExists('inventory', 'isDeleted', 'INTEGER DEFAULT 0');
-    try {
-      this.db.run(`
-        UPDATE inventory
-        SET barcode = NULL
-        WHERE barcode IS NOT NULL AND barcode != ''
-          AND rowid NOT IN (
-            SELECT MIN(rowid)
-            FROM inventory
-            WHERE barcode IS NOT NULL AND barcode != ''
-            GROUP BY COALESCE(userId, ''), barcode
-          )
-      `);
-      this.db.run('DROP INDEX IF EXISTS idx_inventory_user_barcode');
-      this.db.run(`
-        CREATE UNIQUE INDEX idx_inventory_user_barcode
-          ON inventory (COALESCE(userId, ''), barcode)
-          WHERE barcode IS NOT NULL AND barcode != ''
-            AND (isDeleted IS NULL OR isDeleted = 0)
-      `);
-    } catch (error) {
-      console.warn('Could not create the inventory barcode uniqueness index', error);
-    }
+    this.migrateInventoryBarcodeIndex();
 
     this.addColumnIfNotExists('recipes', 'userId', 'TEXT');
     this.addColumnIfNotExists('recipes', 'syncedAt', 'TEXT');
@@ -387,6 +388,31 @@ export class DbService {
     this.addColumnIfNotExists('nutrition_goals', 'trackSugar', 'INTEGER DEFAULT 0');
     this.addColumnIfNotExists('nutrition_goals', 'trackSodium', 'INTEGER DEFAULT 0');
     this.addColumnIfNotExists('nutrition_goals', 'goalType', "TEXT DEFAULT 'custom'");
+  }
+
+  private migrateInventoryBarcodeIndex(): void {
+    try {
+      this.db.run(`
+        UPDATE inventory
+        SET barcode = NULL
+        WHERE barcode IS NOT NULL AND barcode != ''
+          AND rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM inventory
+            WHERE barcode IS NOT NULL AND barcode != ''
+            GROUP BY COALESCE(userId, ''), barcode
+          )
+      `);
+      this.db.run('DROP INDEX IF EXISTS idx_inventory_user_barcode');
+      this.db.run(`
+        CREATE UNIQUE INDEX idx_inventory_user_barcode
+          ON inventory (COALESCE(userId, ''), barcode)
+          WHERE barcode IS NOT NULL AND barcode != ''
+            AND (isDeleted IS NULL OR isDeleted = 0)
+      `);
+    } catch (error) {
+      console.warn('Could not create the inventory barcode uniqueness index', error);
+    }
   }
 
   /**
@@ -485,6 +511,72 @@ export class DbService {
 
   getRecipe(recipeId: string): RecipeEditRow | undefined {
     return this.queryByUser<RecipeEditRow>('recipes', 'id = ?', [recipeId])[0];
+  }
+
+  getMealPlan(mealPlanId: string): any | undefined {
+    return this.queryByUser<any>('meal_plans', 'id = ?', [mealPlanId])[0];
+  }
+
+  getRecipeNutritionIngredients(recipeId: string): RecipeNutritionIngredientRow[] {
+    const ingredients = new Map(
+      this.queryByUser<any>('ingredients').map(ingredient => [ingredient.id, ingredient])
+    );
+    return this.getRecipeIngredients(recipeId).map(recipeIngredient => {
+      const nutrition = ingredients.get(recipeIngredient.ingredientId) ?? {};
+      return {
+        ingredientId: recipeIngredient.ingredientId,
+        quantity: recipeIngredient.quantity,
+        unit: recipeIngredient.unit,
+        energyKcal: nutrition.energyKcal,
+        proteinG: nutrition.proteinG,
+        carbsG: nutrition.carbsG,
+        fatG: nutrition.fatG,
+        fiberG: nutrition.fiberG,
+        sugarG: nutrition.sugarG,
+        sodiumMg: nutrition.sodiumMg,
+      };
+    });
+  }
+
+  getNutritionLogs(date: string): any[] {
+    return this.queryByUser<any>('nutrition_logs', 'date = ?', [date]);
+  }
+
+  getNutritionLogsForRange(startDate: string, endDate: string): any[] {
+    return this.queryByUser<any>('nutrition_logs', 'date >= ? AND date <= ?', [startDate, endDate])
+      .sort((left, right) => `${right.date}${right.createdAt ?? ''}`.localeCompare(`${left.date}${left.createdAt ?? ''}`));
+  }
+
+  getNutritionGoals(): any | undefined {
+    return this.queryByUser<any>('nutrition_goals')[0];
+  }
+
+  getExpiringInventory(): ExpiringInventoryRow[] {
+    const ingredients = new Map(
+      this.queryByUser<any>('ingredients').map(ingredient => [ingredient.id, ingredient])
+    );
+    return this.queryByUser<any>('inventory', 'expiry IS NOT NULL')
+      .map(item => ({
+        id: item.id,
+        ingredientId: item.ingredientId,
+        expiry: item.expiry,
+        name: ingredients.get(item.ingredientId)?.name ?? null,
+        notifyStartDays: ingredients.get(item.ingredientId)?.notifyStartDays,
+        notifyRepeatDays: ingredients.get(item.ingredientId)?.notifyRepeatDays,
+      }));
+  }
+
+  getRecipesUsingIngredients(ingredientIds: readonly string[]): Array<{ id: string; name: string; matchedIngredientIds: string[] }> {
+    if (ingredientIds.length === 0) return [];
+    const wanted = new Set(ingredientIds);
+    return this.queryByUser<{ id: string; name: string }>('recipes')
+      .map(recipe => ({
+        ...recipe,
+        matchedIngredientIds: this.getRecipeIngredients(recipe.id)
+          .map(ingredient => ingredient.ingredientId)
+          .filter(ingredientId => wanted.has(ingredientId)),
+      }))
+      .filter(recipe => recipe.matchedIngredientIds.length > 0);
   }
 
   getIngredientsByIds(ingredientIds: readonly string[]): Array<{ id: string; name: string }> {

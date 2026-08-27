@@ -66,10 +66,7 @@ export class DietAdviceService {
     if (!userId) return [];
 
     // Get all recipes
-    const recipes = this.db.query<any>(
-      `SELECT id, name FROM recipes WHERE (isDeleted IS NULL OR isDeleted = 0) AND (userId = ? OR userId IS NULL)`,
-      [userId]
-    );
+    const recipes = this.db.queryByUser<{ id: string; name: string }>('recipes');
 
     const scored: RecipeSuggestion[] = [];
 
@@ -117,20 +114,13 @@ export class DietAdviceService {
   }
 
   public getIngredientAvailability(recipeId: string, userId: string): number {
-    const recipeIngredients = this.db.query<any>(
-      `SELECT ri.ingredientId FROM recipe_ingredients ri WHERE ri.recipeId = ? AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)`,
-      [recipeId]
-    );
+    const recipeIngredients = this.db.getRecipeIngredients(recipeId);
 
     if (recipeIngredients.length === 0) return 100;
 
     let inStock = 0;
     for (const ri of recipeIngredients) {
-      const inv = this.db.query<any>(
-        `SELECT id FROM inventory WHERE ingredientId = ? AND (isDeleted IS NULL OR isDeleted = 0) AND quantity > 0 LIMIT 1`,
-        [ri.ingredientId]
-      );
-      if (inv.length > 0) inStock++;
+      if (this.db.getInventoryForIngredient(ri.ingredientId).length > 0) inStock++;
     }
 
     return Math.round((inStock / recipeIngredients.length) * 100);
@@ -194,26 +184,8 @@ export class DietAdviceService {
     cutoff.setDate(cutoff.getDate() + withinDays);
     const cutoffStr = cutoff.toISOString().split('T')[0];
 
-    const sql = userId
-      ? `SELECT inv.id, inv.expiry, ing.name, inv.ingredientId
-         FROM inventory inv
-         JOIN ingredients ing ON ing.id = inv.ingredientId
-         WHERE inv.expiry IS NOT NULL
-           AND DATE(inv.expiry) >= DATE(?)
-           AND DATE(inv.expiry) <= DATE(?)
-           AND (inv.isDeleted IS NULL OR inv.isDeleted = 0)
-           AND inv.userId = ?`
-      : `SELECT inv.id, inv.expiry, ing.name, inv.ingredientId
-         FROM inventory inv
-         JOIN ingredients ing ON ing.id = inv.ingredientId
-         WHERE inv.expiry IS NOT NULL
-           AND DATE(inv.expiry) >= DATE(?)
-           AND DATE(inv.expiry) <= DATE(?)
-           AND (inv.isDeleted IS NULL OR inv.isDeleted = 0)
-           AND inv.userId IS NULL`;
-
-    const params = userId ? [today, cutoffStr, userId] : [today, cutoffStr];
-    const expiring = this.db.query<any>(sql, params);
+    const expiring = this.db.getExpiringInventory()
+      .filter(item => item.expiry >= today && item.expiry <= cutoffStr);
 
     if (expiring.length === 0) {
       return { expiringItems: [], matchedRecipes: [] };
@@ -228,34 +200,12 @@ export class DietAdviceService {
       daysLeft: Math.floor((new Date(e.expiry).getTime() - Date.now()) / 86400000),
     }));
 
-    const placeholders = expiringIngredientIds.map(() => '?').join(',');
-    const recipeQuery = userId
-      ? `SELECT DISTINCT r.id as recipeId, r.name as recipeName
-         FROM recipes r
-         JOIN recipe_ingredients ri ON ri.recipeId = r.id
-         WHERE ri.ingredientId IN (${placeholders})
-           AND (r.isDeleted IS NULL OR r.isDeleted = 0)
-           AND r.userId = ?`
-      : `SELECT DISTINCT r.id as recipeId, r.name as recipeName
-         FROM recipes r
-         JOIN recipe_ingredients ri ON ri.recipeId = r.id
-         WHERE ri.ingredientId IN (${placeholders})
-           AND (r.isDeleted IS NULL OR r.isDeleted = 0)
-           AND r.userId IS NULL`;
-
-    const recipeParams = userId ? [...expiringIngredientIds, userId] : expiringIngredientIds;
-    const recipes = this.db.query<any>(recipeQuery, recipeParams);
-
-    const expiringSet = new Set(expiringIngredientIds);
-    const matchedRecipes = recipes
-      .map((r: any) => {
-        const riRows = this.db.query<any>(
-          `SELECT ingredientId FROM recipe_ingredients WHERE recipeId = ? AND (isDeleted IS NULL OR isDeleted = 0)`,
-          [r.recipeId]
-        );
-        const matchCount = riRows.filter((ri: any) => expiringSet.has(ri.ingredientId)).length;
-        return { recipeId: r.recipeId, recipeName: r.recipeName, matchCount };
-      })
+    const matchedRecipes = this.db.getRecipesUsingIngredients(expiringIngredientIds)
+      .map(recipe => ({
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        matchCount: recipe.matchedIngredientIds.length,
+      }))
       .sort((a: any, b: any) => b.matchCount - a.matchCount)
       .slice(0, 3);
 

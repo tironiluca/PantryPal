@@ -6,7 +6,14 @@ import { NutritionService, DailyNutritionSummary, NutritionGoals } from './nutri
 
 describe('DietAdviceService', () => {
   let service: DietAdviceService;
-  let dbSpy: { query: ReturnType<typeof vi.fn> };
+  let dbSpy: {
+    query: ReturnType<typeof vi.fn>;
+    queryByUser: ReturnType<typeof vi.fn>;
+    getRecipeIngredients: ReturnType<typeof vi.fn>;
+    getInventoryForIngredient: ReturnType<typeof vi.fn>;
+    getExpiringInventory: ReturnType<typeof vi.fn>;
+    getRecipesUsingIngredients: ReturnType<typeof vi.fn>;
+  };
   let authSpy: { getCurrentUserId: ReturnType<typeof vi.fn> };
   let nutritionSpy: { getRecipeNutrition: ReturnType<typeof vi.fn> };
 
@@ -32,7 +39,14 @@ describe('DietAdviceService', () => {
   };
 
   beforeEach(() => {
-    dbSpy = { query: vi.fn().mockReturnValue([]) };
+    dbSpy = {
+      query: vi.fn().mockReturnValue([]),
+      queryByUser: vi.fn().mockReturnValue([]),
+      getRecipeIngredients: vi.fn().mockReturnValue([]),
+      getInventoryForIngredient: vi.fn().mockReturnValue([]),
+      getExpiringInventory: vi.fn().mockReturnValue([]),
+      getRecipesUsingIngredients: vi.fn().mockReturnValue([]),
+    };
     authSpy = { getCurrentUserId: vi.fn().mockReturnValue(null) };
     nutritionSpy = { getRecipeNutrition: vi.fn() };
 
@@ -114,17 +128,14 @@ describe('DietAdviceService', () => {
 
   describe('getIngredientAvailability', () => {
     it('returns 100 when a recipe has no ingredients to check', () => {
-      dbSpy.query.mockReturnValue([]);
+      dbSpy.getRecipeIngredients.mockReturnValue([]);
       expect(service.getIngredientAvailability('recipe-1', 'user-1')).toBe(100);
     });
 
     it('computes the percentage of ingredients currently in stock', () => {
-      dbSpy.query
-        // recipe_ingredients lookup
-        .mockReturnValueOnce([{ ingredientId: 'a' }, { ingredientId: 'b' }])
-        // inventory check for 'a' -> in stock
+      dbSpy.getRecipeIngredients.mockReturnValue([{ ingredientId: 'a' }, { ingredientId: 'b' }]);
+      dbSpy.getInventoryForIngredient
         .mockReturnValueOnce([{ id: 'inv-a' }])
-        // inventory check for 'b' -> not in stock
         .mockReturnValueOnce([]);
 
       expect(service.getIngredientAvailability('recipe-1', 'user-1')).toBe(50);
@@ -134,7 +145,7 @@ describe('DietAdviceService', () => {
   describe('getUseItUpSuggestions', () => {
     it('returns empty suggestions when nothing is expiring soon', () => {
       authSpy.getCurrentUserId.mockReturnValue('user-1');
-      dbSpy.query.mockReturnValue([]);
+      dbSpy.getExpiringInventory.mockReturnValue([]);
 
       const result = service.getUseItUpSuggestions(3);
 

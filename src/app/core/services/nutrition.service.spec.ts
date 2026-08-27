@@ -6,11 +6,23 @@ import { ProductsService } from './products.service';
 
 describe('NutritionService', () => {
   let service: NutritionService;
-  let dbSpy: { query: ReturnType<typeof vi.fn>; exec: ReturnType<typeof vi.fn> };
+  let dbSpy: {
+    query: ReturnType<typeof vi.fn>;
+    exec: ReturnType<typeof vi.fn>;
+    getRecipeNutritionIngredients: ReturnType<typeof vi.fn>;
+    getNutritionLogs: ReturnType<typeof vi.fn>;
+    getNutritionGoals: ReturnType<typeof vi.fn>;
+  };
   let authSpy: { getCurrentUserId: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    dbSpy = { query: vi.fn().mockReturnValue([]), exec: vi.fn() };
+    dbSpy = {
+      query: vi.fn().mockReturnValue([]),
+      exec: vi.fn(),
+      getRecipeNutritionIngredients: vi.fn().mockReturnValue([]),
+      getNutritionLogs: vi.fn().mockReturnValue([]),
+      getNutritionGoals: vi.fn().mockReturnValue(undefined),
+    };
     authSpy = { getCurrentUserId: vi.fn().mockReturnValue('user-1') };
 
     TestBed.configureTestingModule({
@@ -25,12 +37,12 @@ describe('NutritionService', () => {
 
   describe('getRecipeNutrition', () => {
     it('returns null when the recipe has no ingredients', () => {
-      dbSpy.query.mockReturnValue([]);
+      dbSpy.getRecipeNutritionIngredients.mockReturnValue([]);
       expect(service.getRecipeNutrition('recipe-1')).toBeNull();
     });
 
     it('scales per-100g nutrition values by the ingredient weight in grams', () => {
-      dbSpy.query.mockReturnValue([
+      dbSpy.getRecipeNutritionIngredients.mockReturnValue([
         { quantity: 200, unit: 'g', energyKcal: 100, proteinG: 10, carbsG: 20, fatG: 5, fiberG: 2, sugarG: 1, sodiumMg: 50 },
       ]);
 
@@ -48,7 +60,7 @@ describe('NutritionService', () => {
     });
 
     it('converts non-gram weight units before scaling', () => {
-      dbSpy.query.mockReturnValue([
+      dbSpy.getRecipeNutritionIngredients.mockReturnValue([
         { quantity: 1, unit: 'kg', energyKcal: 100, proteinG: 10, carbsG: 20, fatG: 5 },
       ]);
 
@@ -60,7 +72,7 @@ describe('NutritionService', () => {
     });
 
     it('skips ingredients measured in non-convertible units (e.g. pcs)', () => {
-      dbSpy.query.mockReturnValue([
+      dbSpy.getRecipeNutritionIngredients.mockReturnValue([
         { quantity: 200, unit: 'g', energyKcal: 100, proteinG: 10, carbsG: 0, fatG: 0 },
         { quantity: 2, unit: 'pcs', energyKcal: 9999, proteinG: 9999, carbsG: 9999, fatG: 9999 },
       ]);
@@ -72,7 +84,7 @@ describe('NutritionService', () => {
     });
 
     it('sums nutrition across multiple ingredients', () => {
-      dbSpy.query.mockReturnValue([
+      dbSpy.getRecipeNutritionIngredients.mockReturnValue([
         { quantity: 100, unit: 'g', energyKcal: 50, proteinG: 5, carbsG: 5, fatG: 5 },
         { quantity: 100, unit: 'g', energyKcal: 30, proteinG: 3, carbsG: 3, fatG: 3 },
       ]);
@@ -104,18 +116,10 @@ describe('NutritionService', () => {
     });
 
     it('aggregates logged meals for the day', () => {
-      dbSpy.query.mockImplementation((sql: string) => {
-        if (sql.includes('FROM nutrition_logs')) {
-          return [
-            { totalKcal: 500, totalProtein: 30, totalCarbs: 40, totalFat: 10, totalFiber: 5, totalSugar: 8, totalSodium: 300 },
-            { totalKcal: 300, totalProtein: 20, totalCarbs: 20, totalFat: 5, totalFiber: 2, totalSugar: 4, totalSodium: 200 },
-          ];
-        }
-        if (sql.includes('FROM nutrition_goals')) {
-          return [];
-        }
-        return [];
-      });
+      dbSpy.getNutritionLogs.mockReturnValue([
+        { totalKcal: 500, totalProtein: 30, totalCarbs: 40, totalFat: 10, totalFiber: 5, totalSugar: 8, totalSodium: 300 },
+        { totalKcal: 300, totalProtein: 20, totalCarbs: 20, totalFat: 5, totalFiber: 2, totalSugar: 4, totalSodium: 200 },
+      ]);
 
       const summary = service.getDailyNutrition('2026-01-01');
 
@@ -125,25 +129,18 @@ describe('NutritionService', () => {
     });
 
     it('computes percentage-of-goal fields when goals are set', () => {
-      dbSpy.query.mockImplementation((sql: string) => {
-        if (sql.includes('FROM nutrition_logs')) {
-          return [{ totalKcal: 1000, totalProtein: 50, totalCarbs: 100, totalFat: 30 }];
-        }
-        if (sql.includes('FROM nutrition_goals')) {
-          return [
-            {
-              userId: 'user-1',
-              dailyKcalGoal: 2000,
-              proteinGoal: 100,
-              carbsGoal: 200,
-              fatGoal: 60,
-              trackFiber: 0,
-              trackSugar: 0,
-              trackSodium: 0,
-            },
-          ];
-        }
-        return [];
+      dbSpy.getNutritionLogs.mockReturnValue([
+        { totalKcal: 1000, totalProtein: 50, totalCarbs: 100, totalFat: 30 },
+      ]);
+      dbSpy.getNutritionGoals.mockReturnValue({
+        userId: 'user-1',
+        dailyKcalGoal: 2000,
+        proteinGoal: 100,
+        carbsGoal: 200,
+        fatGoal: 60,
+        trackFiber: 0,
+        trackSugar: 0,
+        trackSodium: 0,
       });
 
       const summary = service.getDailyNutrition('2026-01-01');
@@ -162,23 +159,21 @@ describe('NutritionService', () => {
     });
 
     it('returns null when no goals row exists', () => {
-      dbSpy.query.mockReturnValue([]);
+      dbSpy.getNutritionGoals.mockReturnValue(undefined);
       expect(service.getGoals()).toBeNull();
     });
 
     it('coerces stored 0/1 tracking flags to booleans', () => {
-      dbSpy.query.mockReturnValue([
-        {
-          userId: 'user-1',
-          dailyKcalGoal: 2000,
-          proteinGoal: 100,
-          carbsGoal: 200,
-          fatGoal: 60,
-          trackFiber: 1,
-          trackSugar: 0,
-          trackSodium: 1,
-        },
-      ]);
+      dbSpy.getNutritionGoals.mockReturnValue({
+        userId: 'user-1',
+        dailyKcalGoal: 2000,
+        proteinGoal: 100,
+        carbsGoal: 200,
+        fatGoal: 60,
+        trackFiber: 1,
+        trackSugar: 0,
+        trackSodium: 1,
+      });
 
       const goals = service.getGoals();
 
@@ -195,7 +190,7 @@ describe('NutritionService', () => {
     });
 
     it('inserts a new row when no goals exist yet', () => {
-      dbSpy.query.mockReturnValue([]); // getGoals() -> no existing row
+      dbSpy.getNutritionGoals.mockReturnValue(undefined); // getGoals() -> no existing row
 
       service.setGoals({ dailyKcalGoal: 2000, proteinGoal: 100, carbsGoal: 200, fatGoal: 60 });
 

@@ -13,6 +13,10 @@ Updated 2026-08-27. This document tracks remaining product, security, and releas
 - Keyboard, language, theme, snackbar, data-event, auth-guard, and error-handler behavior now have inferred unit specifications.
 - Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
 - Ingredient categories, available ingredients, recipe summaries, and recipe edit loads now use typed, user-scoped `DbService` methods, with focused regression coverage.
+- Barcode migration tests now verify first-row preservation, guest/user isolation, active-row uniqueness, and soft-delete behavior.
+- Typed relationship methods now cover meal plans, nutrition logs/goals, recipe nutrition, expiring inventory, and diet-advice recipe matching.
+- Feature/dialog behavior specs cover inventory, ingredients, recipes, meal planning, nutrition, settings, voice, barcode/OCR, and household validation.
+- Mocked authenticated and failure-path Playwright workflows cover protected feature routes, backend/product failures, and permission denial.
 - CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
 - Playwright covers unauthenticated access to every protected route.
 
@@ -56,17 +60,17 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 
 #### 4. Make duplicate barcode prevention authoritative
 
-**Status:** Partial - local enforcement complete; migration coverage remains
+**Status:** Partial - local migration coverage complete; create/edit coverage remains
 
-The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. The local `DbService` contract tests pass; migration and create/edit isolation tests remain.
+The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. SQLite-backed migration and guest/user isolation tests pass; inventory create/edit conflict tests remain.
 
 - Add database migration tests and tests for create, edit, guest, and cross-user cases.
 
 #### 5. Move component database access into services
 
-**Status:** Partial - read-path extraction advanced
+**Status:** Partial - relationship read extraction complete for targeted services
 
-Some components still construct raw SQL for related data and know the database schema directly. For example, meal-of-day logic now uses `DbService.getIngredientInventory()`, but similar ingredient, inventory, recipe, and meal-plan lookups remain in component code or are duplicated across services.
+The targeted relationship reads now use typed `DbService` contracts, including meal plans, nutrition, diet advice, notifications, recipe editing, and recipe lists. Remaining direct SQL is primarily mutation, sync, migration, and non-relationship infrastructure code.
 
 - Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
 - Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
@@ -90,7 +94,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 #### 7. Finish responsive navigation and dialog consistency
 
-**Status:** Partial
+**Status:** Partial - mocked workflows added; coverage target remains
 
 The refreshed UI is substantially implemented. The existing mobile toolbar/dropdown is the chosen replacement for fixed bottom navigation; dialog patterns and async list states are not uniformly complete.
 
@@ -102,7 +106,7 @@ The refreshed UI is substantially implemented. The existing mobile toolbar/dropd
 
 **Status:** Partial
 
-The current suite covers only a small subset of the production code. Every production feature and shared service must be covered by both the Vitest unit/component suite and at least one Playwright browser workflow.
+The suite now includes mocked authenticated and failure-path workflows, but aggregate Vitest coverage is 34.48% statements, 26.86% branches, 38.06% functions, and 34.01% lines across exercised files. Every production feature and shared service still requires deeper branch coverage and the 70%, 80%, then 90% gates.
 
 - Add Vitest tests for every production TypeScript service, component, guard, model, and utility, including success, failure, loading, empty, and permission branches where applicable.
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
@@ -113,7 +117,7 @@ The current suite covers only a small subset of the production code. Every produ
 
 #### 9. Define the full-coverage test matrix
 
-**Status:** Partial
+**Status:** Partial - matrix updated; exhaustive ownership remains
 
 Maintain a checked-in test matrix mapping every `src/app` production file and route to its Vitest and Playwright coverage. The matrix must be reviewed whenever production code changes.
 
@@ -138,12 +142,10 @@ All partial items have been reviewed against repository evidence. Local query ow
 
 ### Local Implementation Queue
 
-1. Add migration tests for duplicate barcode preservation and user/guest isolation.
-2. Extract remaining recipe, ingredient, nutrition, and meal-plan relationship queries into typed service methods.
-3. Add component/dialog Vitest specs for inventory, ingredients, recipes, meal planning, nutrition, settings, voice, and household sharing.
-4. Add authenticated Playwright workflows for inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, and household sharing using a dedicated test account or mocked backend.
-5. Raise Vitest coverage incrementally to 70%, then 80%, then 90% for statements, branches, functions, and lines; update `TEST_MATRIX.md` with every new spec.
-6. Add failure-path browser tests for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
+1. Add inventory create/edit conflict tests and deepen component/dialog Vitest behavior coverage beyond the current smoke contracts.
+2. Inventory every production file in `src/app` and assign a dedicated Vitest and Playwright owner in `TEST_MATRIX.md`.
+3. Raise Vitest coverage incrementally to 70%, then 80%, then 90% for statements, branches, functions, and lines; update `TEST_MATRIX.md` with every new spec.
+4. Replace route-level failure smoke checks with UI assertions for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
 
 ### External Decisions And Operations
 

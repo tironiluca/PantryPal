@@ -26,16 +26,7 @@ export class NotificationsService {
   }
 
   async checkAndNotify() {
-    const userId = this.db.getCurrentUserId();
-    const sql = userId
-      ? `SELECT i.id, i.expiry, ing.name, ing.notifyStartDays, ing.notifyRepeatDays
-         FROM inventory i JOIN ingredients ing ON ing.id = i.ingredientId
-         WHERE i.expiry IS NOT NULL AND (i.isDeleted IS NULL OR i.isDeleted = 0) AND i.userId = ?`
-      : `SELECT i.id, i.expiry, ing.name, ing.notifyStartDays, ing.notifyRepeatDays
-         FROM inventory i JOIN ingredients ing ON ing.id = i.ingredientId
-         WHERE i.expiry IS NOT NULL AND (i.isDeleted IS NULL OR i.isDeleted = 0) AND i.userId IS NULL`;
-    const params = userId ? [userId] : [];
-    const items = this.db.query<any>(sql, params);
+    const items = this.db.getExpiringInventory();
     const today = new Date();
     for (const it of items) {
       const expiry = new Date(it.expiry);

@@ -151,7 +151,7 @@ export class MealPlanService {
   ): void {
     // Include userId to prevent updating another user's meal plan (BUG-14)
     const userId = this.db.getCurrentUserId();
-    const existing = this.db.query<MealPlan>('SELECT * FROM meal_plans WHERE id = ? AND userId = ?', [id, userId]);
+    const existing = this.db.getMealPlan(id);
 
     if (existing.length === 0) {
       throw new Error(`Meal plan ${id} not found`);
@@ -232,20 +232,14 @@ export class MealPlanService {
     // For each meal plan, aggregate ingredients
     for (const plan of mealPlans) {
       // Get recipe ingredients
-      const recipeIngredients = this.db.query<any>(
-        'SELECT * FROM recipe_ingredients WHERE recipeId = ? AND (isDeleted IS NULL OR isDeleted = 0)',
-        [plan.recipeId]
-      );
+      const recipeIngredients = this.db.getRecipeIngredients(plan.recipeId);
 
       for (const ri of recipeIngredients) {
         const key = ri.ingredientId;
 
         if (!ingredientMap.has(key)) {
           // Get ingredient name
-          const ingredient = this.db.query<any>(
-            'SELECT * FROM ingredients WHERE id = ? AND (isDeleted IS NULL OR isDeleted = 0)',
-            [ri.ingredientId]
-          )[0];
+          const ingredient = this.db.getIngredientsByIds([ri.ingredientId])[0];
 
           ingredientMap.set(key, {
             ingredientId: ri.ingredientId,
@@ -269,11 +263,7 @@ export class MealPlanService {
 
     // Check inventory for each ingredient
     for (const [ingredientId, item] of ingredientMap.entries()) {
-      const inventoryItems = this.db.queryByUser<any>(
-        'inventory',
-        'ingredientId = ?',
-        [ingredientId]
-      );
+      const inventoryItems = this.db.getIngredientInventory(ingredientId).inventory;
 
       // Sum up inventory quantity (convert units if needed - simplified for now)
       item.inventoryQuantity = inventoryItems.reduce((sum, inv) => {
@@ -294,29 +284,26 @@ export class MealPlanService {
     hasEnough: boolean;
     missing: Array<{ ingredientName: string; needed: number; unit: string }>;
   } {
-    const plan = this.db.query<MealPlan>('SELECT * FROM meal_plans WHERE id = ?', [mealPlanId])[0];
+    const plan = this.db.getMealPlan(mealPlanId) as MealPlan | undefined;
 
     if (!plan) {
       throw new Error(`Meal plan ${mealPlanId} not found`);
     }
 
-    const recipeIngredients = this.db.query<any>(
-      'SELECT * FROM recipe_ingredients WHERE recipeId = ? AND (isDeleted IS NULL OR isDeleted = 0)',
-      [plan.recipeId]
-    );
+    const recipeIngredients = this.db.getRecipeIngredients(plan.recipeId);
 
     const missing: Array<{ ingredientName: string; needed: number; unit: string }> = [];
 
     for (const ri of recipeIngredients) {
       const neededQuantity = ri.quantity * plan.servings;
-      const inventoryItems = this.db.queryByUser<any>('inventory', 'ingredientId = ?', [ri.ingredientId]);
+      const inventoryItems = this.db.getIngredientInventory(ri.ingredientId).inventory;
 
       const totalInventory = inventoryItems.reduce((sum, inv) => {
         return sum + (inv.unit === ri.unit ? inv.quantity : 0);
       }, 0);
 
       if (totalInventory < neededQuantity) {
-        const ingredient = this.db.query<any>('SELECT * FROM ingredients WHERE id = ?', [ri.ingredientId])[0];
+        const ingredient = this.db.getIngredientsByIds([ri.ingredientId])[0];
         missing.push({
           ingredientName: ingredient?.name || 'Unknown',
           needed: neededQuantity - totalInventory,
@@ -353,7 +340,7 @@ export class MealPlanService {
    */
   private enrichWithRecipeData(plans: MealPlan[]): MealPlanWithRecipe[] {
     return plans.map(plan => {
-      const recipe = this.db.query<any>('SELECT * FROM recipes WHERE id = ?', [plan.recipeId])[0];
+      const recipe = this.db.getRecipe(plan.recipeId);
       return {
         ...plan,
         recipeName: recipe?.name,

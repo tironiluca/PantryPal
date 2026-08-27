@@ -53,15 +53,7 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 ### P2 - Feature Completion
 
-#### 5. Resolve meal-of-day ingredient labels
-
-**Status:** Partial
-
-Inventory list controls and minimum-stock details are implemented. Meal-of-day missing ingredients still display IDs rather than resolved names.
-
-- Resolve ingredient IDs to names in meal-of-day output.
-
-#### 6. Decide and implement analytics scope
+#### 5. Decide and implement analytics scope
 
 **Status:** Not started
 
@@ -73,7 +65,7 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 ### P3 - UX and Test Coverage
 
-#### 7. Finish responsive navigation and dialog consistency
+#### 6. Finish responsive navigation and dialog consistency
 
 **Status:** Partial
 
@@ -83,7 +75,7 @@ The refreshed UI is substantially implemented, but mobile navigation does not ye
 - Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
 - Fill remaining list loading and empty states where async work is visible.
 
-#### 8. Cover the entire codebase with Vitest and Playwright
+#### 7. Cover the entire codebase with Vitest and Playwright
 
 **Status:** Not started
 
@@ -95,7 +87,7 @@ The current suite covers only a small subset of the production code. Every produ
 - Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
 - Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
 
-#### 9. Define the full-coverage test matrix
+#### 8. Define the full-coverage test matrix
 
 **Status:** Not started
 
@@ -111,8 +103,7 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 1. Rotate credentials and remove them from build inputs.
 2. Finish subscription cleanup and error handling.
 3. Add authoritative barcode migration tests.
-4. Complete visible list controls and meal-of-day labels.
-5. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
+4. Decide analytics and navigation scope, then fill the associated Vitest and Playwright tests.
 
 ## Verification Commands
 

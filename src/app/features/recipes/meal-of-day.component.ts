@@ -93,6 +93,11 @@ export class MealOfDayComponent {
     const totalCount = ingredients.length;
 
     for (const ing of ingredients) {
+      const ingredient = this.db.query<{ name: string }>(
+        'SELECT name FROM ingredients WHERE id = ?',
+        [ing.ingredientId]
+      )[0];
+
       // Check inventory - get all items with their units
       const inventoryItems = this.db.query<any>(
         'SELECT quantity, unit, expiry FROM inventory WHERE ingredientId = ?',
@@ -129,8 +134,8 @@ export class MealOfDayComponent {
         // Partial availability
         score += 5 * (totalAvailable / ing.quantity);
       } else {
-        // Not available
-        missing.push(ing.ingredientId);
+        // Not available; keep the ID as a fallback for incomplete legacy data.
+        missing.push(ingredient?.name || ing.ingredientId);
       }
     }
 

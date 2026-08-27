@@ -1,0 +1,26 @@
+# PantryPal Test Matrix
+
+This matrix is the release checklist for production areas. A row is complete only when the named Vitest and Playwright workflows exist and pass in CI.
+
+| Area | Production surface | Vitest coverage | Playwright coverage | Status |
+| --- | --- | --- | --- | --- |
+| Authentication | Login, register, forgot password, auth guard | `src/app/features/auth/login/login.component.spec.ts` | `e2e/login.spec.ts`, `e2e/register.spec.ts`, `e2e/forgot-password.spec.ts` | Partial |
+| Persistence | `DbService`, migrations, fallback storage | `src/app/core/services/db.service.spec.ts` | Missing persistence workflow | Partial |
+| Inventory | Inventory list/edit, barcode, OCR | Missing component/dialog specs | Missing inventory workflow | Uncovered |
+| Ingredients | Ingredient list/edit, matching | `src/app/features/ingredients/ingredient-list.component.spec.ts`, `src/app/core/services/ingredient-matching.service.spec.ts` | Missing ingredients workflow | Partial |
+| Recipes | Recipe list/edit/import, meal-of-day | Missing component/dialog specs | Missing recipes workflow | Uncovered |
+| Meal planning | Calendar, add dialog, shopping list | Missing component/dialog specs | Missing meal-plan workflow | Uncovered |
+| Nutrition | Dashboard, nutrition service | `src/app/core/services/nutrition.service.spec.ts` | Missing nutrition workflow | Partial |
+| Cart | Shopping cart view | `src/app/features/cart/cart-view.component.spec.ts` | Missing cart workflow | Partial |
+| Settings | Profile, language, voice settings | Missing component/service specs | Missing settings workflow | Uncovered |
+| Voice | Voice service and overlay | Missing service/component specs | Missing voice workflow | Uncovered |
+| Household sharing | Household service and UI | Missing service/component specs | Missing household workflow | Uncovered |
+| Shared UI | Confirm, skeleton, snackbar, dialogs | `src/app/shared/dialogs/confirm/confirm.dialog.spec.ts` | Missing shared error workflows | Partial |
+| Cross-cutting failures | Product lookup, save, scanner, OCR, persistence, permissions | Partial focused coverage | Missing failure workflows | Partial |
+
+## Release Rules
+
+- Every production file under `src/app` must be linked to a focused Vitest spec and a Playwright spec before this matrix is marked complete.
+- New production files require a matrix row in the same change.
+- CI runs unit tests, coverage, production build, and Playwright tests.
+- Uncovered rows remain release blockers.

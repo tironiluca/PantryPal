@@ -19,6 +19,7 @@ Environment files now contain placeholders only. `npm start` and `npm run build`
 - A committed `environment.template.ts` containing placeholders is now available.
 - Rotate the exposed Supabase key in the Supabase project and deployment history.
 - Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
+- Repository-side protection is documented in `README.md`; CI receives Supabase values only through secrets.
 
 #### 2. Make recipe import privacy explicit
 
@@ -29,6 +30,7 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 - Add a concise privacy notice beside the import action.
 - Document the third-party proxy dependency and its limitations.
 - Prefer a first-party Supabase Edge Function proxy when the backend is available.
+- The dialog notice and repository documentation now explain third-party proxy disclosure and sensitive-URL limitations.
 
 ### P1 - Correctness and Resource Safety
 
@@ -103,6 +105,8 @@ The current suite covers only a small subset of the production code. Every produ
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - Configure Vitest coverage to include all production files and publish text/HTML reports in CI.
 - Run Vitest coverage, production build, and Playwright E2E tests in CI; any missing coverage or failing test blocks release.
+- `.github/workflows/ci.yml` now runs unit tests, coverage, production build, and Playwright, and uploads coverage and browser artifacts.
+- Full production-area coverage remains blocked by the missing specs listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix
 
@@ -114,6 +118,7 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 - Record the owning Vitest spec and Playwright spec for each area.
 - Track uncovered branches and workflows as backlog entries with an owner and acceptance test.
 - Require the matrix and coverage reports in pull-request checks.
+- `TEST_MATRIX.md` now records the current Vitest and Playwright ownership map and marks uncovered areas as release blockers.
 
 ## Recommended Order
 

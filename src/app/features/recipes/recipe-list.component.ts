@@ -82,22 +82,7 @@ export class RecipeListComponent {
     this.loading.set(true);
     try {
       const userId = this.db.getCurrentUserId();
-      this.rows = userId
-        ? this.db.query<any>(
-            `SELECT r.id, r.name, r.imageUrl, r.servings,
-               (SELECT COUNT(*) FROM recipe_ingredients ri
-                WHERE ri.recipeId = r.id AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)) AS ingredientCount
-             FROM recipes r
-             WHERE r.userId = ? AND (r.isDeleted IS NULL OR r.isDeleted = 0)`,
-            [userId]
-          )
-        : this.db.query<any>(
-            `SELECT r.id, r.name, r.imageUrl, r.servings,
-               (SELECT COUNT(*) FROM recipe_ingredients ri
-                WHERE ri.recipeId = r.id AND (ri.isDeleted IS NULL OR ri.isDeleted = 0)) AS ingredientCount
-             FROM recipes r
-             WHERE r.userId IS NULL AND (r.isDeleted IS NULL OR r.isDeleted = 0)`
-          );
+      this.rows = this.db.getRecipesWithIngredientCounts();
 
       this.computeCanCook(userId);
       this.applyFilters();

@@ -12,6 +12,7 @@ Updated 2026-08-27. This document tracks remaining product, security, and releas
 - Cache, voice-command, and recipe-import service behavior now have inferred unit specifications.
 - Keyboard, language, theme, snackbar, data-event, auth-guard, and error-handler behavior now have inferred unit specifications.
 - Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
+- Ingredient categories, available ingredients, recipe summaries, and recipe edit loads now use typed, user-scoped `DbService` methods, with focused regression coverage.
 - CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
 - Playwright covers unauthenticated access to every protected route.
 
@@ -34,7 +35,7 @@ Environment files now contain placeholders only. `npm start` and `npm run build`
 
 #### 2. Make recipe import privacy explicit
 
-**Status:** Partial
+**Status:** Blocked externally
 
 Recipe URLs are still sent to third-party CORS proxies, even though encoding and private-network rejection are implemented. A privacy notice is now shown beside the import action.
 
@@ -55,15 +56,15 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 
 #### 4. Make duplicate barcode prevention authoritative
 
-**Status:** Partial
+**Status:** Partial - local enforcement complete; migration coverage remains
 
-The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index.
+The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. The local `DbService` contract tests pass; migration and create/edit isolation tests remain.
 
 - Add database migration tests and tests for create, edit, guest, and cross-user cases.
 
 #### 5. Move component database access into services
 
-**Status:** Partial
+**Status:** Partial - read-path extraction advanced
 
 Some components still construct raw SQL for related data and know the database schema directly. For example, meal-of-day logic now uses `DbService.getIngredientInventory()`, but similar ingredient, inventory, recipe, and meal-plan lookups remain in component code or are duplicated across services.
 
@@ -124,8 +125,14 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 ## External Blockers
 
-- A first-party recipe proxy requires a deployed Supabase Edge Function and its operational policy.
-- Analytics requires product approval for metrics, retention, and scope.
+- Recipe proxy owner: deploy a Supabase Edge Function that accepts only validated public recipe URLs, fetches server-side, applies timeouts and response-size limits, and returns the existing parser input. Then configure the client to prefer it and retain the third-party proxy only as an explicitly approved fallback. Acceptance: deployed function, privacy/retention policy, staging validation, and passing proxy failure tests.
+- Analytics product owner: decide whether analytics is in scope, define consumption/waste metrics, retention, ownership/RLS, and deletion behavior. Acceptance: recorded decision and approved data contract, or an explicit out-of-scope decision that closes this backlog item.
+- Test owner: provide a dedicated test account or approve a deterministic Supabase mock strategy for authenticated Playwright workflows. Acceptance: inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, and household workflows pass in CI.
+- Repository owner: run the local verification tasks that do not require external access: credential scan of the bundle/history, migration and barcode isolation tests, remaining typed query extraction, dialog/error-path tests, matrix updates, and coverage threshold enforcement.
+
+## Partial-Item Conclusion
+
+All partial items have been reviewed against repository evidence. Local query ownership and regression coverage were extended in this pass, and duplicate-barcode enforcement is active locally. The remaining partial work is intentionally retained: error-path cleanup, dialog consistency, the full Vitest/Playwright matrix, and migration isolation tests still need implementation. Recipe privacy and realistic authenticated browser coverage also require external proxy deployment, policy, or test-account decisions. The plan is not release-complete until those acceptance gates pass.
 
 ## Next Steps
 

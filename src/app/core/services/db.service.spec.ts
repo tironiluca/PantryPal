@@ -110,6 +110,45 @@ describe('DbService SQL identifier validation', () => {
     expect(service.getIngredientsByIds([])).toEqual([]);
     expect(queryByUser).not.toHaveBeenCalled();
   });
+
+  it('loads categories and available ingredients in display order', () => {
+    vi.spyOn(service, 'queryByUser')
+      .mockReturnValueOnce([
+        { id: 'cat-2', name: 'Vegetables' },
+        { id: 'cat-1', name: 'Dairy' },
+      ])
+      .mockReturnValueOnce([
+        { id: 'ing-2', name: 'Zucchini', categoryId: 'cat-2' },
+        { id: 'ing-1', name: 'Milk', categoryId: 'cat-1' },
+      ]);
+
+    expect(service.getAvailableIngredients()).toEqual([
+      { id: 'ing-1', name: 'Milk', category: 'Dairy' },
+      { id: 'ing-2', name: 'Zucchini', category: 'Vegetables' },
+    ]);
+  });
+
+  it('loads a user-scoped recipe and counts active recipe ingredients', () => {
+    vi.spyOn(service, 'queryByUser').mockReturnValue([
+      { id: 'recipe-1', name: 'Soup', imageUrl: '', servings: 2 },
+    ]);
+    vi.spyOn(service, 'getRecipeIngredients').mockReturnValue([
+      { ingredientId: 'ing-1', quantity: 1, unit: 'pcs', name: 'Carrot' },
+    ]);
+
+    expect(service.getRecipesWithIngredientCounts()).toEqual([
+      { id: 'recipe-1', name: 'Soup', imageUrl: '', servings: 2, ingredientCount: 1 },
+    ]);
+  });
+
+  it('loads a recipe through the user-scoped contract', () => {
+    const queryByUser = vi.spyOn(service, 'queryByUser').mockReturnValue([
+      { id: 'recipe-1', name: 'Soup' },
+    ]);
+
+    expect(service.getRecipe('recipe-1')).toEqual({ id: 'recipe-1', name: 'Soup' });
+    expect(queryByUser).toHaveBeenCalledWith('recipes', 'id = ?', ['recipe-1']);
+  });
 });
 
 describe('DbService persistence fallback', () => {

@@ -52,6 +52,30 @@ export interface RecipeIngredientRow {
   name: string | null;
 }
 
+export interface IngredientCategoryRow {
+  id: string;
+  name: string;
+}
+
+export interface RecipeSummaryRow {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  servings?: number;
+  ingredientCount: number;
+}
+
+export interface RecipeEditRow {
+  id: string;
+  name: string;
+  steps?: string;
+  servings?: number;
+  prepTime?: number;
+  cookTime?: number;
+  imageUrl?: string;
+  notes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DbService {
   private auth = inject(AuthService);
@@ -431,6 +455,36 @@ export class DbService {
     );
 
     return { name: ingredient?.name ?? null, inventory };
+  }
+
+  getIngredientCategories(): IngredientCategoryRow[] {
+    return this.queryByUser<IngredientCategoryRow>('ingredient_categories')
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  getAvailableIngredients(): Array<{ id: string; name: string; category: string }> {
+    const categories = new Map(
+      this.getIngredientCategories().map(category => [category.id, category.name])
+    );
+    return this.queryByUser<{ id: string; name: string; categoryId?: string }>('ingredients')
+      .map(ingredient => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        category: categories.get(ingredient.categoryId ?? '') ?? 'Other',
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  getRecipesWithIngredientCounts(): RecipeSummaryRow[] {
+    const recipes = this.queryByUser<RecipeSummaryRow>('recipes');
+    return recipes.map(recipe => ({
+      ...recipe,
+      ingredientCount: this.getRecipeIngredients(recipe.id).length,
+    }));
+  }
+
+  getRecipe(recipeId: string): RecipeEditRow | undefined {
+    return this.queryByUser<RecipeEditRow>('recipes', 'id = ?', [recipeId])[0];
   }
 
   getIngredientsByIds(ingredientIds: readonly string[]): Array<{ id: string; name: string }> {

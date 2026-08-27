@@ -84,9 +84,8 @@ export class InventoryEditDialog implements OnInit {
   ngOnInit(): void {
     // Load ingredient list for autocomplete
     try {
-      this.allIngredients = this.db.query<{ id: string; name: string }>(
-        'SELECT id, name FROM ingredients ORDER BY name'
-      );
+      this.allIngredients = this.db.getAvailableIngredients()
+        .map(({ id, name }) => ({ id, name }));
     } catch {
       this.allIngredients = [];
     }

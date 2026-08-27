@@ -81,21 +81,7 @@ export class RecipeEditDialog implements OnInit {
   }
 
   private loadIngredients(): void {
-    const userId = this.db.getCurrentUserId();
-    // BUG-15: null userId must use IS NULL, not = NULL (SQL NULL comparison)
-    const sql = userId
-      ? `SELECT i.id, i.name, c.name as category
-         FROM ingredients i
-         LEFT JOIN ingredient_categories c ON i.categoryId = c.id
-         WHERE i.userId = ? AND (i.isDeleted IS NULL OR i.isDeleted = 0)
-         ORDER BY i.name`
-      : `SELECT i.id, i.name, c.name as category
-         FROM ingredients i
-         LEFT JOIN ingredient_categories c ON i.categoryId = c.id
-         WHERE i.userId IS NULL AND (i.isDeleted IS NULL OR i.isDeleted = 0)
-         ORDER BY i.name`;
-    const params = userId ? [userId] : [];
-    const ingredients = this.db.query<any>(sql, params);
+    const ingredients = this.db.getAvailableIngredients();
     this.availableIngredients.set(
       ingredients.map(ing => ({
         id: ing.id,
@@ -106,7 +92,7 @@ export class RecipeEditDialog implements OnInit {
   }
 
   private loadRecipeData(): void {
-    const recipe = this.db.query<any>('SELECT * FROM recipes WHERE id = ?', [this.data.id])[0];
+    const recipe = this.db.getRecipe(this.data.id);
 
     if (!recipe) return;
 
@@ -115,12 +101,7 @@ export class RecipeEditDialog implements OnInit {
     steps.forEach((step: string) => this.addStep(step));
 
     // Load ingredients
-    const recipeIngredients = this.db.query<any>(
-      `SELECT ingredientId, quantity, unit
-       FROM recipe_ingredients
-       WHERE recipeId = ? AND (isDeleted IS NULL OR isDeleted = 0)`,
-      [this.data.id]
-    );
+    const recipeIngredients = this.db.getRecipeIngredients(this.data.id);
 
     recipeIngredients.forEach(ing => {
       this.addIngredient(ing.ingredientId, ing.quantity, ing.unit);

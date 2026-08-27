@@ -43,9 +43,7 @@ export class IngredientEditDialog implements OnInit {
 
   ngOnInit(): void {
     try {
-      this.categories = this.db.query<{ id: string; name: string }>(
-        'SELECT id, name FROM ingredient_categories ORDER BY name'
-      );
+      this.categories = this.db.getIngredientCategories();
     } catch {
       this.categories = [];
     }

@@ -67,13 +67,13 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 #### 6. Finish unit-aware shopping cart calculations
 
-**Status:** In progress
+**Status:** Completed
 
-Cart calculations now aggregate compatible units through `UnitConverterService`.
+Cart calculations now aggregate compatible units through `UnitConverterService`, report shortages explicitly, and keep incompatible unit families separate. Focused cart tests cover these cases.
 
-- Keep the conversion behavior covered by focused cart tests.
-- Keep incompatible units separate and make the shortage explicit.
-- Add cart conversion and mixed-unit tests.
+- [x] Keep the conversion behavior covered by focused cart tests.
+- [x] Keep incompatible units separate and make the shortage explicit.
+- [x] Add cart conversion and mixed-unit tests.
 
 #### 7. Complete list controls and meal-of-day labels
 

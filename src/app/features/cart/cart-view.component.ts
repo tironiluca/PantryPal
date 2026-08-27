@@ -114,12 +114,16 @@ export class CartViewComponent implements OnInit {
             targetUnit
           );
 
-          if (available !== null && needed > available) {
+          const shortage = available === null
+            ? null
+            : this.unitConverter.calculateShortage(available, targetUnit, needed, targetUnit);
+
+          if (shortage && shortage.shortage > 0) {
             out.push({
               ingredientId,
               ingredientName: ingredients.get(ingredientId) ?? ingredientId,
-              suggestedQty: needed - available,
-              unit: targetUnit,
+              suggestedQty: shortage.shortage,
+              unit: shortage.unit,
               reason: 'min-restock',
             });
           }

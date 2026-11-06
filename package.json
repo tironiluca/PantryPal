@@ -52,7 +52,7 @@
     "zone.js": "^0.16.1"
   },
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.7.0",

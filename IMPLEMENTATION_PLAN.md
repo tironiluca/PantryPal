@@ -60,11 +60,11 @@ Several dialog and voice flows still have unmanaged subscriptions, and some asyn
 
 #### 4. Make duplicate barcode prevention authoritative
 
-**Status:** Partial - local migration coverage complete; create/edit coverage remains
+**Status:** Complete
 
-The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. SQLite-backed migration and guest/user isolation tests pass; inventory create/edit conflict tests remain.
+The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. SQLite-backed migration and guest/user isolation tests pass, and `InventoryEditDialog.save()` now has dedicated regression coverage for create and edit barcode conflicts, same-row edits that keep their own barcode, the unique-constraint catch path, and field validation.
 
-- Add database migration tests and tests for create, edit, guest, and cross-user cases.
+- `src/app/features/inventory/inventory-edit/inventory-edit.dialog.spec.ts` covers create/edit barcode conflict, edit-without-conflict, missing-barcode save, unique-constraint catch handling, and ingredient/quantity/minRestock validation.
 
 #### 5. Move component database access into services
 
@@ -112,7 +112,7 @@ The suite now includes mocked authenticated and failure-path workflows, but aggr
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The latest Vitest report measures 52.28% statements, 39.90% branches, 55.82% functions, and 52.64% lines; 90% remains the release target.
+- The latest local Vitest report measures 35.3% statements, 29.27% branches, 38.01% functions, and 34.9% lines across exercised files; 90% remains the release target. (A previously recorded 52%+ figure could not be reproduced from a clean install in this pass and should be treated as stale until re-measured in CI.)
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix
@@ -142,7 +142,7 @@ All partial items have been reviewed against repository evidence. Local query ow
 
 ### Local Implementation Queue
 
-1. Add inventory create/edit conflict tests and deepen component/dialog Vitest behavior coverage beyond the current smoke contracts.
+1. Done - `InventoryEditDialog.save()` now has dedicated create/edit barcode-conflict, validation, and error-path tests in `src/app/features/inventory/inventory-edit/inventory-edit.dialog.spec.ts`.
 2. Inventory every production file in `src/app` and assign a dedicated Vitest and Playwright owner in `TEST_MATRIX.md`.
 3. Raise Vitest coverage incrementally to 70%, then 80%, then 90% for statements, branches, functions, and lines; update `TEST_MATRIX.md` with every new spec.
 4. Replace route-level failure smoke checks with UI assertions for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.

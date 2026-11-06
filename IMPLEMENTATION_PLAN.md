@@ -112,7 +112,7 @@ The suite now includes mocked authenticated and failure-path workflows, but aggr
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The latest local Vitest report measures 44.64% statements, 38.82% branches, 44.61% functions, and 44.35% lines across exercised files; 90% remains the release target. (A previously recorded 52%+ figure could not be reproduced from a clean install in this pass and should be treated as stale until re-measured in CI.)
+- The latest local Vitest report measures 47.33% statements, 42.31% branches, 46.80% functions, and 47.21% lines across exercised files; 90% remains the release target. (A previously recorded 52%+ figure could not be reproduced from a clean install in this pass and should be treated as stale until re-measured in CI.)
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 
 #### 9. Define the full-coverage test matrix

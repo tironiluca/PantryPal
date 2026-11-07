@@ -112,7 +112,7 @@ The suite now includes mocked authenticated and failure-path workflows, but aggr
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The latest local Vitest report measures 52.84% statements, 48.13% branches, 51.18% functions, and 53.16% lines across exercised files; 90% remains the release target.
+- The latest local Vitest report measures 53.37% statements, 48.55% branches, 51.74% functions, and 53.69% lines across exercised files; 90% remains the release target.
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 - Fixed a webpack production-build failure (`export 'DBSchema' was not found in 'idb'`) by importing `DBSchema`/`IDBPDatabase` from `idb` as `import type` in `cache.service.ts`, since they are type-only exports that some `idb` releases do not expose as a runtime binding; without a committed lockfile, a fresh `npm install` could resolve a patch version that broke the untyped import at any time.
 - Fixed every Vercel Preview/Development deployment failing with "Node.js Version '20.x' is discontinued" by bumping `package.json`'s `engines.node` (and the CI workflow's `actions/setup-node`) to `26.x`.

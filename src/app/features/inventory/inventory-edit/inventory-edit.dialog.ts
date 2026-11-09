@@ -159,38 +159,31 @@ export class InventoryEditDialog implements OnInit {
 
       if (!this.model.id) {
         this.model.id = `inv-${crypto.randomUUID()}`;
-        this.db.exec(
-          'INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
-          [
-            this.model.id,
-            this.model.ingredientId,
-            +this.model.quantity,
-            this.model.unit,
-            +this.model.minRestock,
-            this.model.expiry || null,
-            this.model.location || null,
-            this.model.barcode || null,
-            now,
-            now,
-          ]
-        );
+        this.db.createInventoryItem({
+          id: this.model.id,
+          ingredientId: this.model.ingredientId,
+          quantity: +this.model.quantity,
+          unit: this.model.unit,
+          minRestock: +this.model.minRestock,
+          expiry: this.model.expiry || null,
+          location: this.model.location || null,
+          barcode: this.model.barcode || null,
+          createdAt: now,
+          updatedAt: now,
+        });
         this.snackbar.success(this.transloco.translate('inventory.itemAdded'));
         this.dataEvents.emit('inventory', 'create', this.model.id);
       } else {
-        this.db.exec(
-          'UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?',
-          [
-            this.model.ingredientId,
-            +this.model.quantity,
-            this.model.unit,
-            +this.model.minRestock,
-            this.model.expiry || null,
-            this.model.location || null,
-            this.model.barcode || null,
-            now,
-            this.model.id,
-          ]
-        );
+        this.db.updateInventoryItemDetails(this.model.id, {
+          ingredientId: this.model.ingredientId,
+          quantity: +this.model.quantity,
+          unit: this.model.unit,
+          minRestock: +this.model.minRestock,
+          expiry: this.model.expiry || null,
+          location: this.model.location || null,
+          barcode: this.model.barcode || null,
+          updatedAt: now,
+        });
         this.snackbar.success(this.transloco.translate('inventory.itemUpdated'));
         this.dataEvents.emit('inventory', 'update', this.model.id);
       }

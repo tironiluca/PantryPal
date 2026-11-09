@@ -16,7 +16,8 @@ function setup(existingBarcodeRows: any[] = []) {
   };
   component.db = {
     queryByUser: vi.fn(() => existingBarcodeRows),
-    exec: vi.fn(),
+    createInventoryItem: vi.fn(),
+    updateInventoryItemDetails: vi.fn(),
   };
   component.snackbar = { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() };
   component.transloco = { translate: (key: string) => key };
@@ -39,7 +40,7 @@ describe('InventoryEditDialog save conflicts', () => {
       ['12345', '']
     );
     expect(component.snackbar.error).toHaveBeenCalledWith('inventory.barcodeAlreadyInUse');
-    expect(component.db.exec).not.toHaveBeenCalled();
+    expect(component.db.createInventoryItem).not.toHaveBeenCalled();
     expect(component.ref.close).not.toHaveBeenCalled();
   });
 
@@ -49,8 +50,8 @@ describe('InventoryEditDialog save conflicts', () => {
 
     component.save();
 
-    expect(component.db.exec).toHaveBeenCalledTimes(1);
-    expect(component.db.exec.mock.calls[0][0]).toContain('INSERT INTO inventory');
+    expect(component.db.createInventoryItem).toHaveBeenCalledTimes(1);
+    expect(component.db.createInventoryItem).toHaveBeenCalledWith(expect.objectContaining({ barcode: '12345' }));
     expect(component.dataEvents.emit).toHaveBeenCalledWith('inventory', 'create', component.model.id);
     expect(component.snackbar.success).toHaveBeenCalledWith('inventory.itemAdded');
     expect(component.ref.close).toHaveBeenCalledWith(true);
@@ -69,7 +70,7 @@ describe('InventoryEditDialog save conflicts', () => {
       ['99999', 'inv-mine']
     );
     expect(component.snackbar.error).toHaveBeenCalledWith('inventory.barcodeAlreadyInUse');
-    expect(component.db.exec).not.toHaveBeenCalled();
+    expect(component.db.updateInventoryItemDetails).not.toHaveBeenCalled();
   });
 
   it('allows edit to keep its own existing barcode', () => {
@@ -79,8 +80,8 @@ describe('InventoryEditDialog save conflicts', () => {
 
     component.save();
 
-    expect(component.db.exec).toHaveBeenCalledTimes(1);
-    expect(component.db.exec.mock.calls[0][0]).toContain('UPDATE inventory');
+    expect(component.db.updateInventoryItemDetails).toHaveBeenCalledTimes(1);
+    expect(component.db.updateInventoryItemDetails).toHaveBeenCalledWith('inv-mine', expect.objectContaining({ barcode: '99999' }));
     expect(component.dataEvents.emit).toHaveBeenCalledWith('inventory', 'update', 'inv-mine');
     expect(component.snackbar.success).toHaveBeenCalledWith('inventory.itemUpdated');
     expect(component.ref.close).toHaveBeenCalledWith(true);
@@ -92,13 +93,13 @@ describe('InventoryEditDialog save conflicts', () => {
     component.save();
 
     expect(component.db.queryByUser).not.toHaveBeenCalled();
-    expect(component.db.exec).toHaveBeenCalledTimes(1);
+    expect(component.db.createInventoryItem).toHaveBeenCalledTimes(1);
     expect(component.ref.close).toHaveBeenCalledWith(true);
   });
 
   it('reports a unique-constraint failure from exec as a barcode conflict', () => {
     const component = setup([]);
-    component.db.exec = vi.fn(() => {
+    component.db.createInventoryItem = vi.fn(() => {
       throw new Error('UNIQUE constraint failed: inventory.barcode');
     });
 
@@ -112,7 +113,7 @@ describe('InventoryEditDialog save conflicts', () => {
   it('routes a non-conflict save failure through the error handler', () => {
     const component = setup([]);
     const error = new Error('disk full');
-    component.db.exec = vi.fn(() => {
+    component.db.createInventoryItem = vi.fn(() => {
       throw error;
     });
 
@@ -130,7 +131,7 @@ describe('InventoryEditDialog save conflicts', () => {
     component.save();
 
     expect(component.snackbar.error).toHaveBeenCalledWith('inventory.enterIngredientName');
-    expect(component.db.exec).not.toHaveBeenCalled();
+    expect(component.db.createInventoryItem).not.toHaveBeenCalled();
   });
 
   it('rejects save when quantity is not positive', () => {
@@ -140,7 +141,7 @@ describe('InventoryEditDialog save conflicts', () => {
     component.save();
 
     expect(component.snackbar.error).toHaveBeenCalledWith('inventory.quantityMustBePositive');
-    expect(component.db.exec).not.toHaveBeenCalled();
+    expect(component.db.createInventoryItem).not.toHaveBeenCalled();
   });
 
   it('rejects save when minRestock is negative', () => {
@@ -150,6 +151,6 @@ describe('InventoryEditDialog save conflicts', () => {
     component.save();
 
     expect(component.snackbar.error).toHaveBeenCalledWith('inventory.minRestockNegative');
-    expect(component.db.exec).not.toHaveBeenCalled();
+    expect(component.db.createInventoryItem).not.toHaveBeenCalled();
   });
 });

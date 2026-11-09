@@ -1,6 +1,6 @@
 # PantryPal - Implementation Plan
 
-Updated 2026-08-27. This document tracks remaining product, security, and release work. Completed repository changes are summarized below; detailed test ownership is maintained in [TEST_MATRIX.md](TEST_MATRIX.md).
+Updated 2026-11-09. This document tracks remaining product, security, and release work. Completed repository changes are summarized below; detailed test ownership is maintained in [TEST_MATRIX.md](TEST_MATRIX.md).
 
 ## Completed In Repository
 
@@ -49,14 +49,11 @@ Recipe URLs are still sent to third-party CORS proxies, even though encoding and
 
 #### 3. Finish observable and async error cleanup
 
-**Status:** Partial
+**Status:** Complete
 
-Several dialog and voice flows still have unmanaged subscriptions, and some async operations still use silent catches or lack user feedback.
+Audited 2026-11-09. Every component `subscribe()` is piped through `takeUntilDestroyed()`, and `SyncService` clears its auto-sync interval and `online` listener in `stopAutoSync()`. Save, scan, OCR, import, and recognition failures all reach the error handler or snackbar. The remaining empty `catch` blocks are deliberate fallbacks (DB not yet ready, malformed URL treated as unsafe, unparseable date shown raw), not swallowed errors.
 
-- Apply `takeUntilDestroyed()` to remaining component subscriptions.
-- Route HTTP and database failures through the existing error and snackbar services.
-- Replace silent catches with intentional handling and logging.
-- Add tests for failed product lookup, save, scanner, and dialog workflows.
+- Failure-path specs now cover product lookup, save, scanner, OCR, image recognition, recipe import, and sync push/pull.
 
 #### 4. Make duplicate barcode prevention authoritative
 
@@ -68,15 +65,11 @@ The inventory dialog and database enforce user-scoped barcode uniqueness, includ
 
 #### 5. Move component database access into services
 
-**Status:** Partial - relationship read extraction complete for targeted services
+**Status:** Complete
 
-The targeted relationship reads now use typed `DbService` contracts, including meal plans, nutrition, diet advice, notifications, recipe editing, and recipe lists. Remaining direct SQL is primarily mutation, sync, migration, and non-relationship infrastructure code.
+No component calls `db.query()` or `db.exec()` any more; relationship reads were extracted earlier, and the remaining mutations now go through named `DbService` methods: `createInventoryItem`, `updateInventoryItemDetails`, `setInventoryQuantity`, `createIngredient`, `updateIngredientDetails`, `createRecipe`, `createImportedRecipe`, `updateRecipeDetails`, `clearRecipeIngredients`, `deleteRecipeIngredientsByRecipe`, and `addRecipeIngredient`. Plain row deletes reuse the existing allowlisted `hardDelete()`. Each method is a domain operation with a fixed table and parameterized values, not a generic SQL passthrough, and each has a spec asserting its SQL and parameter order.
 
-- Inventory, ingredient, recipe, and meal-plan relationship queries should be exposed through typed methods on `DbService` or the owning domain service.
-- Components should consume service methods and focus on presentation, filtering state, and user interaction rather than SQL construction.
-- Preserve user and household scoping when replacing direct queries.
-- Add focused service tests for each extracted query and component tests for the resulting behavior.
-- Avoid creating a generic query wrapper that merely relocates raw SQL without defining a useful domain contract.
+- Direct SQL now lives only in services (sync, migration, persistence, and the domain services such as `NutritionService` and `IngredientMatchingService`).
 
 ### P2 - Feature Completion
 
@@ -94,26 +87,27 @@ Consumption/waste tables, an analytics service/model, and an analytics view do n
 
 #### 7. Finish responsive navigation and dialog consistency
 
-**Status:** Partial - mocked workflows added; coverage target remains
+**Status:** Partial - dialog save validation standardized; visual review remains
 
-The refreshed UI is substantially implemented. The existing mobile toolbar/dropdown is the chosen replacement for fixed bottom navigation; dialog patterns and async list states are not uniformly complete.
+The existing mobile toolbar/dropdown is the chosen replacement for fixed bottom navigation. Every edit dialog now disables Save until its required input is valid: the ingredient dialog requires a name and the nutrition-goals dialog requires a positive calorie goal, and both previously let invalid rows be saved. The goals dialog's Cancel button now carries the same `close` icon as every other dialog.
 
 - Keep the existing mobile toolbar/dropdown as the navigation pattern.
-- Standardize helper text, disabled states, icon affordances, and responsive sections across edit dialogs.
-- Fill remaining list loading and empty states where async work is visible.
+- List views already show empty states. Their loads are synchronous SQLite reads, so there is no visible async gap that needs a skeleton; revisit only if a list moves to async loading.
+- Remaining: a visual pass on helper text and responsive sections across dialogs at phone width, which needs a browser review rather than code inspection.
 
 #### 8. Cover the entire codebase with Vitest and Playwright
 
 **Status:** Partial
 
-The suite now includes mocked authenticated and failure-path workflows, but aggregate Vitest coverage is 34.48% statements, 26.86% branches, 38.06% functions, and 34.01% lines across exercised files. Every production feature and shared service still requires deeper branch coverage and the 70%, 80%, then 90% gates.
+Vitest coverage has passed the 70% stage for statements, functions, and lines; branches are at 69.5%. The CI gate in `vitest.config.mts` is now 70/65/70/70 (statements/branches/functions/lines), raised from 30/25/35/30. The 80% and then 90% stages remain.
 
 - Add Vitest tests for every production TypeScript service, component, guard, model, and utility, including success, failure, loading, empty, and permission branches where applicable.
 - Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
 - Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
 - CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The latest local Vitest report measures 56.97% statements, 49.85% branches, 56.5% functions, and 57.4% lines across exercised files (491 tests, 49 spec files); 90% remains the release target.
-- Added specs for previously-uncovered production files: `skeleton.component`, `use-it-up-banner.component`, `settings.component`, `household-settings.component`, `home.component`, `diet-advice.component`, `nutrition-goals.dialog`, `nutrition-reports.component`, `forgot-password.component`, `barcode-scanner.dialog`, `app.component`, and `register.component`. Remaining uncovered production files (mostly `*.routes.ts` route tables and pure data models with no behavior, plus `sync.service.ts` and several larger dialogs/components such as `ingredient-edit.dialog`, `image-recognition.dialog`, `inventory-list.component`, `recipe-edit.dialog`, `recipe-import.dialog`, `meal-plan-add.dialog`, `meal-of-day.component`, `recipe-list.component`, `voice-control-overlay.component`, `sync-conflict.dialog`, `sync-status.component`) still need focused specs.
+- The latest report (`npm run test:coverage`, the CI command) measures 76.81% statements, 69.54% branches, 76.01% functions, and 77.4% lines (745 tests, 63 spec files); 90% remains the release target.
+- Every production component, dialog, and service in `src/app` now has a co-located spec. `sync.service.ts` went from 1% to 89% statement coverage. The only files without a dedicated spec are the `*.routes.ts` route tables, `app.config.ts`, `transloco-loader.ts`, `nav-tabs.ts`, and the interface-only models, none of which contain branching logic.
+- Lowest statement coverage, which is next for the 80% stage: `inventory-edit.dialog.ts` (29%; its spec only covers `save()`, not product lookup, barcode scan, or OCR), `db.service.ts` (32%; init, OPFS persistence, and migrations need a real sql.js harness), `nutrition.service.ts` (51%), `products.service.ts` (58%), `cache.service.ts` (58%), and `ingredient-list.component.ts` (58%).
 - Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
 - Fixed a webpack production-build failure (`export 'DBSchema' was not found in 'idb'`) by importing `DBSchema`/`IDBPDatabase` from `idb` as `import type` in `cache.service.ts`, since they are type-only exports that some `idb` releases do not expose as a runtime binding; without a committed lockfile, a fresh `npm install` could resolve a patch version that broke the untyped import at any time.
 - Fixed every Vercel Preview/Development deployment failing with "Node.js Version '20.x' is discontinued" by bumping `package.json`'s `engines.node` (and the CI workflow's `actions/setup-node`) to `26.x`.
@@ -140,16 +134,18 @@ Maintain a checked-in test matrix mapping every `src/app` production file and ro
 
 ## Partial-Item Conclusion
 
-All partial items have been reviewed against repository evidence. Local query ownership and regression coverage were extended in this pass, and duplicate-barcode enforcement is active locally. The remaining partial work is intentionally retained: error-path cleanup, dialog consistency, the full Vitest/Playwright matrix, and migration isolation tests still need implementation. Recipe privacy and realistic authenticated browser coverage also require external proxy deployment, policy, or test-account decisions. The plan is not release-complete until those acceptance gates pass.
+Reviewed against repository evidence on 2026-11-09. Error-path cleanup (item 3) and component database access (item 5) are complete, every production component and service has a focused spec, and the CI coverage gate enforces the 70% stage. Still partial: the 80% and 90% coverage stages, a visual dialog review at phone width, and Playwright UI assertions in place of route-level smoke checks. Recipe privacy and realistic authenticated browser coverage still require external proxy deployment, policy, or test-account decisions. The plan is not release-complete until those acceptance gates pass.
 
 ## Next Steps
 
 ### Local Implementation Queue
 
 1. Done - `InventoryEditDialog.save()` now has dedicated create/edit barcode-conflict, validation, and error-path tests in `src/app/features/inventory/inventory-edit/inventory-edit.dialog.spec.ts`.
-2. Inventory every production file in `src/app` and assign a dedicated Vitest and Playwright owner in `TEST_MATRIX.md`.
-3. Raise Vitest coverage incrementally to 70%, then 80%, then 90% for statements, branches, functions, and lines; update `TEST_MATRIX.md` with every new spec.
+2. Done - every production component, dialog, and service has a co-located Vitest spec recorded in `TEST_MATRIX.md`.
+3. In progress - the 70% coverage stage is reached and enforced in CI. Next is 80%, starting with the files listed under item 8; raise the `vitest.config.mts` gate as each stage is reached.
 4. Replace route-level failure smoke checks with UI assertions for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
+5. Fix the memory-only persistence fallback for inventory edits. In `DbService.exec()`, the memory-only `UPDATE inventory` handler reads the row id from `params[9]`, but the update passes nine parameters, so the id is at `params[8]`. When neither OPFS nor IndexedDB is available, editing an inventory item therefore silently does nothing. The same handler also receives `setInventoryQuantity()` (three parameters: quantity, updatedAt, id), so the fix must tell the two statement shapes apart rather than only correcting the index. Add a memory-only round-trip test for both.
+6. Replace the native `prompt()` in `ProfileComponent.deleteAccount()` with a typed-confirmation dialog consistent with the app's other confirmations.
 
 ### External Decisions And Operations
 

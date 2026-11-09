@@ -280,20 +280,14 @@ export class MealPlanCalendarComponent implements OnInit {
             const deductInInvUnit = this.unitConverter.convert(remaining, neededUnit, invUnit);
             if (deductInInvUnit === null) continue;
             const newQty = Math.max(0, inv.quantity - deductInInvUnit);
-            this.db.exec(
-              `UPDATE inventory SET quantity = ?, updatedAt = ?, version = version + 1 WHERE id = ?`,
-              [newQty, now, inv.id]
-            );
+            this.db.setInventoryQuantity(inv.id, newQty, now);
             remaining = 0;
             fullyDeducted = true;
             break;
           } else {
             // Partially deplete this row
             remaining -= invInRecipeUnit;
-            this.db.exec(
-              `UPDATE inventory SET quantity = 0, updatedAt = ?, version = version + 1 WHERE id = ?`,
-              [now, inv.id]
-            );
+            this.db.setInventoryQuantity(inv.id, 0, now);
           }
         }
 

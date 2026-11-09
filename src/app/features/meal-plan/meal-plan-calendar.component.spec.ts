@@ -22,7 +22,7 @@ function bare(): MealPlanCalendarComponent & Record<string, any> {
   component.db = {
     getRecipeIngredients: vi.fn(() => []),
     getInventoryForIngredient: vi.fn(() => []),
-    exec: vi.fn(),
+    setInventoryQuantity: vi.fn(),
   };
   component.unitConverter = { convert: vi.fn((qty: number) => qty) };
   component.errorHandler = { handle: vi.fn() };
@@ -186,7 +186,7 @@ describe('MealPlanCalendarComponent', () => {
       expect(component.snackbar.success).toHaveBeenCalledWith(
         'Marked as complete (no ingredients to deduct)'
       );
-      expect(component.db.exec).not.toHaveBeenCalled();
+      expect(component.db.setInventoryQuantity).not.toHaveBeenCalled();
     });
 
     it('fully deducts a single ingredient from one matching inventory row', () => {
@@ -200,10 +200,7 @@ describe('MealPlanCalendarComponent', () => {
 
       component.deductIngredients(meal({ servings: 2 }));
 
-      expect(component.db.exec).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE inventory SET quantity'),
-        [6, expect.any(String), 'inv1']
-      );
+      expect(component.db.setInventoryQuantity).toHaveBeenCalledWith('inv1', 6, expect.any(String));
       expect(component.dataEvents.emit).toHaveBeenCalledWith('inventory', 'update');
       expect(component.snackbar.success).toHaveBeenCalledWith(
         'Marked as complete — deducted 1 ingredient(s)'
@@ -222,14 +219,8 @@ describe('MealPlanCalendarComponent', () => {
 
       component.deductIngredients(meal({ servings: 1 }));
 
-      expect(component.db.exec).toHaveBeenCalledWith(
-        expect.stringContaining('quantity = 0'),
-        [expect.any(String), 'inv1']
-      );
-      expect(component.db.exec).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE inventory SET quantity'),
-        [7, expect.any(String), 'inv2']
-      );
+      expect(component.db.setInventoryQuantity).toHaveBeenCalledWith('inv1', 0, expect.any(String));
+      expect(component.db.setInventoryQuantity).toHaveBeenCalledWith('inv2', 7, expect.any(String));
     });
 
     it('skips ingredients whose inventory unit cannot be converted and warns', () => {
@@ -242,7 +233,7 @@ describe('MealPlanCalendarComponent', () => {
 
       component.deductIngredients(meal({ servings: 1 }));
 
-      expect(component.db.exec).not.toHaveBeenCalled();
+      expect(component.db.setInventoryQuantity).not.toHaveBeenCalled();
       expect(component.snackbar.warning).toHaveBeenCalledWith(
         'Marked as complete — deducted 0, skipped 1 (unit mismatch or low stock)'
       );

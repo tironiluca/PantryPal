@@ -127,55 +127,35 @@ export class RecipeImportDialog {
       const recipeId = `rec-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       const now = new Date().toISOString();
 
-      this.db.exec(
-        `INSERT INTO recipes (id, name, steps, userId, sourceUrl, sourceName, importedAt, imageUrl, prepTime, cookTime, servings, version, isDeleted, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          recipeId,
-          recipe.name,
-          recipe.instructions,
-          userId,
-          recipe.sourceUrl,
-          recipe.sourceName || null,
-          now,
-          recipe.imageUrl || null,
-          recipe.prepTime || null,
-          recipe.cookTime || null,
-          recipe.servings || null,
-          1,
-          0,
-          now,
-          now,
-        ]
-      );
+      this.db.createImportedRecipe({
+        id: recipeId,
+        name: recipe.name,
+        steps: recipe.instructions,
+        userId,
+        sourceUrl: recipe.sourceUrl,
+        sourceName: recipe.sourceName || null,
+        importedAt: now,
+        imageUrl: recipe.imageUrl || null,
+        prepTime: recipe.prepTime || null,
+        cookTime: recipe.cookTime || null,
+        servings: recipe.servings || null,
+        createdAt: now,
+        updatedAt: now,
+      });
 
-      // Create or map ingredients
       for (const mapping of this.ingredientMappings()) {
-        let ingredientId = mapping.selectedIngredientId;
+        const ingredientId = mapping.selectedIngredientId
+          || this.ingredientMatcher.createIngredientFromImport(mapping.original.ingredientName);
 
-        // Create new ingredient if needed
-        if (!ingredientId) {
-          ingredientId = this.ingredientMatcher.createIngredientFromImport(
-            mapping.original.ingredientName
-          );
-        }
-
-        // Add to recipe_ingredients
-        this.db.exec(
-          `INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, version, isDeleted, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            recipeId,
-            ingredientId,
-            mapping.original.quantity,
-            mapping.original.unit,
-            userId,
-            1,
-            0,
-            now,
-            now,
-          ]
-        );
+        this.db.addRecipeIngredient({
+          recipeId,
+          ingredientId,
+          quantity: mapping.original.quantity,
+          unit: mapping.original.unit,
+          userId,
+          createdAt: now,
+          updatedAt: now,
+        });
       }
 
       this.snackbar.success(`Recipe "${recipe.name}" imported successfully!`);

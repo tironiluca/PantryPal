@@ -12,14 +12,18 @@ describe('RecipeImportDialog', () => {
   let component: RecipeImportDialog;
   let importServiceSpy: { importFromUrl: ReturnType<typeof vi.fn>; parseIngredientsWithQuantities: ReturnType<typeof vi.fn> };
   let matcherSpy: { mapIngredients: ReturnType<typeof vi.fn>; createIngredientFromImport: ReturnType<typeof vi.fn> };
-  let dbSpy: { getCurrentUserId: ReturnType<typeof vi.fn>; exec: ReturnType<typeof vi.fn> };
+  let dbSpy: {
+    getCurrentUserId: ReturnType<typeof vi.fn>;
+    createImportedRecipe: ReturnType<typeof vi.fn>;
+    addRecipeIngredient: ReturnType<typeof vi.fn>;
+  };
   let snackbarSpy: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let dialogRefSpy: { close: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     importServiceSpy = { importFromUrl: vi.fn(), parseIngredientsWithQuantities: vi.fn() };
     matcherSpy = { mapIngredients: vi.fn(), createIngredientFromImport: vi.fn() };
-    dbSpy = { getCurrentUserId: vi.fn().mockReturnValue('u1'), exec: vi.fn() };
+    dbSpy = { getCurrentUserId: vi.fn().mockReturnValue('u1'), createImportedRecipe: vi.fn(), addRecipeIngredient: vi.fn() };
     snackbarSpy = { success: vi.fn(), error: vi.fn() };
     dialogRefSpy = { close: vi.fn() };
 
@@ -113,7 +117,7 @@ describe('RecipeImportDialog', () => {
   describe('saveRecipe', () => {
     it('does nothing when no recipe has been imported', async () => {
       await component.saveRecipe();
-      expect(dbSpy.exec).not.toHaveBeenCalled();
+      expect(dbSpy.createImportedRecipe).not.toHaveBeenCalled();
     });
 
     it('refuses to save when no user is authenticated', async () => {
@@ -141,11 +145,12 @@ describe('RecipeImportDialog', () => {
 
       await component.saveRecipe();
 
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO recipes'), expect.any(Array));
-      expect(dbSpy.exec).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO recipe_ingredients'),
-        expect.arrayContaining(['ing-1', 2, 'cup'])
-      );
+      expect(dbSpy.createImportedRecipe).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'Pancakes', steps: 'Mix', userId: 'u1', sourceUrl: 'https://example.com', sourceName: null,
+      }));
+      expect(dbSpy.addRecipeIngredient).toHaveBeenCalledWith(expect.objectContaining({
+        ingredientId: 'ing-1', quantity: 2, unit: 'cup', userId: 'u1',
+      }));
       expect(matcherSpy.createIngredientFromImport).not.toHaveBeenCalled();
       expect(snackbarSpy.success).toHaveBeenCalledWith('Recipe "Pancakes" imported successfully!');
       expect(dialogRefSpy.close).toHaveBeenCalled();
@@ -167,15 +172,12 @@ describe('RecipeImportDialog', () => {
       await component.saveRecipe();
 
       expect(matcherSpy.createIngredientFromImport).toHaveBeenCalledWith('mystery item');
-      expect(dbSpy.exec).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO recipe_ingredients'),
-        expect.arrayContaining(['ing-new'])
-      );
+      expect(dbSpy.addRecipeIngredient).toHaveBeenCalledWith(expect.objectContaining({ ingredientId: 'ing-new' }));
     });
 
     it('shows a failure snackbar when the database throws', async () => {
       component.importedRecipe.set({ name: 'Pancakes', ingredients: [], instructions: '' } as any);
-      dbSpy.exec.mockImplementation(() => { throw new Error('db error'); });
+      dbSpy.createImportedRecipe.mockImplementation(() => { throw new Error('db error'); });
 
       await component.saveRecipe();
 

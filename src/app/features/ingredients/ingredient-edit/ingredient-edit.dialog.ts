@@ -90,17 +90,22 @@ export class IngredientEditDialog implements OnInit {
     const isNew = !this.model.id;
     if (isNew) {
       this.model.id = `ing-${crypto.randomUUID()}`;
-      this.db.exec(
-        'INSERT INTO ingredients (id, name, categoryId, defaultShelfLifeDays, notifyStartDays, notifyRepeatDays) VALUES (?,?,?,?,?,?)',
-        [this.model.id, this.model.name, this.model.categoryId || null,
-         this.model.defaultShelfLifeDays ?? null, this.model.notifyStartDays ?? null, this.model.notifyRepeatDays ?? null]
-      );
+      this.db.createIngredient({
+        id: this.model.id,
+        name: this.model.name,
+        categoryId: this.model.categoryId || null,
+        defaultShelfLifeDays: this.model.defaultShelfLifeDays ?? null,
+        notifyStartDays: this.model.notifyStartDays ?? null,
+        notifyRepeatDays: this.model.notifyRepeatDays ?? null,
+      });
     } else {
-      this.db.exec(
-        'UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=? WHERE id=?',
-        [this.model.name, this.model.categoryId || null,
-         this.model.defaultShelfLifeDays ?? null, this.model.notifyStartDays ?? null, this.model.notifyRepeatDays ?? null, this.model.id]
-      );
+      this.db.updateIngredientDetails(this.model.id, {
+        name: this.model.name,
+        categoryId: this.model.categoryId || null,
+        defaultShelfLifeDays: this.model.defaultShelfLifeDays ?? null,
+        notifyStartDays: this.model.notifyStartDays ?? null,
+        notifyRepeatDays: this.model.notifyRepeatDays ?? null,
+      });
     }
 
     // Persist pending nutrition now that the ingredient row exists (BUG-11)

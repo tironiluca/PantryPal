@@ -11,14 +11,22 @@ import { NutritionService } from '../../../core/services/nutrition.service';
 describe('IngredientEditDialog', () => {
   let fixture: ComponentFixture<IngredientEditDialog>;
   let component: IngredientEditDialog;
-  let dbSpy: { exec: ReturnType<typeof vi.fn>; getIngredientCategories: ReturnType<typeof vi.fn> };
+  let dbSpy: {
+    createIngredient: ReturnType<typeof vi.fn>;
+    updateIngredientDetails: ReturnType<typeof vi.fn>;
+    getIngredientCategories: ReturnType<typeof vi.fn>;
+  };
   let dialogRefSpy: { close: ReturnType<typeof vi.fn> };
   let matDialogSpy: { open: ReturnType<typeof vi.fn> };
   let dataEventsSpy: { emit: ReturnType<typeof vi.fn> };
   let nutritionSpy: { updateIngredientNutrition: ReturnType<typeof vi.fn> };
 
   async function setup(data: any = null) {
-    dbSpy = { exec: vi.fn(), getIngredientCategories: vi.fn().mockReturnValue([{ id: 'c1', name: 'Dairy' }]) };
+    dbSpy = {
+      createIngredient: vi.fn(),
+      updateIngredientDetails: vi.fn(),
+      getIngredientCategories: vi.fn().mockReturnValue([{ id: 'c1', name: 'Dairy' }]),
+    };
     dialogRefSpy = { close: vi.fn() };
     matDialogSpy = { open: vi.fn() };
     dataEventsSpy = { emit: vi.fn() };
@@ -127,7 +135,7 @@ describe('IngredientEditDialog', () => {
 
       component.save();
 
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO ingredients'), expect.any(Array));
+      expect(dbSpy.createIngredient).toHaveBeenCalledWith(expect.objectContaining({ name: 'Flour', categoryId: 'c1' }));
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('ingredients', 'create', expect.stringMatching(/^ing-/));
       expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
     });
@@ -137,7 +145,7 @@ describe('IngredientEditDialog', () => {
 
       component.save();
 
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('UPDATE ingredients SET'), expect.any(Array));
+      expect(dbSpy.updateIngredientDetails).toHaveBeenCalledWith('ing-1', expect.objectContaining({ name: 'Milk', categoryId: 'c1' }));
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('ingredients', 'update', 'ing-1');
       expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
     });

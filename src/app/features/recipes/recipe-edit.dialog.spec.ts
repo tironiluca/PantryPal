@@ -15,7 +15,10 @@ describe('RecipeEditDialog', () => {
     getRecipe: ReturnType<typeof vi.fn>;
     getRecipeIngredients: ReturnType<typeof vi.fn>;
     getCurrentUserId: ReturnType<typeof vi.fn>;
-    exec: ReturnType<typeof vi.fn>;
+    createRecipe: ReturnType<typeof vi.fn>;
+    updateRecipeDetails: ReturnType<typeof vi.fn>;
+    clearRecipeIngredients: ReturnType<typeof vi.fn>;
+    addRecipeIngredient: ReturnType<typeof vi.fn>;
   };
   let snackbarSpy: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let dialogRefSpy: { close: ReturnType<typeof vi.fn> };
@@ -27,7 +30,10 @@ describe('RecipeEditDialog', () => {
       getRecipe: vi.fn(),
       getRecipeIngredients: vi.fn().mockReturnValue([]),
       getCurrentUserId: vi.fn().mockReturnValue('u1'),
-      exec: vi.fn(),
+      createRecipe: vi.fn(),
+      updateRecipeDetails: vi.fn(),
+      clearRecipeIngredients: vi.fn(),
+      addRecipeIngredient: vi.fn(),
     };
     snackbarSpy = { success: vi.fn(), error: vi.fn() };
     dialogRefSpy = { close: vi.fn() };
@@ -125,7 +131,7 @@ describe('RecipeEditDialog', () => {
       await component.save();
 
       expect(snackbarSpy.error).toHaveBeenCalledWith('recipes.fillRequiredFields');
-      expect(dbSpy.exec).not.toHaveBeenCalled();
+      expect(dbSpy.createRecipe).not.toHaveBeenCalled();
     });
 
     it('creates a new recipe and its ingredient rows, then closes with the new id', async () => {
@@ -136,8 +142,13 @@ describe('RecipeEditDialog', () => {
 
       await component.save();
 
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO recipes'), expect.any(Array));
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO recipe_ingredients'), expect.any(Array));
+      expect(dbSpy.createRecipe).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'Pancakes', steps: JSON.stringify(['Mix']), userId: 'u1',
+      }));
+      expect(dbSpy.addRecipeIngredient).toHaveBeenCalledWith(expect.objectContaining({
+        ingredientId: 'ing-1', quantity: 2, unit: 'cup', userId: 'u1',
+      }));
+      expect(dbSpy.updateRecipeDetails).not.toHaveBeenCalled();
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('recipes', 'create', expect.any(String));
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('recipe_ingredients', 'create');
       expect(snackbarSpy.success).toHaveBeenCalledWith('recipes.recipeCreated');
@@ -153,8 +164,9 @@ describe('RecipeEditDialog', () => {
 
       await component.save();
 
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('UPDATE recipes'), expect.any(Array));
-      expect(dbSpy.exec).toHaveBeenCalledWith(expect.stringContaining('UPDATE recipe_ingredients SET isDeleted'), expect.any(Array));
+      expect(dbSpy.updateRecipeDetails).toHaveBeenCalledWith('rec-1', expect.objectContaining({ name: 'Pancakes v2' }));
+      expect(dbSpy.clearRecipeIngredients).toHaveBeenCalledWith('rec-1', expect.any(String));
+      expect(dbSpy.createRecipe).not.toHaveBeenCalled();
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('recipes', 'update', 'rec-1');
       expect(snackbarSpy.success).toHaveBeenCalledWith('recipes.recipeUpdated');
       expect(dialogRefSpy.close).toHaveBeenCalledWith('rec-1');
@@ -174,7 +186,7 @@ describe('RecipeEditDialog', () => {
     it('shows a failure snackbar and clears saving when the database throws', async () => {
       await setup(null);
       component.recipeForm.patchValue({ name: 'Pancakes' });
-      dbSpy.exec.mockImplementation(() => { throw new Error('db error'); });
+      dbSpy.createRecipe.mockImplementation(() => { throw new Error('db error'); });
 
       await component.save();
 

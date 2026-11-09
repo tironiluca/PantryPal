@@ -173,61 +173,33 @@ export class RecipeEditDialog implements OnInit {
       // Prepare steps
       const steps = JSON.stringify(formValue.steps.filter((s: string) => s.trim()));
 
-      if (this.isEditMode()) {
-        // Update existing recipe
-        this.db.exec(
-          `UPDATE recipes
-           SET name = ?, steps = ?, servings = ?, prepTime = ?, cookTime = ?, imageUrl = ?, notes = ?,
-               updatedAt = ?, version = version + 1
-           WHERE id = ?`,
-          [
-            formValue.name,
-            steps,
-            formValue.servings,
-            formValue.prepTime || null,
-            formValue.cookTime || null,
-            formValue.imageUrl || null,
-            formValue.notes || null,
-            now,
-            recipeId,
-          ]
-        );
+      const details = {
+        name: formValue.name,
+        steps,
+        servings: formValue.servings,
+        prepTime: formValue.prepTime || null,
+        cookTime: formValue.cookTime || null,
+        imageUrl: formValue.imageUrl || null,
+        notes: formValue.notes || null,
+      };
 
-        // Delete existing recipe ingredients
-        this.db.exec(
-          'UPDATE recipe_ingredients SET isDeleted = 1, updatedAt = ? WHERE recipeId = ?',
-          [now, recipeId]
-        );
+      if (this.isEditMode()) {
+        this.db.updateRecipeDetails(recipeId, { ...details, updatedAt: now });
+        this.db.clearRecipeIngredients(recipeId, now);
       } else {
-        // Create new recipe
-        this.db.exec(
-          `INSERT INTO recipes (id, name, steps, servings, prepTime, cookTime, imageUrl, notes, userId, version, isDeleted, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            recipeId,
-            formValue.name,
-            steps,
-            formValue.servings,
-            formValue.prepTime || null,
-            formValue.cookTime || null,
-            formValue.imageUrl || null,
-            formValue.notes || null,
-            userId,
-            1,
-            0,
-            now,
-            now,
-          ]
-        );
+        this.db.createRecipe({ id: recipeId, ...details, userId, createdAt: now, updatedAt: now });
       }
 
-      // Insert recipe ingredients
       for (const ing of formValue.ingredients) {
-        this.db.exec(
-          `INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, version, isDeleted, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [recipeId, ing.ingredientId, ing.quantity, ing.unit, userId, 1, 0, now, now]
-        );
+        this.db.addRecipeIngredient({
+          recipeId,
+          ingredientId: ing.ingredientId,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          userId,
+          createdAt: now,
+          updatedAt: now,
+        });
       }
 
       const msgKey = this.isEditMode() ? 'recipes.recipeUpdated' : 'recipes.recipeCreated';

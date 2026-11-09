@@ -201,7 +201,7 @@ export class IngredientListComponent {
       .subscribe(ok => {
         if (!ok) return;
         try {
-          this.db.exec('DELETE FROM ingredients WHERE id = ?', [row.id]);
+          this.db.hardDelete('ingredients', row.id);
           this.dataEvents.emit('ingredients', 'delete', row.id);
           this.snackbar.success('Ingredient deleted successfully');
           this.refresh();

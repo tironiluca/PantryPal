@@ -14,7 +14,12 @@ import { KeyboardService } from '../../core/services/keyboard.service';
 describe('RecipeListComponent', () => {
   let fixture: ComponentFixture<RecipeListComponent>;
   let component: RecipeListComponent;
-  let dbSpy: { getCurrentUserId: ReturnType<typeof vi.fn>; getRecipesWithIngredientCounts: ReturnType<typeof vi.fn>; exec: ReturnType<typeof vi.fn> };
+  let dbSpy: {
+    getCurrentUserId: ReturnType<typeof vi.fn>;
+    getRecipesWithIngredientCounts: ReturnType<typeof vi.fn>;
+    deleteRecipeIngredientsByRecipe: ReturnType<typeof vi.fn>;
+    hardDelete: ReturnType<typeof vi.fn>;
+  };
   let dietAdviceSpy: { getIngredientAvailability: ReturnType<typeof vi.fn> };
   let dialogSpy: { open: ReturnType<typeof vi.fn> };
   let errorHandlerSpy: { handle: ReturnType<typeof vi.fn> };
@@ -53,7 +58,8 @@ describe('RecipeListComponent', () => {
         { id: 'r1', name: 'Pancakes', ingredientCount: 3 },
         { id: 'r2', name: 'Omelette', ingredientCount: 2 },
       ]),
-      exec: vi.fn(),
+      deleteRecipeIngredientsByRecipe: vi.fn(),
+      hardDelete: vi.fn(),
     };
     dietAdviceSpy = { getIngredientAvailability: vi.fn().mockReturnValue(100) };
     dialogSpy = { open: vi.fn() };
@@ -169,7 +175,7 @@ describe('RecipeListComponent', () => {
 
       component.remove({ id: 'r1', name: 'Pancakes' });
 
-      expect(dbSpy.exec).not.toHaveBeenCalled();
+      expect(dbSpy.hardDelete).not.toHaveBeenCalled();
     });
 
     it('deletes the recipe and its ingredients, then refreshes', async () => {
@@ -179,8 +185,8 @@ describe('RecipeListComponent', () => {
 
       component.remove({ id: 'r1', name: 'Pancakes' });
 
-      expect(dbSpy.exec).toHaveBeenCalledWith('DELETE FROM recipe_ingredients WHERE recipeId = ?', ['r1']);
-      expect(dbSpy.exec).toHaveBeenCalledWith('DELETE FROM recipes WHERE id = ?', ['r1']);
+      expect(dbSpy.deleteRecipeIngredientsByRecipe).toHaveBeenCalledWith('r1');
+      expect(dbSpy.hardDelete).toHaveBeenCalledWith('recipes', 'r1');
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('recipes', 'delete', 'r1');
       expect(snackbarSpy.success).toHaveBeenCalledWith('Recipe deleted successfully');
       expect(refreshSpy).toHaveBeenCalled();
@@ -189,7 +195,7 @@ describe('RecipeListComponent', () => {
     it('reports an error when deletion fails', async () => {
       await setup();
       dialogSpy.open.mockReturnValue({ afterClosed: () => of(true) });
-      dbSpy.exec.mockImplementation(() => { throw new Error('delete failed'); });
+      dbSpy.hardDelete.mockImplementation(() => { throw new Error('delete failed'); });
 
       component.remove({ id: 'r1', name: 'Pancakes' });
 

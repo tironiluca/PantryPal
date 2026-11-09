@@ -305,7 +305,7 @@ export class InventoryListComponent {
       .subscribe(ok => {
         if (!ok) return;
         try {
-          this.db.exec('DELETE FROM inventory WHERE id = ?', [row.id]);
+          this.db.hardDelete('inventory', row.id);
           this.dataEvents.emit('inventory', 'delete', row.id);
           this.snackbar.success('Inventory item deleted successfully');
           this.refresh();

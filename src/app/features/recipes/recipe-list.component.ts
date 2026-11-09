@@ -150,8 +150,8 @@ export class RecipeListComponent {
       .subscribe(ok => {
         if (!ok) return;
         try {
-          this.db.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [r.id]);
-          this.db.exec('DELETE FROM recipes WHERE id = ?', [r.id]);
+          this.db.deleteRecipeIngredientsByRecipe(r.id);
+          this.db.hardDelete('recipes', r.id);
           this.dataEvents.emit('recipes', 'delete', r.id);
           this.snackbar.success('Recipe deleted successfully');
           this.refresh();

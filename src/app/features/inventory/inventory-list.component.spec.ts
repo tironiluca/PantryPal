@@ -21,7 +21,7 @@ function daysFromNow(days: number): string {
 describe('InventoryListComponent', () => {
   let fixture: ComponentFixture<InventoryListComponent>;
   let component: InventoryListComponent;
-  let dbSpy: { queryByUser: ReturnType<typeof vi.fn>; getIngredientsByIds: ReturnType<typeof vi.fn>; exec: ReturnType<typeof vi.fn> };
+  let dbSpy: { queryByUser: ReturnType<typeof vi.fn>; getIngredientsByIds: ReturnType<typeof vi.fn>; hardDelete: ReturnType<typeof vi.fn> };
   let ocrSpy: { extractExpiry: ReturnType<typeof vi.fn> };
   let dialogSpy: { open: ReturnType<typeof vi.fn> };
   let errorHandlerSpy: { handle: ReturnType<typeof vi.fn> };
@@ -63,7 +63,7 @@ describe('InventoryListComponent', () => {
     dbSpy = {
       queryByUser: vi.fn().mockReturnValue(baseRows.map(r => ({ ...r }))),
       getIngredientsByIds: vi.fn().mockReturnValue([{ id: 'ing-1', name: 'Milk' }, { id: 'ing-2', name: 'Eggs' }]),
-      exec: vi.fn(),
+      hardDelete: vi.fn(),
     };
     ocrSpy = { extractExpiry: vi.fn() };
     dialogSpy = { open: vi.fn() };
@@ -383,7 +383,7 @@ describe('InventoryListComponent', () => {
 
       component.remove({ id: 'i1' } as any);
 
-      expect(dbSpy.exec).not.toHaveBeenCalled();
+      expect(dbSpy.hardDelete).not.toHaveBeenCalled();
     });
 
     it('deletes the item and refreshes on confirmation', async () => {
@@ -393,7 +393,7 @@ describe('InventoryListComponent', () => {
 
       component.remove({ id: 'i1' } as any);
 
-      expect(dbSpy.exec).toHaveBeenCalledWith('DELETE FROM inventory WHERE id = ?', ['i1']);
+      expect(dbSpy.hardDelete).toHaveBeenCalledWith('inventory', 'i1');
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('inventory', 'delete', 'i1');
       expect(snackbarSpy.success).toHaveBeenCalledWith('Inventory item deleted successfully');
       expect(refreshSpy).toHaveBeenCalled();
@@ -402,7 +402,7 @@ describe('InventoryListComponent', () => {
     it('reports an error when deletion fails', async () => {
       await setup();
       dialogSpy.open.mockReturnValue({ afterClosed: () => of(true) });
-      dbSpy.exec.mockImplementation(() => { throw new Error('delete failed'); });
+      dbSpy.hardDelete.mockImplementation(() => { throw new Error('delete failed'); });
 
       component.remove({ id: 'i1' } as any);
 

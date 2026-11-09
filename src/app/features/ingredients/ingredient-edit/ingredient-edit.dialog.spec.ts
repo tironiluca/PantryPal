@@ -128,7 +128,42 @@ describe('IngredientEditDialog', () => {
     });
   });
 
+  describe('canSave', () => {
+    it('is false for a blank or whitespace-only name', async () => {
+      await setup(null);
+      component.model.name = '';
+      expect(component.canSave()).toBe(false);
+      component.model.name = '   ';
+      expect(component.canSave()).toBe(false);
+    });
+
+    it('is true once a name is entered', async () => {
+      await setup(null);
+      component.model.name = 'Flour';
+      expect(component.canSave()).toBe(true);
+    });
+
+    it('disables the save button while the name is blank', async () => {
+      await setup(null);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('[mat-dialog-actions] button'));
+      expect(buttons[buttons.length - 1].disabled).toBe(true);
+    });
+  });
+
   describe('save', () => {
+    it('does nothing when the name is blank', async () => {
+      await setup(null);
+      component.model.name = '  ';
+
+      component.save();
+
+      expect(dbSpy.createIngredient).not.toHaveBeenCalled();
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+
     it('inserts a new ingredient and closes with true', async () => {
       await setup(null);
       component.model = { id: '', name: 'Flour', categoryId: 'c1', defaultShelfLifeDays: 30, notifyStartDays: 3, notifyRepeatDays: 1 };

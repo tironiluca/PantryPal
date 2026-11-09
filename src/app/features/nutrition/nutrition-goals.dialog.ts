@@ -44,7 +44,12 @@ export class NutritionGoalsDialog {
     }
   }
 
+  canSave(): boolean {
+    return Number(this.goals?.dailyKcalGoal) > 0;
+  }
+
   save() {
+    if (!this.canSave()) return;
     this.dialogRef.close(this.goals);
   }
 }

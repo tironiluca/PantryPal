@@ -54,6 +54,25 @@ describe('NutritionGoalsDialog', () => {
     expect(component.goals).toEqual(initialGoals);
   });
 
+  it('refuses to save without a positive daily calorie goal', async () => {
+    await setup({ goals: { ...initialGoals, dailyKcalGoal: 0 }, isEdit: false });
+    expect(component.canSave()).toBe(false);
+
+    component.save();
+
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
+
+  it('treats a cleared calorie input as unsaveable', async () => {
+    await setup({ goals: { ...initialGoals, dailyKcalGoal: null }, isEdit: false });
+    expect(component.canSave()).toBe(false);
+  });
+
+  it('allows saving with a positive calorie goal', async () => {
+    await setup({ goals: initialGoals, isEdit: true });
+    expect(component.canSave()).toBe(true);
+  });
+
   it('closes the dialog with the edited goals on save', async () => {
     await setup({ goals: initialGoals, isEdit: true });
     component.goals.dailyKcalGoal = 2200;

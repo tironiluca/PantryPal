@@ -63,8 +63,11 @@
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-button mat-dialog-close>{{ t('common.cancel') }}</button>
-    <button mat-raised-button color="primary" (click)="save()">
+    <button mat-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+      {{ t('common.cancel') }}
+    </button>
+    <button mat-raised-button color="primary" (click)="save()" [disabled]="!canSave()">
       <mat-icon>save</mat-icon>
       {{ t('nutrition.saveGoals') }}
     </button>

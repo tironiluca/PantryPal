@@ -49,6 +49,10 @@ export class IngredientEditDialog implements OnInit {
     }
   }
 
+  canSave(): boolean {
+    return !!this.model.name?.trim();
+  }
+
   hasNutrition(): boolean {
     return this.model.energyKcal != null && this.model.energyKcal > 0;
   }
@@ -87,6 +91,7 @@ export class IngredientEditDialog implements OnInit {
   }
 
   save() {
+    if (!this.canSave()) return;
     const isNew = !this.model.id;
     if (isNew) {
       this.model.id = `ing-${crypto.randomUUID()}`;

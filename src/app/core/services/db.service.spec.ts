@@ -152,6 +152,134 @@ describe('DbService SQL identifier validation', () => {
   });
 });
 
+describe('DbService typed mutation methods', () => {
+  let service: DbService;
+  let exec: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        DbService,
+        { provide: AuthService, useValue: { getCurrentUserId: () => null } },
+      ],
+    });
+    service = TestBed.inject(DbService);
+    exec = vi.spyOn(service, 'exec').mockImplementation(() => undefined as any);
+  });
+
+  it('creates an inventory item with every column in order', () => {
+    service.createInventoryItem({
+      id: 'inv-1', ingredientId: 'ing-1', quantity: 2, unit: 'kg', minRestock: 1,
+      expiry: '2026-05-01', location: 'fridge', barcode: '123', createdAt: 't1', updatedAt: 't1',
+    });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO inventory'),
+      ['inv-1', 'ing-1', 2, 'kg', 1, '2026-05-01', 'fridge', '123', 't1', 't1']
+    );
+  });
+
+  it('updates an inventory item\'s details', () => {
+    service.updateInventoryItemDetails('inv-1', {
+      ingredientId: 'ing-1', quantity: 3, unit: 'kg', minRestock: 1,
+      expiry: null, location: null, barcode: null, updatedAt: 't2',
+    });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE inventory SET'),
+      ['ing-1', 3, 'kg', 1, null, null, null, 't2', 'inv-1']
+    );
+  });
+
+  it('sets an inventory item quantity directly', () => {
+    service.setInventoryQuantity('inv-1', 0, 't3');
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE inventory SET quantity = ?'),
+      [0, 't3', 'inv-1']
+    );
+  });
+
+  it('creates an ingredient', () => {
+    service.createIngredient({ id: 'ing-1', name: 'Flour', categoryId: 'cat-1', defaultShelfLifeDays: 30, notifyStartDays: 3, notifyRepeatDays: 1 });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO ingredients'),
+      ['ing-1', 'Flour', 'cat-1', 30, 3, 1]
+    );
+  });
+
+  it('updates an ingredient\'s details', () => {
+    service.updateIngredientDetails('ing-1', { name: 'Flour', categoryId: null, defaultShelfLifeDays: null, notifyStartDays: null, notifyRepeatDays: null });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE ingredients SET'),
+      ['Flour', null, null, null, null, 'ing-1']
+    );
+  });
+
+  it('creates a recipe with a fresh version and not deleted', () => {
+    service.createRecipe({
+      id: 'rec-1', name: 'Soup', steps: '[]', servings: 2, prepTime: 5, cookTime: 10,
+      imageUrl: null, notes: null, userId: 'u1', createdAt: 't1', updatedAt: 't1',
+    });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO recipes'),
+      ['rec-1', 'Soup', '[]', 2, 5, 10, null, null, 'u1', 1, 0, 't1', 't1']
+    );
+  });
+
+  it('creates an imported recipe with source attribution', () => {
+    service.createImportedRecipe({
+      id: 'rec-1', name: 'Soup', steps: 'Mix', userId: 'u1', sourceUrl: 'https://example.com',
+      sourceName: 'Example', importedAt: 't1', imageUrl: null, prepTime: null, cookTime: null,
+      servings: null, createdAt: 't1', updatedAt: 't1',
+    });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO recipes'),
+      ['rec-1', 'Soup', 'Mix', 'u1', 'https://example.com', 'Example', 't1', null, null, null, null, 1, 0, 't1', 't1']
+    );
+  });
+
+  it('updates a recipe\'s details and bumps its version', () => {
+    service.updateRecipeDetails('rec-1', {
+      name: 'Soup v2', steps: '[]', servings: 3, prepTime: null, cookTime: null,
+      imageUrl: null, notes: null, updatedAt: 't2',
+    });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE recipes'),
+      ['Soup v2', '[]', 3, null, null, null, null, 't2', 'rec-1']
+    );
+  });
+
+  it('soft-deletes a recipe\'s ingredients', () => {
+    service.clearRecipeIngredients('rec-1', 't2');
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE recipe_ingredients SET isDeleted = 1'),
+      ['t2', 'rec-1']
+    );
+  });
+
+  it('hard-deletes a recipe\'s ingredients', () => {
+    service.deleteRecipeIngredientsByRecipe('rec-1');
+
+    expect(exec).toHaveBeenCalledWith('DELETE FROM recipe_ingredients WHERE recipeId = ?', ['rec-1']);
+  });
+
+  it('adds a recipe ingredient row', () => {
+    service.addRecipeIngredient({ recipeId: 'rec-1', ingredientId: 'ing-1', quantity: 2, unit: 'cup', userId: 'u1', createdAt: 't1', updatedAt: 't1' });
+
+    expect(exec).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO recipe_ingredients'),
+      ['rec-1', 'ing-1', 2, 'cup', 'u1', 1, 0, 't1', 't1']
+    );
+  });
+});
+
 describe('DbService persistence fallback', () => {
   let service: DbService;
   let snackbar: { warning: ReturnType<typeof vi.fn> };

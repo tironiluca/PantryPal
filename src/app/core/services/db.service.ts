@@ -614,6 +614,126 @@ export class DbService {
     );
   }
 
+  createInventoryItem(item: {
+    id: string; ingredientId: string; quantity: number; unit: string; minRestock: number;
+    expiry: string | null; location: string | null; barcode: string | null; createdAt: string; updatedAt: string;
+  }): void {
+    this.exec(
+      'INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [
+        item.id, item.ingredientId, item.quantity, item.unit, item.minRestock,
+        item.expiry, item.location, item.barcode, item.createdAt, item.updatedAt,
+      ]
+    );
+  }
+
+  updateInventoryItemDetails(id: string, item: {
+    ingredientId: string; quantity: number; unit: string; minRestock: number;
+    expiry: string | null; location: string | null; barcode: string | null; updatedAt: string;
+  }): void {
+    this.exec(
+      'UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?',
+      [
+        item.ingredientId, item.quantity, item.unit, item.minRestock,
+        item.expiry, item.location, item.barcode, item.updatedAt, id,
+      ]
+    );
+  }
+
+  /** Set an inventory row's quantity directly, e.g. when deducting stock consumed by a cooked meal. */
+  setInventoryQuantity(id: string, quantity: number, updatedAt: string): void {
+    this.exec(
+      'UPDATE inventory SET quantity = ?, updatedAt = ?, version = version + 1 WHERE id = ?',
+      [quantity, updatedAt, id]
+    );
+  }
+
+  createIngredient(item: {
+    id: string; name: string; categoryId: string | null;
+    defaultShelfLifeDays: number | null; notifyStartDays: number | null; notifyRepeatDays: number | null;
+  }): void {
+    this.exec(
+      'INSERT INTO ingredients (id, name, categoryId, defaultShelfLifeDays, notifyStartDays, notifyRepeatDays) VALUES (?,?,?,?,?,?)',
+      [item.id, item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays]
+    );
+  }
+
+  updateIngredientDetails(id: string, item: {
+    name: string; categoryId: string | null;
+    defaultShelfLifeDays: number | null; notifyStartDays: number | null; notifyRepeatDays: number | null;
+  }): void {
+    this.exec(
+      'UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=? WHERE id=?',
+      [item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays, id]
+    );
+  }
+
+  createRecipe(data: {
+    id: string; name: string; steps: string; servings: number; prepTime: number | null; cookTime: number | null;
+    imageUrl: string | null; notes: string | null; userId: string; createdAt: string; updatedAt: string;
+  }): void {
+    this.exec(
+      `INSERT INTO recipes (id, name, steps, servings, prepTime, cookTime, imageUrl, notes, userId, version, isDeleted, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id, data.name, data.steps, data.servings, data.prepTime, data.cookTime,
+        data.imageUrl, data.notes, data.userId, 1, 0, data.createdAt, data.updatedAt,
+      ]
+    );
+  }
+
+  createImportedRecipe(data: {
+    id: string; name: string; steps: string; userId: string; sourceUrl: string; sourceName: string | null;
+    importedAt: string; imageUrl: string | null; prepTime: number | null; cookTime: number | null;
+    servings: number | null; createdAt: string; updatedAt: string;
+  }): void {
+    this.exec(
+      `INSERT INTO recipes (id, name, steps, userId, sourceUrl, sourceName, importedAt, imageUrl, prepTime, cookTime, servings, version, isDeleted, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id, data.name, data.steps, data.userId, data.sourceUrl, data.sourceName, data.importedAt,
+        data.imageUrl, data.prepTime, data.cookTime, data.servings, 1, 0, data.createdAt, data.updatedAt,
+      ]
+    );
+  }
+
+  updateRecipeDetails(id: string, data: {
+    name: string; steps: string; servings: number; prepTime: number | null; cookTime: number | null;
+    imageUrl: string | null; notes: string | null; updatedAt: string;
+  }): void {
+    this.exec(
+      `UPDATE recipes
+       SET name = ?, steps = ?, servings = ?, prepTime = ?, cookTime = ?, imageUrl = ?, notes = ?,
+           updatedAt = ?, version = version + 1
+       WHERE id = ?`,
+      [data.name, data.steps, data.servings, data.prepTime, data.cookTime, data.imageUrl, data.notes, data.updatedAt, id]
+    );
+  }
+
+  /** Soft-delete every recipe_ingredients row for a recipe, typically before rewriting them on edit. */
+  clearRecipeIngredients(recipeId: string, updatedAt: string): void {
+    this.exec(
+      'UPDATE recipe_ingredients SET isDeleted = 1, updatedAt = ? WHERE recipeId = ?',
+      [updatedAt, recipeId]
+    );
+  }
+
+  /** Permanently remove every recipe_ingredients row for a recipe, e.g. when the recipe itself is deleted. */
+  deleteRecipeIngredientsByRecipe(recipeId: string): void {
+    this.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [recipeId]);
+  }
+
+  addRecipeIngredient(data: {
+    recipeId: string; ingredientId: string; quantity: number; unit: string; userId: string;
+    createdAt: string; updatedAt: string;
+  }): void {
+    this.exec(
+      `INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, version, isDeleted, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [data.recipeId, data.ingredientId, data.quantity, data.unit, data.userId, 1, 0, data.createdAt, data.updatedAt]
+    );
+  }
+
   exec(sql: string, params: any[] = []) {
     if (!this.db) { this.memOnly = true; }
     if (this.memOnly) {

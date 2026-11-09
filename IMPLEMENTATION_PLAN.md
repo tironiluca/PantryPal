@@ -26,6 +26,39 @@ PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabas
 
 ## Active Backlog
 
+### P0 - Production Sign-In Outage
+
+#### 10. Restore sign-in on production
+
+**Status:** Open (reported 2026-11-09)
+
+On https://pantry-vibe-pal.vercel.app/auth/login, none of the sign-in methods works: email/password, Google, and GitHub all fail.
+
+Findings so far, checked 2026-11-09:
+
+- The production deployment is healthy. `dpl_4vM263SQ9DqF5XHHKLaJ5WB92Zg6` for `main@39102e9` is READY, and the login page returns 200.
+- The bundle contains real Supabase values rather than placeholders: project `yszsmwuremvxajibydem.supabase.co` with an `sb_publishable_…` key. This is a public key, so its presence in the bundle is expected.
+- No CSP or Vercel header blocks requests to Supabase. `vercel.json` sets only cache headers and the SPA rewrite.
+- The client code paths look correct. `LoginComponent` calls `AuthService.signIn()` (`signInWithPassword`) and `signInWithOAuth('google' | 'github')` with `redirectTo: <origin>/home`. Unit specs cover both paths with a mocked client.
+- The Supabase project itself could not be inspected. The connector only reaches a different organization, and this environment's network blocks `*.supabase.co`, so no request was made to the auth API.
+
+All three methods fail together. That points to a shared backend cause rather than per-provider settings. Check these in order:
+
+1. **Project paused, deleted, or key disabled.** Free-tier projects pause after inactivity. Confirm that project `yszsmwuremvxajibydem` is active and that the publishable key is enabled. Confirm the key in Vercel's `SUPABASE_URL`/`SUPABASE_ANON_KEY` is the one for that project, and was not superseded by the 2026-08-27 rotation.
+2. **Wrong project after rotation.** If the rotation created or switched projects, existing users and the OAuth provider config may live in the old one. Make the Vercel production variables point at the project that holds the users, then redeploy.
+3. **Auth URL configuration.** In Supabase → Authentication → URL Configuration, set Site URL to `https://pantry-vibe-pal.vercel.app`. Add `https://pantry-vibe-pal.vercel.app/**` to the redirect allowlist; preview domains are optional. A missing entry breaks the OAuth return trip.
+4. **Providers.** Google and GitHub must be enabled. Each provider's OAuth app callback must be `https://yszsmwuremvxajibydem.supabase.co/auth/v1/callback`.
+5. **Email/password specifics.** If the project is active and email/password still fails, find out whether the error is "Invalid login credentials" (no such user in this project) or "Email not confirmed".
+
+Repository work to go with the fix:
+
+- Capture the exact browser console and network errors for each method. Record the Supabase response status and body for `POST /auth/v1/token`, and the URL that the OAuth redirect lands on.
+- Log the raw Supabase error code next to the mapped snackbar message in `AuthService.getAuthErrorMessage()`. A network or paused-project failure must not be shown only as a generic message.
+- Have OAuth return to a dedicated `/auth/callback` route that waits for `detectSessionInUrl`. It should then navigate, rather than landing directly on the guarded `/home`, where the guard can run before the session is restored.
+- Add a post-deploy smoke check: a Playwright job or uptime probe that calls `GET /auth/v1/settings` with the production key. It should alert when the project is paused or the key is invalid.
+
+**Acceptance:** email/password, Google, and GitHub sign-in each succeed on the production domain and land on `/home` with a session. Sign-out returns to `/auth/login`. The smoke check passes against production.
+
 ### P0 - Security and Data Protection
 
 #### 1. Remove credentials from environment files
@@ -146,16 +179,21 @@ Reviewed against repository evidence on 2026-11-09. Error-path cleanup (item 3) 
 4. Replace route-level failure smoke checks with UI assertions for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
 5. Fix the memory-only persistence fallback for inventory edits. In `DbService.exec()`, the memory-only `UPDATE inventory` handler reads the row id from `params[9]`, but the update passes nine parameters, so the id is at `params[8]`. When neither OPFS nor IndexedDB is available, editing an inventory item therefore silently does nothing. The same handler also receives `setInventoryQuantity()` (three parameters: quantity, updatedAt, id), so the fix must tell the two statement shapes apart rather than only correcting the index. Add a memory-only round-trip test for both.
 6. Replace the native `prompt()` in `ProfileComponent.deleteAccount()` with a typed-confirmation dialog consistent with the app's other confirmations.
+7. Login hardening from item 10:
+   - Surface raw Supabase auth error codes.
+   - Add an `/auth/callback` route for the OAuth return.
+   - Add a production auth smoke check.
 
 ### External Decisions And Operations
 
+0. **Urgent: restore production sign-in (item 10).** In the Supabase dashboard, confirm that project `yszsmwuremvxajibydem` is active and its publishable key matches Vercel's production variables. Then check the URL configuration and the Google/GitHub providers. Capture the failing auth responses if the cause is still unclear.
 1. Verify the production bundle and git history contain no active credentials after the completed rotation and cleanup.
 2. Decide whether analytics is in scope, then define metrics, retention, ownership/RLS, and acceptance tests before implementing it.
 3. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.
 
 ### Acceptance Gate
 
-The plan is complete when all external decisions are recorded, the matrix has no uncovered production areas, Vitest reaches at least 90% for all four metrics, authenticated and unauthenticated Playwright workflows pass, CI is green, and the production bundle contains no active credentials.
+The plan is complete when all external decisions are recorded, the matrix has no uncovered production areas, Vitest reaches at least 90% for all four metrics, authenticated and unauthenticated Playwright workflows pass, CI is green, production sign-in works for every supported method (item 10), and the production bundle contains no active credentials.
 
 ## Verification Commands
 

@@ -97,6 +97,63 @@ describe('RecipeImportService', () => {
     expect(recipe.instructions).toBe('1. Mix the batter.\n\n2. Bake.\n\n3. Whip cream.\n\n4. Assemble.');
   });
 
+  describe('first-party recipe fetcher', () => {
+    const recipeHtml = `<script type="application/ld+json">${JSON.stringify({ '@type': 'Recipe', name: 'Soup', recipeIngredient: ['water'] })}</script>`;
+    let invoke: ReturnType<typeof vi.fn>;
+
+    const signedIn = (result: unknown) => {
+      invoke = vi.fn().mockResolvedValue(result);
+      (service as any).auth = { isAuthenticated: () => true, getSupabaseClient: () => ({ functions: { invoke } }) };
+    };
+
+    it('uses the edge function and never contacts third-party proxies when it succeeds', async () => {
+      signedIn({ data: { html: recipeHtml }, error: null });
+
+      const recipe = await service.importFromUrl('https://example.com/soup');
+
+      expect(invoke).toHaveBeenCalledWith('recipe-proxy', { body: { url: 'https://example.com/soup' } });
+      expect(recipe.name).toBe('Soup');
+      expect(http.get).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the proxies when the function is not deployed', async () => {
+      signedIn({ data: null, error: { context: new Response('{}', { status: 404 }) } });
+      http.get.mockReturnValueOnce(of(recipeHtml));
+
+      const recipe = await service.importFromUrl('https://example.com/soup');
+
+      expect(recipe.name).toBe('Soup');
+      expect(http.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back when the function call itself throws', async () => {
+      signedIn(undefined);
+      invoke.mockRejectedValue(new Error('network'));
+      http.get.mockReturnValueOnce(of(recipeHtml));
+
+      await expect(service.importFromUrl('https://example.com/soup')).resolves.toMatchObject({ name: 'Soup' });
+    });
+
+    it('does not send a URL the function refused to third-party proxies', async () => {
+      signedIn({ data: null, error: { context: new Response(JSON.stringify({ error: 'Local network addresses are not supported' }), { status: 400 }) } });
+
+      await expect(service.importFromUrl('https://intranet.example.com/a')).rejects.toThrow(
+        'Failed to import recipe: Local network addresses are not supported'
+      );
+      expect(http.get).not.toHaveBeenCalled();
+    });
+
+    it('skips the function when signed out', async () => {
+      invoke = vi.fn();
+      (service as any).auth = { isAuthenticated: () => false, getSupabaseClient: () => ({ functions: { invoke } }) };
+      http.get.mockReturnValueOnce(of(recipeHtml));
+
+      await service.importFromUrl('https://example.com/soup');
+
+      expect(invoke).not.toHaveBeenCalled();
+    });
+  });
+
   it('maps imported ingredient quantities through the matching service', () => {
     const result = service.parseIngredientsWithQuantities(['2 tomatoes', 'salt to taste']);
 

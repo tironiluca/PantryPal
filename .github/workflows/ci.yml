@@ -33,6 +33,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Test Edge Function validation
+        run: node --test supabase/functions/recipe-proxy/validate.test.ts
+
       - name: Generate environment files
         run: node scripts/generate-environments.mjs
 

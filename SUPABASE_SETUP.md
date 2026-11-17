@@ -58,6 +58,16 @@ Until 004 is applied, creating or joining a household and deleting an account fa
 PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres ./scripts/test-supabase-sql.sh
 ```
 
+### Recipe fetcher (optional, recommended)
+
+`supabase/functions/recipe-proxy` fetches recipe pages server-side, so signed-in users' recipe URLs are not sent to third-party CORS proxies. It refuses private and local network targets, follows at most three validated redirects, and caps responses at 2 MB and 10 seconds. Deploy it with the Supabase CLI:
+
+```bash
+supabase functions deploy recipe-proxy --project-ref <your-project-ref>
+```
+
+Until it is deployed, the app falls back to the third-party proxies.
+
 ## Step 5: Configure URLs for Sign-In Redirects
 
 In **Authentication -> URL Configuration**:

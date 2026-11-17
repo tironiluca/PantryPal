@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IngredientMatchingService } from './ingredient-matching.service';
+import { AuthService } from './auth.service';
 
 export interface ImportedRecipe {
   name: string;
@@ -24,12 +25,16 @@ export interface ParsedIngredient {
   ingredientName: string;
 }
 
+/** The first-party fetcher refused the URL (e.g. a private address); do not retry elsewhere. */
+export class RecipeUrlRejectedError extends Error {}
+
 @Injectable({
   providedIn: 'root',
 })
 export class RecipeImportService {
   private http = inject(HttpClient);
   private ingredientMatcher = inject(IngredientMatchingService);
+  private auth = inject(AuthService, { optional: true });
 
   /**
    * Import recipe from URL
@@ -49,6 +54,9 @@ export class RecipeImportService {
       return recipe;
     } catch (error) {
       console.error('Failed to import recipe:', error);
+      if (error instanceof RecipeUrlRejectedError) {
+        throw new Error(`Failed to import recipe: ${error.message}`);
+      }
       throw new Error('Failed to import recipe. Make sure the URL is accessible and contains a valid recipe.');
     }
   }
@@ -330,12 +338,47 @@ export class RecipeImportService {
   }
 
   /**
+   * Fetch the page through the `recipe-proxy` Supabase Edge Function.
+   * Returns null when the function cannot serve the request (not deployed, signed out, the site
+   * failed) so the caller can fall back. A URL the function refuses as unsafe is an error, and is
+   * never retried through third-party proxies.
+   */
+  private async fetchViaRecipeFunction(url: string): Promise<string | null> {
+    const supabase = this.auth?.getSupabaseClient();
+    if (!supabase || !this.auth?.isAuthenticated()) {
+      return null;
+    }
+    try {
+      const { data, error } = await supabase.functions.invoke('recipe-proxy', { body: { url } });
+      if (!error) {
+        return typeof data?.html === 'string' && data.html.length > 0 ? data.html : null;
+      }
+      const response = (error as { context?: Response }).context;
+      if (response?.status === 400) {
+        const body = await response.json().catch(() => null);
+        throw new RecipeUrlRejectedError(body?.error ?? 'This URL cannot be imported');
+      }
+      return null;
+    } catch (error) {
+      if (error instanceof RecipeUrlRejectedError) throw error;
+      console.warn('Recipe fetch function unavailable, using fallback proxies', error);
+      return null;
+    }
+  }
+
+  /**
    * Fetch URL with multiple CORS proxy fallbacks
    */
   private async fetchWithFallback(url: string): Promise<string> {
     // Block requests to private/local networks (SEC-09 SSRF protection)
     if (this.isSsrfTarget(url)) {
       throw new Error('Recipe import does not support local or private network URLs');
+    }
+
+    // Prefer PantryPal's own fetcher, which keeps the URL away from third parties.
+    const firstParty = await this.fetchViaRecipeFunction(url);
+    if (firstParty !== null) {
+      return firstParty;
     }
 
     // All proxy URLs use encodeURIComponent so special chars are handled correctly (BUG-24)

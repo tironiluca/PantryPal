@@ -10,7 +10,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY,
-  email text UNIQUE
+  email text UNIQUE,
+  email_confirmed_at timestamptz DEFAULT now()
 );
 
 CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb

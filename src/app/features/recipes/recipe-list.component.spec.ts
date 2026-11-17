@@ -17,7 +17,7 @@ describe('RecipeListComponent', () => {
   let dbSpy: {
     getCurrentUserId: ReturnType<typeof vi.fn>;
     getRecipesWithIngredientCounts: ReturnType<typeof vi.fn>;
-    deleteRecipeIngredientsByRecipe: ReturnType<typeof vi.fn>;
+    clearRecipeIngredients: ReturnType<typeof vi.fn>;
     softDelete: ReturnType<typeof vi.fn>;
   };
   let dietAdviceSpy: { getIngredientAvailability: ReturnType<typeof vi.fn> };
@@ -58,7 +58,7 @@ describe('RecipeListComponent', () => {
         { id: 'r1', name: 'Pancakes', ingredientCount: 3 },
         { id: 'r2', name: 'Omelette', ingredientCount: 2 },
       ]),
-      deleteRecipeIngredientsByRecipe: vi.fn(),
+      clearRecipeIngredients: vi.fn(),
       softDelete: vi.fn(),
       canModify: vi.fn(() => true),
     };
@@ -186,7 +186,7 @@ describe('RecipeListComponent', () => {
 
       component.remove({ id: 'r1', name: 'Pancakes' });
 
-      expect(dbSpy.deleteRecipeIngredientsByRecipe).toHaveBeenCalledWith('r1');
+      expect(dbSpy.clearRecipeIngredients).toHaveBeenCalledWith("r1", expect.any(String));
       expect(dbSpy.softDelete).toHaveBeenCalledWith('recipes', 'r1');
       expect(dataEventsSpy.emit).toHaveBeenCalledWith('recipes', 'delete', 'r1');
       expect(snackbarSpy.success).toHaveBeenCalledWith('Recipe deleted successfully');

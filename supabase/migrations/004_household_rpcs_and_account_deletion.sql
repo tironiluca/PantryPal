@@ -111,6 +111,13 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
   )
 $$;
 
+-- The caller's email, only once it is confirmed. Invitations are matched on this, so an
+-- account that merely claims an address cannot see or accept invitations sent to it.
+CREATE OR REPLACE FUNCTION public.confirmed_email() RETURNS text
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+  SELECT lower(email) FROM auth.users WHERE id = auth.uid() AND email_confirmed_at IS NOT NULL
+$$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Household policies: replace whatever exists (names differ between setups).
 -- Reads only; every write goes through the functions below.
@@ -127,17 +134,17 @@ BEGIN
 END $$;
 
 CREATE POLICY "Members read their household" ON public.households
-  FOR SELECT USING (public.is_household_member(id));
+  FOR SELECT TO authenticated USING (public.is_household_member(id));
 
 CREATE POLICY "Owner renames household" ON public.households
-  FOR UPDATE USING (owner_id = auth.uid()::text) WITH CHECK (owner_id = auth.uid()::text);
+  FOR UPDATE TO authenticated USING (owner_id = auth.uid()::text) WITH CHECK (owner_id = auth.uid()::text);
 
 CREATE POLICY "Members read household members" ON public.household_members
-  FOR SELECT USING (public.is_household_member(household_id));
+  FOR SELECT TO authenticated USING (public.is_household_member(household_id));
 
 CREATE POLICY "Invitees and members read invitations" ON public.household_invitations
-  FOR SELECT USING (
-    lower(invited_email) = lower(auth.jwt() ->> 'email')
+  FOR SELECT TO authenticated USING (
+    lower(invited_email) = public.confirmed_email()
     OR public.is_household_member(household_invitations.household_id)
   );
 
@@ -198,7 +205,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
   SELECT i.id, i.household_id, h.name, i.invited_at
   FROM public.household_invitations i
   JOIN public.households h ON h.id = i.household_id
-  WHERE i.status = 'pending' AND lower(i.invited_email) = lower(auth.jwt() ->> 'email')
+  WHERE i.status = 'pending' AND lower(i.invited_email) = public.confirmed_email()
   ORDER BY i.invited_at
 $$;
 
@@ -211,7 +218,7 @@ BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
 
   SELECT household_id INTO v_household FROM public.household_invitations
-  WHERE id = p_invitation_id AND status = 'pending' AND lower(invited_email) = lower(auth.jwt() ->> 'email')
+  WHERE id = p_invitation_id AND status = 'pending' AND lower(invited_email) = public.confirmed_email()
   FOR UPDATE;
   IF v_household IS NULL THEN
     RAISE EXCEPTION 'Invitation not found or already used' USING ERRCODE = 'P0002';
@@ -230,7 +237,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '28000'; END IF;
   UPDATE public.household_invitations SET status = 'declined'
-  WHERE id = p_invitation_id AND status = 'pending' AND lower(invited_email) = lower(auth.jwt() ->> 'email');
+  WHERE id = p_invitation_id AND status = 'pending' AND lower(invited_email) = public.confirmed_email();
   IF NOT FOUND THEN RAISE EXCEPTION 'Invitation not found or already used' USING ERRCODE = 'P0002'; END IF;
 END $$;
 
@@ -303,7 +310,7 @@ BEGIN
       EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Household shared ' || t, t);
       EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Household members read ' || t, t);
       EXECUTE format(
-        'CREATE POLICY %I ON public.%I FOR SELECT USING (public.shares_household_with(user_id::text))',
+        'CREATE POLICY %I ON public.%I FOR SELECT TO authenticated USING (public.shares_household_with(user_id::text))',
         'Household members read ' || t, t);
     END IF;
   END LOOP;
@@ -312,7 +319,7 @@ BEGIN
     EXECUTE 'DROP POLICY IF EXISTS "Household members read recipe_ingredients" ON public.recipe_ingredients';
     EXECUTE $p$
       CREATE POLICY "Household members read recipe_ingredients" ON public.recipe_ingredients
-      FOR SELECT USING (EXISTS (
+      FOR SELECT TO authenticated USING (EXISTS (
         SELECT 1 FROM public.recipes r
         WHERE r.id = recipe_ingredients.recipe_id AND public.shares_household_with(r.user_id::text)
       ))
@@ -391,7 +398,7 @@ DO $$
 DECLARE f text;
 BEGIN
   FOREACH f IN ARRAY ARRAY[
-    'current_household_id()', 'is_household_member(text)', 'shares_household_with(text)',
+    'current_household_id()', 'is_household_member(text)', 'shares_household_with(text)', 'confirmed_email()',
     'create_household(text)', 'invite_household_member(text)', 'my_pending_invitations()',
     'accept_household_invitation(text)', 'decline_household_invitation(text)',
     'household_member_details()', 'leave_household()', 'remove_household_member(text)',

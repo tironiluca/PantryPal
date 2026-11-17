@@ -303,6 +303,7 @@ describe('HouseholdService', () => {
       service.supabase.from = vi.fn(() => chainable({ data: [{ user_id: 'u1' }, { user_id: 'u2' }] }));
 
       expect(await service.getHouseholdUserIds()).toEqual(['u1', 'u2']);
+      expect(service.db.setHouseholdMembers).toHaveBeenCalledWith(['u1', 'u2']);
     });
 
     it('falls back to the current user when members cannot be read', async () => {
@@ -311,6 +312,7 @@ describe('HouseholdService', () => {
       service.supabase.from = vi.fn(() => chainable({ error: { message: 'denied' } }));
 
       expect(await service.getHouseholdUserIds()).toEqual(['u1']);
+      expect(service.db.setHouseholdMembers).not.toHaveBeenCalled();
     });
   });
 

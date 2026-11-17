@@ -27,6 +27,9 @@ function makeDb(overrides: Record<string, any> = {}) {
     markRowsSynced: vi.fn().mockResolvedValue(undefined),
     getSyncCursor: vi.fn(() => null),
     setSyncCursor: vi.fn(),
+    hasSyncCursors: vi.fn(() => true),
+    getHouseholdBackfill: vi.fn(() => []),
+    clearHouseholdBackfill: vi.fn(),
     pruneSyncLog: vi.fn(),
     execBatch: vi.fn().mockResolvedValue(undefined),
     logSync: vi.fn(),
@@ -252,6 +255,68 @@ describe('SyncService', () => {
       expect(inventoryTable.gte).toHaveBeenCalledWith('updated_at', '2026-03-01T00:00:00Z');
     });
 
+    it('resumes an upgraded device from its legacy last-sync time instead of re-pulling deleted rows', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.db = makeDb({
+        hasSyncCursors: vi.fn(() => false),
+        getSyncStats: vi.fn(() => ({ unsyncedCount: 0, lastSyncTime: '2026-10-01T00:00:00.000Z', tables: {} })),
+      });
+      const inventoryTable = supabaseTable();
+      routeTables(service, { inventory: inventoryTable });
+
+      await service.syncNow();
+
+      expect(inventoryTable.gte).toHaveBeenCalledWith('updated_at', '2026-10-01T00:00:00.000Z');
+    });
+
+    it('starts from the beginning on a device that has never synced', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.db = makeDb({ hasSyncCursors: vi.fn(() => false) });
+      const inventoryTable = supabaseTable();
+      routeTables(service, { inventory: inventoryTable });
+
+      await service.syncNow();
+
+      expect(inventoryTable.gte).toHaveBeenCalledWith('updated_at', new Date(0).toISOString());
+    });
+
+    it('pulls a newly joined member\'s rows from the start without resetting the user\'s own cursor', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.householdService.getHouseholdUserIds = vi.fn().mockResolvedValue(['u1', 'u2']);
+      service.db = makeDb({
+        getSyncCursor: vi.fn(() => '2026-06-01T00:00:00Z'),
+        getHouseholdBackfill: vi.fn(() => ['u2']),
+      });
+      const old = { id: 'i-old', user_id: 'u2', updated_at: '2026-01-01T00:00:00Z', version: 1 };
+      const ingredientsTable = supabaseTable({ pages: [[], [old]] });
+      routeTables(service, { ingredients: ingredientsTable });
+
+      const result = await service.syncNow();
+
+      expect(ingredientsTable.gte).toHaveBeenCalledWith('updated_at', '2026-06-01T00:00:00Z');
+      expect(ingredientsTable.gte).toHaveBeenCalledWith('updated_at', new Date(0).toISOString());
+      expect(ingredientsTable.in).toHaveBeenCalledWith('user_id', ['u2']);
+      // The user's own cursor does not move backwards for the backfill.
+      expect(service.db.setSyncCursor).toHaveBeenCalledWith('u1', 'ingredients', '2026-06-01T00:00:00Z');
+      expect(result.pulledCount).toBe(1);
+      expect(service.db.clearHouseholdBackfill).toHaveBeenCalledWith('u1', ['u2']);
+    });
+
+    it('keeps the backfill pending when any table failed', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.householdService.getHouseholdUserIds = vi.fn().mockResolvedValue(['u1', 'u2']);
+      service.db = makeDb({ getHouseholdBackfill: vi.fn(() => ['u2']) });
+      routeTables(service, { inventory: supabaseTable({ error: { message: 'down' } }) });
+
+      await service.syncNow();
+
+      expect(service.db.clearHouseholdBackfill).not.toHaveBeenCalled();
+    });
+
     it('reads every page until a short page is returned', async () => {
       const service = bare();
       service.auth = { getCurrentUserId: () => 'u1' };
@@ -414,6 +479,28 @@ describe('SyncService', () => {
       expect(statements[0].sql).toContain('INSERT INTO recipe_ingredients');
       expect(service.db.logSync).toHaveBeenCalledWith('recipe_ingredients', 'pull', 'r1:i1', true);
       expect(result.pulledCount).toBe(1);
+    });
+
+    it('gives pulled recipe ingredients the owner of their recipe, so they are readable locally', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.db = makeDb({
+        query: vi.fn((sql: string) =>
+          sql.startsWith('SELECT id FROM recipes WHERE userId')
+            ? [{ id: 'r1' }]
+            : sql.startsWith('SELECT id, userId FROM recipes')
+              ? [{ id: 'r1', userId: 'u2' }]
+              : []
+        ),
+      });
+      routeTables(service, { recipe_ingredients: supabaseTable({ pages: [[{ recipe_id: 'r1', ingredient_id: 'i1', quantity: 1, updated_at: '2026-02-01T00:00:00Z' }]] }) });
+
+      await service.syncNow();
+
+      const [statements] = service.db.execBatch.mock.calls[0];
+      const sql: string = statements[0].sql;
+      const columns = sql.slice(sql.indexOf('(') + 1, sql.indexOf(')')).split(',');
+      expect(statements[0].params[columns.indexOf('userId')]).toBe('u2');
     });
 
     it('updates an existing recipe ingredient by its composite key', async () => {

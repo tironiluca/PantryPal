@@ -42,8 +42,9 @@ export const HOUSEHOLD_SHARED_TABLES: ReadonlySet<string> = new Set([
 export const SHARED_ROW_READ_ONLY_MESSAGE =
   'This item belongs to another household member, so only they can change it.';
 
-/** Pseudo-table name in sync_state that remembers the household member set. */
+/** Pseudo-table names in sync_state that remember the household member set and members to backfill. */
 const HOUSEHOLD_STATE_KEY = '_household_members';
+const HOUSEHOLD_BACKFILL_KEY = '_household_backfill';
 
 export const DATABASE_UNAVAILABLE_MESSAGE =
   'Local storage is unavailable in this browser, so changes cannot be saved.';
@@ -620,8 +621,8 @@ export class DbService {
     }));
   }
 
-  getInventoryForIngredient(ingredientId: string): Array<{ id: string; quantity: number; unit: string }> {
-    return this.queryByUser<{ id: string; quantity: number; unit: string }>(
+  getInventoryForIngredient(ingredientId: string): Array<{ id: string; quantity: number; unit: string; userId?: string | null }> {
+    return this.queryByUser<{ id: string; quantity: number; unit: string; userId?: string | null }>(
       'inventory',
       'ingredientId = ? AND quantity > 0',
       [ingredientId]
@@ -1011,6 +1012,12 @@ export class DbService {
     return owner === null || owner === '' || owner === this.getCurrentUserId();
   }
 
+  /** Throw when the row with this id belongs to another household member. */
+  assertRowEditable(table: string, id: string): void {
+    this.assertAllowedTable(table);
+    this.assertCanModify(table, 'id = ?', [id]);
+  }
+
   /** Throw when a row belongs to another household member; the server would reject the change anyway. */
   private assertCanModify(table: string, where: string, params: any[]): void {
     if (!this.db || !this.getCurrentUserId()) return;
@@ -1034,11 +1041,7 @@ export class DbService {
     }
 
     const others = [...new Set(memberIds.filter(id => id && id !== userId))].sort();
-    const previousRow = this.query<{ pullCursor: string | null }>(
-      'SELECT pullCursor FROM sync_state WHERE userId = ? AND tableName = ?',
-      [userId, HOUSEHOLD_STATE_KEY]
-    )[0];
-    const previous: string[] = previousRow?.pullCursor ? JSON.parse(previousRow.pullCursor) : [];
+    const previous = this.readStateList(userId, HOUSEHOLD_STATE_KEY);
     this.householdMemberIds = others;
 
     if (JSON.stringify(previous) === JSON.stringify(others)) {
@@ -1050,19 +1053,63 @@ export class DbService {
     if (removed.length > 0) {
       const placeholders = removed.map(() => '?').join(',');
       for (const table of HOUSEHOLD_SHARED_TABLES) {
-        statements.push({ sql: `DELETE FROM ${table} WHERE userId IN (${placeholders})`, params: removed });
+        // Only clean rows: a former member who also signs in on this device keeps unsynced edits.
+        statements.push({
+          sql: `DELETE FROM ${table} WHERE userId IN (${placeholders}) AND syncedAt IS NOT NULL AND (updatedAt IS NULL OR updatedAt <= syncedAt)`,
+          params: removed,
+        });
       }
+      // Their rows are gone from this device, so their own cursors must start over.
+      statements.push({ sql: `DELETE FROM sync_state WHERE userId IN (${placeholders})`, params: removed });
     }
-    if (others.some(id => !previous.includes(id))) {
-      // New members' rows may be older than our cursors; pull everything again.
-      statements.push({ sql: 'DELETE FROM sync_state WHERE userId = ? AND tableName <> ?', params: [userId, HOUSEHOLD_STATE_KEY] });
+
+    // New members' existing rows may be older than our cursors; pull just their rows from the start.
+    const added = others.filter(id => !previous.includes(id));
+    const backfill = [...new Set([...this.readStateList(userId, HOUSEHOLD_BACKFILL_KEY), ...added])]
+      .filter(id => others.includes(id));
+    statements.push(this.writeStateList(userId, HOUSEHOLD_BACKFILL_KEY, backfill));
+    statements.push(this.writeStateList(userId, HOUSEHOLD_STATE_KEY, others));
+    this.execBatch(statements).catch(error => console.error('Failed to update household membership locally', error));
+  }
+
+  /** Household members whose rows still need a full pull (joined since the last complete sync). */
+  getHouseholdBackfill(userId: string): string[] {
+    return this.readStateList(userId, HOUSEHOLD_BACKFILL_KEY);
+  }
+
+  /** Mark members as backfilled once every table pulled their rows successfully. */
+  clearHouseholdBackfill(userId: string, done: string[]): void {
+    const remaining = this.getHouseholdBackfill(userId).filter(id => !done.includes(id));
+    const stmt = this.writeStateList(userId, HOUSEHOLD_BACKFILL_KEY, remaining);
+    this.exec(stmt.sql, stmt.params);
+  }
+
+  /** True once this device has stored any pull cursor for the user (i.e. synced with the new protocol). */
+  hasSyncCursors(userId: string): boolean {
+    return this.query<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM sync_state WHERE userId = ? AND tableName NOT IN (?, ?)',
+      [userId, HOUSEHOLD_STATE_KEY, HOUSEHOLD_BACKFILL_KEY]
+    )[0]?.n > 0;
+  }
+
+  private readStateList(userId: string, key: string): string[] {
+    const row = this.query<{ pullCursor: string | null }>(
+      'SELECT pullCursor FROM sync_state WHERE userId = ? AND tableName = ?',
+      [userId, key]
+    )[0];
+    try {
+      return row?.pullCursor ? JSON.parse(row.pullCursor) : [];
+    } catch {
+      return [];
     }
-    statements.push({
+  }
+
+  private writeStateList(userId: string, key: string, ids: string[]): { sql: string; params: any[] } {
+    return {
       sql: `INSERT INTO sync_state (userId, tableName, pullCursor, updatedAt) VALUES (?, ?, ?, ?)
             ON CONFLICT(userId, tableName) DO UPDATE SET pullCursor = excluded.pullCursor, updatedAt = excluded.updatedAt`,
-      params: [userId, HOUSEHOLD_STATE_KEY, JSON.stringify(others), new Date().toISOString()],
-    });
-    this.execBatch(statements).catch(error => console.error('Failed to update household membership locally', error));
+      params: [userId, key, JSON.stringify(ids), new Date().toISOString()],
+    };
   }
 
   /**

@@ -158,7 +158,7 @@ export class RecipeListComponent {
       .subscribe(ok => {
         if (!ok) return;
         try {
-          this.db.deleteRecipeIngredientsByRecipe(r.id);
+          this.db.clearRecipeIngredients(r.id, new Date().toISOString());
           this.db.softDelete('recipes', r.id);
           this.dataEvents.emit('recipes', 'delete', r.id);
           this.snackbar.success('Recipe deleted successfully');

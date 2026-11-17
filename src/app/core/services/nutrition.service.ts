@@ -129,6 +129,7 @@ export class NutritionService {
   }
 
   updateIngredientNutrition(ingredientId: string, nutrition: NutritionData): void {
+    this.db.assertRowEditable('ingredients', ingredientId);
     const now = new Date().toISOString();
     this.db.exec(
       `UPDATE ingredients

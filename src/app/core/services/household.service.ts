@@ -204,7 +204,10 @@ export class HouseholdService {
       return userId ? [userId] : [];
     }
 
-    return (data ?? []).map((r: any) => r.user_id);
+    const ids = (data ?? []).map((r: any) => r.user_id);
+    // Picks up members who joined since the household was loaded (e.g. mid-session).
+    this.db.setHouseholdMembers(ids);
+    return ids;
   }
 
   private async loadMembers(): Promise<void> {

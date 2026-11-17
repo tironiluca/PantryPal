@@ -23,6 +23,7 @@ function bare(): MealPlanCalendarComponent & Record<string, any> {
     getRecipeIngredients: vi.fn(() => []),
     getInventoryForIngredient: vi.fn(() => []),
     setInventoryQuantity: vi.fn(),
+    canModify: vi.fn((row: any) => !row?.userId || row.userId === "u1"),
   };
   component.unitConverter = { convert: vi.fn((qty: number) => qty) };
   component.errorHandler = { handle: vi.fn() };
@@ -205,6 +206,22 @@ describe('MealPlanCalendarComponent', () => {
       expect(component.snackbar.success).toHaveBeenCalledWith(
         'Marked as complete — deducted 1 ingredient(s)'
       );
+    });
+
+    it('skips a housemate\'s stock and deducts only from the user\'s own rows', () => {
+      const component = bare();
+      component.db.getRecipeIngredients.mockReturnValue([
+        { ingredientId: 'carrot', quantity: 2, unit: 'pcs' },
+      ]);
+      component.db.getInventoryForIngredient.mockReturnValue([
+        { id: 'shared', quantity: 10, unit: 'pcs', userId: 'u2' },
+        { id: 'mine', quantity: 10, unit: 'pcs', userId: 'u1' },
+      ]);
+
+      component.deductIngredients(meal({ servings: 2 }));
+
+      expect(component.db.setInventoryQuantity).not.toHaveBeenCalledWith('shared', expect.anything(), expect.anything());
+      expect(component.db.setInventoryQuantity).toHaveBeenCalledWith('mine', 6, expect.any(String));
     });
 
     it('partially depletes multiple rows before fully covering the need', () => {

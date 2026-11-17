@@ -376,34 +376,69 @@ export class SyncService {
     // Get all user IDs in the household (includes self)
     const householdUserIds = await this.householdService.getHouseholdUserIds();
     const pullUserIds = householdUserIds.length > 1 ? householdUserIds : [userId];
+    // Members who joined since the last complete sync: their rows are pulled from the start.
+    const backfillIds = this.db.getHouseholdBackfill(userId).filter(id => pullUserIds.includes(id));
+    // A device upgrading from the single global cursor resumes from its last sync instead of
+    // re-pulling everything, which would bring back rows deleted before deletions synced.
+    const initialCursor = this.db.hasSyncCursors(userId)
+      ? SyncService.EPOCH
+      : this.db.getSyncStats().lastSyncTime ?? SyncService.EPOCH;
+
+    const recipeIdsOf = (owners: string[]) => {
+      if (owners.length === 0) return [];
+      const placeholders = owners.map(() => '?').join(',');
+      return this.db.query<{ id: string }>(
+        `SELECT id FROM recipes WHERE userId IN (${placeholders}) AND (isDeleted IS NULL OR isDeleted = 0)`,
+        owners
+      ).map(r => r.id);
+    };
 
     for (const table of this.SYNC_TABLES) {
       try {
         const isChild = this.CHILD_TABLES.has(table);
-        const cursor = this.db.getSyncCursor(userId, table) ?? SyncService.EPOCH;
+        const cursor = this.db.getSyncCursor(userId, table) ?? initialCursor;
 
         let recipeIds: string[] | null = null;
         if (isChild) {
           // For child tables (recipe_ingredients), include recipes from all household members (BUG-20)
-          const placeholders = pullUserIds.map(() => '?').join(',');
-          recipeIds = this.db.query<{id: string}>(
-            `SELECT id FROM recipes WHERE userId IN (${placeholders}) AND (isDeleted IS NULL OR isDeleted = 0)`,
-            pullUserIds
-          ).map(r => r.id);
+          recipeIds = recipeIdsOf(pullUserIds);
           if (recipeIds.length === 0) continue;
         }
 
         const data = await this.fetchRemoteChanges(table, cursor, pullUserIds, recipeIds);
+        const backfill = backfillIds.length === 0
+          ? []
+          : await this.fetchRemoteChanges(table, SyncService.EPOCH, backfillIds, isChild ? recipeIdsOf(backfillIds) : null);
 
-        if (data.length === 0) {
+        if (data.length === 0 && backfill.length === 0) {
           continue;
         }
 
         // The cursor comes from the server's own values, never from this device's clock.
-        const nextCursor: string = data[data.length - 1].updated_at ?? cursor;
+        const nextCursor: string = data.length > 0 ? data[data.length - 1].updated_at ?? cursor : cursor;
 
         // Convert snake_case Supabase records to camelCase for local storage
-        const records = data.map((record: any) => this.remoteToLocal(record));
+        const seen = new Set<string>();
+        const records = [...data, ...backfill]
+          .map((record: any) => this.remoteToLocal(record))
+          .filter((record: any) => {
+            const key = this.getRecordId(record, table);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+        if (isChild) {
+          // The server table has no owner column; rows belong to their recipe's owner, which local
+          // reads and the household purge rely on.
+          const owners = new Map(
+            this.db.query<{ id: string; userId: string | null }>(
+              `SELECT id, userId FROM recipes WHERE id IN (${records.map(() => '?').join(',')})`,
+              records.map((r: any) => r.recipeId)
+            ).map(r => [r.id, r.userId])
+          );
+          records.forEach((r: any) => { r.userId = owners.get(r.recipeId) ?? null; });
+        }
 
         // Build WHERE clause for finding existing records
         const findExistingQuery = isChild
@@ -470,6 +505,10 @@ export class SyncService {
         // Log failure
         this.db.logSync(table, 'pull', '', false, errorMsg);
       }
+    }
+
+    if (backfillIds.length > 0 && errors.length === 0) {
+      this.db.clearHouseholdBackfill(userId, backfillIds);
     }
 
     return { count, conflicts, errors };

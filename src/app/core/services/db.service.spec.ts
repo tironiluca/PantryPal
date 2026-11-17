@@ -623,7 +623,8 @@ describe('DbService household sharing on this device (real SQLite schema)', () =
     (service as any).migrate();
     vi.spyOn(service, 'persist').mockResolvedValue(undefined);
     for (const [id, owner] of [['mine', 'me'], ['theirs', 'partner'], ['stranger', 'someone-else']]) {
-      service.exec('INSERT INTO ingredients (id, name, userId, updatedAt) VALUES (?, ?, ?, ?)', [id, id, owner, '2026-01-01T00:00:00.000Z']);
+      service.exec('INSERT INTO ingredients (id, name, userId, updatedAt, syncedAt) VALUES (?, ?, ?, ?, ?)',
+        [id, id, owner, '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:01.000Z']);
     }
     service.exec('INSERT INTO nutrition_logs (id, userId, date, createdAt) VALUES (?, ?, ?, ?)', ['log-p', 'partner', '2026-01-01', '2026-01-01']);
   });
@@ -657,16 +658,27 @@ describe('DbService household sharing on this device (real SQLite schema)', () =
     expect(service.getChangedRecords<any>('ingredients').map(r => r.id)).not.toContain('theirs');
   });
 
-  it('resets pull cursors when a new member joins, so their older rows are fetched', async () => {
+  it('queues a new member for a full pull without resetting the user\'s own cursors', async () => {
     service.setSyncCursor('me', 'ingredients', '2026-06-01T00:00:00Z');
     service.setHouseholdMembers(['me']);
     await flush();
-    expect(service.getSyncCursor('me', 'ingredients')).toBe('2026-06-01T00:00:00Z');
+    expect(service.getHouseholdBackfill('me')).toEqual([]);
+    expect(service.hasSyncCursors('me')).toBe(true);
 
     service.setHouseholdMembers(['me', 'partner']);
     await flush();
 
-    expect(service.getSyncCursor('me', 'ingredients')).toBeNull();
+    expect(service.getSyncCursor('me', 'ingredients')).toBe('2026-06-01T00:00:00Z');
+    expect(service.getHouseholdBackfill('me')).toEqual(['partner']);
+
+    service.clearHouseholdBackfill('me', ['partner']);
+    expect(service.getHouseholdBackfill('me')).toEqual([]);
+  });
+
+  it('does not count household bookkeeping as sync history', async () => {
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+    expect(service.hasSyncCursors('me')).toBe(false);
   });
 
   it('does nothing when the member set is unchanged', async () => {
@@ -690,6 +702,21 @@ describe('DbService household sharing on this device (real SQLite schema)', () =
     const all = (service as any).query('SELECT id FROM ingredients ORDER BY id').map((r: any) => r.id);
     expect(all).toEqual(['mine', 'stranger']);
     expect(ids('ingredients')).toEqual(['mine']);
+    expect(service.getHouseholdBackfill('me')).toEqual([]);
+  });
+
+  it('keeps a former member\'s unsynced edits on a shared device, and resets their cursors', async () => {
+    service.exec('INSERT INTO ingredients (id, name, userId, updatedAt) VALUES (?, ?, ?, ?)', ['theirs-dirty', 'x', 'partner', '2026-02-01T00:00:00.000Z']);
+    service.setSyncCursor('partner', 'ingredients', '2026-06-01T00:00:00Z');
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    service.setHouseholdMembers(['me']);
+    await flush();
+
+    const all = (service as any).query('SELECT id FROM ingredients ORDER BY id').map((r: any) => r.id);
+    expect(all).toEqual(['mine', 'stranger', 'theirs-dirty']);
+    expect(service.getSyncCursor('partner', 'ingredients')).toBeNull();
   });
 });
 

@@ -12,11 +12,15 @@ INSERT INTO auth.users (id, email) VALUES
   ('00000000-0000-0000-0000-00000000000b', 'mia@example.test'),
   ('00000000-0000-0000-0000-00000000000c', 'ivan@example.test'),
   ('00000000-0000-0000-0000-00000000000d', 'otto@example.test');
+-- Eve signed up with an address she has not confirmed.
+INSERT INTO auth.users (id, email, email_confirmed_at) VALUES
+  ('00000000-0000-0000-0000-00000000000e', 'eve@example.test', NULL);
 INSERT INTO public.users (id, email, display_name) VALUES
   ('00000000-0000-0000-0000-00000000000a', 'olive@example.test', 'Olive'),
   ('00000000-0000-0000-0000-00000000000b', 'mia@example.test', 'Mia'),
   ('00000000-0000-0000-0000-00000000000c', 'ivan@example.test', 'Ivan'),
-  ('00000000-0000-0000-0000-00000000000d', 'otto@example.test', 'Otto');
+  ('00000000-0000-0000-0000-00000000000d', 'otto@example.test', 'Otto'),
+  ('00000000-0000-0000-0000-00000000000e', 'eve@example.test', 'Eve');
 
 CREATE OR REPLACE FUNCTION tests.expect(p_ok boolean, p_message text) RETURNS void
 LANGUAGE plpgsql AS $$
@@ -64,7 +68,15 @@ SELECT set_config('tests.invite_mia', public.invite_household_member(' Mia@Examp
 SELECT set_config('tests.invite_ivan', public.invite_household_member('ivan@example.test'), false);
 SELECT tests.expect(public.invite_household_member('mia@example.test') = current_setting('tests.invite_mia'),
   're-inviting returns the existing pending invitation');
-SELECT tests.expect((SELECT count(*) FROM public.household_invitations) = 2, 'members read their household invitations');
+SELECT set_config('tests.invite_eve', public.invite_household_member('eve@example.test'), false);
+SELECT tests.expect((SELECT count(*) FROM public.household_invitations) = 3, 'members read their household invitations');
+
+-- Unconfirmed address: the invitation stays invisible and cannot be accepted.
+SELECT tests.login('00000000-0000-0000-0000-00000000000e', 'eve@example.test');
+SELECT tests.expect((SELECT count(*) FROM public.household_invitations) = 0, 'an unconfirmed email cannot read invitations sent to it');
+SELECT tests.expect((SELECT count(*) FROM public.my_pending_invitations()) = 0, 'an unconfirmed email has no pending invitations');
+SELECT tests.expect_error(format('SELECT public.accept_household_invitation(%L)', current_setting('tests.invite_eve')),
+  'not found', 'an unconfirmed email cannot accept an invitation');
 
 -- Outsider: sees nothing and cannot invite.
 SELECT tests.login('00000000-0000-0000-0000-00000000000d', 'otto@example.test');
@@ -128,7 +140,11 @@ SELECT tests.expect(EXISTS (SELECT 1 FROM public.ingredients WHERE user_id::text
   'other users'' data is untouched');
 
 SET ROLE anon;
+SELECT set_config('request.jwt.claims', '{}', false);
 SELECT tests.expect_error($$SELECT public.delete_my_account()$$, 'permission denied', 'anonymous callers cannot use the account functions');
+SELECT tests.expect((SELECT count(*) FROM public.households) = 0 AND (SELECT count(*) FROM public.household_invitations) = 0,
+  'signed-out reads of household tables return nothing instead of an error');
+SELECT tests.expect((SELECT count(*) FROM public.ingredients) = 0, 'signed-out reads of shared data tables return nothing instead of an error');
 RESET ROLE;
 
 \echo 'All migration 004 checks passed.'

@@ -271,6 +271,9 @@ export class MealPlanCalendarComponent implements OnInit {
             break;
           }
 
+          // A housemate's stock is read-only; leave it for them to update.
+          if (!this.db.canModify(inv)) continue;
+
           const invUnit = inv.unit as Unit;
           const invInRecipeUnit = this.unitConverter.convert(inv.quantity, invUnit, neededUnit);
           if (invInRecipeUnit === null) continue; // Incompatible units — skip this row

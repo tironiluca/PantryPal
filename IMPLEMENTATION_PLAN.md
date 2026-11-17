@@ -1,207 +1,452 @@
 # PantryPal - Implementation Plan
 
-Updated 2026-11-09. This document tracks remaining product, security, and release work. Completed repository changes are summarized below; detailed test ownership is maintained in [TEST_MATRIX.md](TEST_MATRIX.md).
+Rewritten 2026-11-17 after a full repository review. This replaces the previous backlog. The plan is in four parts:
 
-## Completed In Repository
+1. what is broken now;
+2. what is still missing from the original plan;
+3. what is worth adding to the architecture;
+4. what is worth adding to the features.
 
-- Environment files use placeholders; build-time Supabase values come from variables or CI secrets.
-- Recipe import displays and documents third-party proxy privacy limitations.
-- Voice subscriptions use `takeUntilDestroyed()`.
-- Ingredient barcode failures use shared error handling and have regression coverage.
-- Recipe URL validation now rejects private and local network targets before proxy access, with parser and proxy-fallback regression coverage.
-- Cache, voice-command, and recipe-import service behavior now have inferred unit specifications.
-- Keyboard, language, theme, snackbar, data-event, auth-guard, and error-handler behavior now have inferred unit specifications.
-- Meal-plan, inventory, and meal-of-day relationship lookups use typed, user-scoped `DbService` methods.
-- Ingredient categories, available ingredients, recipe summaries, and recipe edit loads now use typed, user-scoped `DbService` methods, with focused regression coverage.
-- Barcode migration tests now verify first-row preservation, guest/user isolation, active-row uniqueness, and soft-delete behavior.
-- Typed relationship methods now cover meal plans, nutrition logs/goals, recipe nutrition, expiring inventory, and diet-advice recipe matching.
-- Feature/dialog behavior specs cover inventory, ingredients, recipes, meal planning, nutrition, settings, voice, barcode/OCR, and household validation.
-- Mocked authenticated and failure-path Playwright workflows cover protected feature routes, backend/product failures, and permission denial.
-- CI runs unit tests, coverage, production build, and Playwright, and uploads test artifacts.
-- Playwright covers unauthenticated access to every protected route.
+Test ownership is tracked in [TEST_MATRIX.md](TEST_MATRIX.md).
 
-## Current State
+## How To Read This Plan
 
-PantryPal is an Angular standalone PWA using SQLite/WASM for local data, Supabase for authentication and sync, Material UI, barcode/OCR features, recipes, meal planning, nutrition, household sharing, and IndexedDB product caching.
+Every finding carries an evidence tag:
 
-## Active Backlog
+- **[Verified]** - confirmed from code, CI logs, or the production deployment.
+- **[Inferred - confirm live]** - follows from the checked-in SQL or code but has not been run against the live Supabase project, because this environment cannot reach it. Confirm each one before fixing.
+- **[External]** - needs a dashboard, account, or product decision outside the repository.
 
-### P0 - Production Sign-In Outage
+Every work item says where it can be done:
 
-#### 10. Restore sign-in on production
+- **Local** - code-only and testable in the repository.
+- **Needs Supabase** - needs access to the Supabase project, either the dashboard or SQL.
 
-**Status:** Open (reported 2026-11-09)
+## Snapshot
 
-On https://pantry-vibe-pal.vercel.app/auth/login, none of the sign-in methods works: email/password, Google, and GitHub all fail.
+PantryPal is an Angular 21 standalone PWA. It stores data locally in SQLite (sql.js) with OPFS or IndexedDB persistence, and uses Supabase for authentication, cloud sync, and household sharing. It is deployed on Vercel from `main`.
 
-Findings so far, checked 2026-11-09:
+Feature breadth is good. Inventory, ingredients, recipes with import, meal planning, cart, nutrition, voice, barcode/OCR, image recognition, export, i18n (en/it), and PWA support all exist. Unit coverage is wide: 745 tests, about 77% statements, run locally.
 
-- The production deployment is healthy. `dpl_4vM263SQ9DqF5XHHKLaJ5WB92Zg6` for `main@39102e9` is READY, and the login page returns 200.
-- The bundle contains real Supabase values rather than placeholders: project `yszsmwuremvxajibydem.supabase.co` with an `sb_publishable_…` key. This is a public key, so its presence in the bundle is expected.
-- No CSP or Vercel header blocks requests to Supabase. `vercel.json` sets only cache headers and the SPA rewrite.
-- The client code paths look correct. `LoginComponent` calls `AuthService.signIn()` (`signInWithPassword`) and `signInWithOAuth('google' | 'github')` with `redirectTo: <origin>/home`. Unit specs cover both paths with a mocked client.
-- The Supabase project itself could not be inspected. The connector only reaches a different organization, and this environment's network blocks `*.supabase.co`, so no request was made to the auth API.
+The weak points are everything that touches the server: sign-in, sync, sharing, account lifecycle, and the CI gate. These need to be made correct before more features are added.
 
-All three methods fail together. That points to a shared backend cause rather than per-provider settings. Check these in order:
+| Area | State |
+| --- | --- |
+| Production sign-in | **Down** - all methods fail on the production site |
+| CI | **Has never run a test** - 12 of 12 runs failed before installing dependencies |
+| Cloud sync | Works on the happy path; several silent data-loss paths |
+| Household sharing | Likely non-functional end to end |
+| Password reset | Broken - the email link has no route |
+| Delete account | Reports success but deletes nothing |
+| Local features | Broadly complete; covered by unit specs |
 
-1. **Project paused, deleted, or key disabled.** Free-tier projects pause after inactivity. Confirm that project `yszsmwuremvxajibydem` is active and that the publishable key is enabled. Confirm the key in Vercel's `SUPABASE_URL`/`SUPABASE_ANON_KEY` is the one for that project, and was not superseded by the 2026-08-27 rotation.
-2. **Wrong project after rotation.** If the rotation created or switched projects, existing users and the OAuth provider config may live in the old one. Make the Vercel production variables point at the project that holds the users, then redeploy.
-3. **Auth URL configuration.** In Supabase → Authentication → URL Configuration, set Site URL to `https://pantry-vibe-pal.vercel.app`. Add `https://pantry-vibe-pal.vercel.app/**` to the redirect allowlist; preview domains are optional. A missing entry breaks the OAuth return trip.
-4. **Providers.** Google and GitHub must be enabled. Each provider's OAuth app callback must be `https://yszsmwuremvxajibydem.supabase.co/auth/v1/callback`.
-5. **Email/password specifics.** If the project is active and email/password still fails, find out whether the error is "Invalid login credentials" (no such user in this project) or "Email not confirmed".
+## Part 1 - Broken Now
 
-Repository work to go with the fix:
+Ordered by priority. Fix B1 first, because until CI runs, no other fix is verified by the gate.
 
-- Capture the exact browser console and network errors for each method. Record the Supabase response status and body for `POST /auth/v1/token`, and the URL that the OAuth redirect lands on.
-- Log the raw Supabase error code next to the mapped snackbar message in `AuthService.getAuthErrorMessage()`. A network or paused-project failure must not be shown only as a generic message.
-- Have OAuth return to a dedicated `/auth/callback` route that waits for `detectSessionInUrl`. It should then navigate, rather than landing directly on the guarded `/home`, where the guard can run before the session is restored.
-- Add a post-deploy smoke check: a Playwright job or uptime probe that calls `GET /auth/v1/settings` with the production key. It should alert when the project is paused or the key is invalid.
+### B1. CI has never executed tests - P0, Local + [External] secrets
 
-**Acceptance:** email/password, Google, and GitHub sign-in each succeed on the production domain and land on `/home` with a session. Sign-out returns to `/auth/login`. The smoke check passes against production.
+**[Verified]** Every run of `.github/workflows/ci.yml` fails in the "Set up Node.js" step. The latest is run 42667749268 on `main@39102e9`. The error is:
 
-### P0 - Security and Data Protection
+> Dependencies lock file is not found ... Supported file patterns: package-lock.json, npm-shrinkwrap.json, yarn.lock
 
-#### 1. Remove credentials from environment files
+`/package-lock.json` is listed in `.gitignore:17`, yet the workflow uses `cache: npm` and `npm ci`, and both require a lockfile. The same log shows `SUPABASE_URL` and `SUPABASE_ANON_KEY` as empty. So after the lockfile is fixed, `prebuild` (`scripts/generate-environments.mjs`) would fail next.
 
-**Status:** Complete
+The previous plan claimed that "CI runs unit tests, coverage, production build, and Playwright" and that the 70% gate is "enforced in CI". Neither claim was ever true.
 
-Environment files now contain placeholders only. `npm start` and `npm run build` generate them from `SUPABASE_URL` and `SUPABASE_ANON_KEY`, loaded from a local `.env` or CI variables, and fail when either value is missing.
+The missing lockfile also explains the earlier `idb` build break. Vercel resolves dependencies fresh on every deploy.
 
-- Supabase key rotation and credential-bearing history cleanup were completed administratively on 2026-08-27.
-- Verify the production bundle and git history contain no active credentials after rotation and history cleanup.
+**Fix:**
+1. Remove `/package-lock.json` from `.gitignore` and commit the lockfile.
+2. Add the two repository secrets [External]. Alternatively, let CI build with placeholder values: the build does not need real credentials, and only the Vercel deploy does.
+3. Drop the separate `npm test` step. `test:coverage` already runs the suite.
+4. Move `actions/*` to their Node 24 releases; the current versions log a deprecation warning.
 
-#### 2. Make recipe import privacy explicit
+**Acceptance:** a green CI run on `main` that executes unit tests, the coverage gate, the build, and Playwright.
 
-**Status:** Blocked externally
+### B2. Production sign-in is down - P0, [External] first, then Local
 
-Recipe URLs are still sent to third-party CORS proxies, even though encoding and private-network rejection are implemented. A privacy notice is now shown beside the import action.
+**[Verified]** On https://pantry-vibe-pal.vercel.app/auth/login, email/password, Google, and GitHub all fail.
 
-- Prefer a first-party Supabase Edge Function proxy when the backend is available.
+The deployment itself is healthy:
+- deployment `dpl_4vM263SQ9DqF5XHHKLaJ5WB92Zg6` is READY;
+- the bundle carries real values for project `yszsmwuremvxajibydem`;
+- no CSP or Vercel header blocks requests to Supabase;
+- the client code paths are correct.
+
+The profile upsert in `AuthService.ensureUserProfile()` (`auth.service.ts:284`) swallows its own errors. A missing `users` table therefore cannot cause the outage.
 
-### P1 - Correctness and Resource Safety
+All three methods fail together, which points at the Supabase project. Check these in order [External]:
+
+1. Is project `yszsmwuremvxajibydem` paused or deleted, or is its publishable key disabled? Free-tier projects pause when idle.
+2. Do Vercel's production `SUPABASE_URL`/`SUPABASE_ANON_KEY` point at the project that holds the users, after the 2026-08-27 key rotation?
+3. In Authentication → URL Configuration:
+   - Site URL is `https://pantry-vibe-pal.vercel.app`.
+   - The redirect allowlist contains `https://pantry-vibe-pal.vercel.app/**`.
+4. Google and GitHub are enabled. Each provider app's callback is `https://yszsmwuremvxajibydem.supabase.co/auth/v1/callback`.
+5. If only email/password still fails, check whether the error is "Invalid login credentials" or "Email not confirmed".
 
-#### 3. Finish observable and async error cleanup
+Repository hardening (Local):
+- Log the raw Supabase error status and code next to the mapped message in `getAuthErrorMessage()` (`auth.service.ts:330`).
+- Return OAuth to a dedicated `/auth/callback` route that waits for the session, instead of `/home` (`auth.service.ts:185`).
+- Add a scheduled smoke check that calls `GET /auth/v1/settings` with the production key and fails when the project is paused or the key is rejected.
 
-**Status:** Complete
+**Acceptance:**
+- All three methods sign in on production and land on `/home`.
+- Sign-out returns to `/auth/login`.
+- The smoke check passes.
 
-Audited 2026-11-09. Every component `subscribe()` is piped through `takeUntilDestroyed()`, and `SyncService` clears its auto-sync interval and `online` listener in `stopAutoSync()`. Save, scan, OCR, import, and recognition failures all reach the error handler or snackbar. The remaining empty `catch` blocks are deliberate fallbacks (DB not yet ready, malformed URL treated as unsafe, unparseable date shown raw), not swallowed errors.
+### B3. Sync can silently lose or resurrect data - P0, Local + Needs Supabase
 
-- Failure-path specs now cover product lookup, save, scanner, OCR, image recognition, recipe import, and sync push/pull.
+All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
-#### 4. Make duplicate barcode prevention authoritative
-
-**Status:** Complete
-
-The inventory dialog and database enforce user-scoped barcode uniqueness, including a shared guest scope. Migration now preserves the first legacy row for each scope and clears duplicate barcode values before recreating the active-row index. SQLite-backed migration and guest/user isolation tests pass, and `InventoryEditDialog.save()` now has dedicated regression coverage for create and edit barcode conflicts, same-row edits that keep their own barcode, the unique-constraint catch path, and field validation.
-
-- `src/app/features/inventory/inventory-edit/inventory-edit.dialog.spec.ts` covers create/edit barcode conflict, edit-without-conflict, missing-barcode save, unique-constraint catch handling, and ingredient/quantity/minRestock validation.
-
-#### 5. Move component database access into services
-
-**Status:** Complete
-
-No component calls `db.query()` or `db.exec()` any more; relationship reads were extracted earlier, and the remaining mutations now go through named `DbService` methods: `createInventoryItem`, `updateInventoryItemDetails`, `setInventoryQuantity`, `createIngredient`, `updateIngredientDetails`, `createRecipe`, `createImportedRecipe`, `updateRecipeDetails`, `clearRecipeIngredients`, `deleteRecipeIngredientsByRecipe`, and `addRecipeIngredient`. Plain row deletes reuse the existing allowlisted `hardDelete()`. Each method is a domain operation with a fixed table and parameterized values, not a generic SQL passthrough, and each has a spec asserting its SQL and parameter order.
-
-- Direct SQL now lives only in services (sync, migration, persistence, and the domain services such as `NutritionService` and `IngredientMatchingService`).
-
-### P2 - Feature Completion
-
-#### 6. Decide and implement analytics scope
-
-**Status:** Not started
-
-Consumption/waste tables, an analytics service/model, and an analytics view do not exist.
-
-- Confirm this remains in product scope before implementation.
-- If approved, add migrations, ownership/RLS rules, logging at inventory mutation points, and a focused dashboard.
-- Define metrics and retention before building charts.
-
-### P3 - UX and Test Coverage
-
-#### 7. Finish responsive navigation and dialog consistency
-
-**Status:** Partial - dialog save validation standardized; visual review remains
-
-The existing mobile toolbar/dropdown is the chosen replacement for fixed bottom navigation. Every edit dialog now disables Save until its required input is valid: the ingredient dialog requires a name and the nutrition-goals dialog requires a positive calorie goal, and both previously let invalid rows be saved. The goals dialog's Cancel button now carries the same `close` icon as every other dialog.
-
-- Keep the existing mobile toolbar/dropdown as the navigation pattern.
-- List views already show empty states. Their loads are synchronous SQLite reads, so there is no visible async gap that needs a skeleton; revisit only if a list moves to async loading.
-- Remaining: a visual pass on helper text and responsive sections across dialogs at phone width, which needs a browser review rather than code inspection.
-
-#### 8. Cover the entire codebase with Vitest and Playwright
-
-**Status:** Partial
-
-Vitest coverage has passed the 70% stage for statements, functions, and lines; branches are at 69.5%. The CI gate in `vitest.config.mts` is now 70/65/70/70 (statements/branches/functions/lines), raised from 30/25/35/30. The 80% and then 90% stages remain.
-
-- Add Vitest tests for every production TypeScript service, component, guard, model, and utility, including success, failure, loading, empty, and permission branches where applicable.
-- Add Playwright coverage for every route and user-facing workflow, including authentication, inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, household sharing, and error states.
-- Link each production area to both a focused Vitest spec and a Playwright spec; new code cannot merge without both.
-- CI executes unit tests, coverage, production build, and Playwright and uploads artifacts.
-- The latest report (`npm run test:coverage`, the CI command) measures 76.81% statements, 69.54% branches, 76.01% functions, and 77.4% lines (745 tests, 63 spec files); 90% remains the release target.
-- Every production component, dialog, and service in `src/app` now has a co-located spec. `sync.service.ts` went from 1% to 89% statement coverage. The only files without a dedicated spec are the `*.routes.ts` route tables, `app.config.ts`, `transloco-loader.ts`, `nav-tabs.ts`, and the interface-only models, none of which contain branching logic.
-- Lowest statement coverage, which is next for the 80% stage: `inventory-edit.dialog.ts` (29%; its spec only covers `save()`, not product lookup, barcode scan, or OCR), `db.service.ts` (32%; init, OPFS persistence, and migrations need a real sql.js harness), `nutrition.service.ts` (51%), `products.service.ts` (58%), `cache.service.ts` (58%), and `ingredient-list.component.ts` (58%).
-- Protected-route smoke coverage is complete; feature workflow and branch coverage remain listed in `TEST_MATRIX.md`.
-- Fixed a webpack production-build failure (`export 'DBSchema' was not found in 'idb'`) by importing `DBSchema`/`IDBPDatabase` from `idb` as `import type` in `cache.service.ts`, since they are type-only exports that some `idb` releases do not expose as a runtime binding; without a committed lockfile, a fresh `npm install` could resolve a patch version that broke the untyped import at any time.
-- Fixed every Vercel Preview/Development deployment failing with "Node.js Version '20.x' is discontinued" by bumping `package.json`'s `engines.node` (and the CI workflow's `actions/setup-node`) to `26.x`.
-- Fixed every Vercel Preview/Development deployment failing with "Missing required environment variable(s): SUPABASE_URL, SUPABASE_ANON_KEY" by extending both variables' Vercel target scope from `production`-only to `production`, `preview`, and `development`.
-
-#### 9. Define the full-coverage test matrix
-
-**Status:** Partial - matrix updated; exhaustive ownership remains
-
-Maintain a checked-in test matrix mapping every `src/app` production file and route to its Vitest and Playwright coverage. The matrix must be reviewed whenever production code changes.
-
-- Inventory all production files, routes, dialogs, services, guards, and shared components.
-- Record the owning Vitest spec and Playwright spec for each area.
-- Track uncovered branches and workflows as backlog entries with an owner and acceptance test.
-- Require the matrix and coverage reports in pull-request checks.
-- `TEST_MATRIX.md` records current Vitest and Playwright ownership and marks uncovered areas as release blockers.
-
-## External Blockers
-
-- Recipe proxy owner: deploy a Supabase Edge Function that accepts only validated public recipe URLs, fetches server-side, applies timeouts and response-size limits, and returns the existing parser input. Then configure the client to prefer it and retain the third-party proxy only as an explicitly approved fallback. Acceptance: deployed function, privacy/retention policy, staging validation, and passing proxy failure tests.
-- Analytics product owner: decide whether analytics is in scope, define consumption/waste metrics, retention, ownership/RLS, and deletion behavior. Acceptance: recorded decision and approved data contract, or an explicit out-of-scope decision that closes this backlog item.
-- Test owner: provide a dedicated test account or approve a deterministic Supabase mock strategy for authenticated Playwright workflows. Acceptance: inventory, ingredients, recipes, meal planning, nutrition, cart, settings, voice, barcode/OCR, and household workflows pass in CI.
-- Repository owner: run the local verification tasks that do not require external access: credential scan of the bundle/history, migration and barcode isolation tests, remaining typed query extraction, dialog/error-path tests, matrix updates, and coverage threshold enforcement.
-
-## Partial-Item Conclusion
-
-Reviewed against repository evidence on 2026-11-09. Error-path cleanup (item 3) and component database access (item 5) are complete, every production component and service has a focused spec, and the CI coverage gate enforces the 70% stage. Still partial: the 80% and 90% coverage stages, a visual dialog review at phone width, and Playwright UI assertions in place of route-level smoke checks. Recipe privacy and realistic authenticated browser coverage still require external proxy deployment, policy, or test-account decisions. The plan is not release-complete until those acceptance gates pass.
-
-## Next Steps
-
-### Local Implementation Queue
-
-1. Done - `InventoryEditDialog.save()` now has dedicated create/edit barcode-conflict, validation, and error-path tests in `src/app/features/inventory/inventory-edit/inventory-edit.dialog.spec.ts`.
-2. Done - every production component, dialog, and service has a co-located Vitest spec recorded in `TEST_MATRIX.md`.
-3. In progress - the 70% coverage stage is reached and enforced in CI. Next is 80%, starting with the files listed under item 8; raise the `vitest.config.mts` gate as each stage is reached.
-4. Replace route-level failure smoke checks with UI assertions for save, product lookup, scanner, OCR, persistence fallback, permissions, and household isolation.
-5. Fix the memory-only persistence fallback for inventory edits. In `DbService.exec()`, the memory-only `UPDATE inventory` handler reads the row id from `params[9]`, but the update passes nine parameters, so the id is at `params[8]`. When neither OPFS nor IndexedDB is available, editing an inventory item therefore silently does nothing. The same handler also receives `setInventoryQuantity()` (three parameters: quantity, updatedAt, id), so the fix must tell the two statement shapes apart rather than only correcting the index. Add a memory-only round-trip test for both.
-6. Replace the native `prompt()` in `ProfileComponent.deleteAccount()` with a typed-confirmation dialog consistent with the app's other confirmations.
-7. Login hardening from item 10:
-   - Surface raw Supabase auth error codes.
-   - Add an `/auth/callback` route for the OAuth return.
-   - Add a production auth smoke check.
-
-### External Decisions And Operations
-
-0. **Urgent: restore production sign-in (item 10).** In the Supabase dashboard, confirm that project `yszsmwuremvxajibydem` is active and its publishable key matches Vercel's production variables. Then check the URL configuration and the Google/GitHub providers. Capture the failing auth responses if the cause is still unclear.
-1. Verify the production bundle and git history contain no active credentials after the completed rotation and cleanup.
-2. Decide whether analytics is in scope, then define metrics, retention, ownership/RLS, and acceptance tests before implementing it.
-3. Deploy and validate a first-party Supabase Edge Function proxy before removing the third-party recipe proxy.
-
-### Acceptance Gate
-
-The plan is complete when all external decisions are recorded, the matrix has no uncovered production areas, Vitest reaches at least 90% for all four metrics, authenticated and unauthenticated Playwright workflows pass, CI is green, production sign-in works for every supported method (item 10), and the production bundle contains no active credentials.
+1. **Hard deletes never reach the server.**
+   - Recipe, inventory, and ingredient lists call `db.hardDelete()`: `recipe-list.component.ts:154`, `inventory-list.component.ts:308`, `ingredient-list.component.ts:204`.
+   - Sync only propagates `isDeleted = 1` tombstones (`db.service.ts:1023`).
+   - The deleted row therefore stays in Supabase and comes back on every other device and on a fresh install.
+   - Only `meal_plans` uses `softDelete()`.
+2. **One global cursor on client clocks.**
+   - `lastSyncTime` is `MAX(syncedAt)` across five tables (`db.service.ts:1162`).
+   - The push stamps `updated_at` with the device clock (`sync.service.ts:185`), into a `TEXT` column.
+   - Remote rows are pulled with `gt('updated_at', lastSyncTime)` (`sync.service.ts:290`).
+   - A device whose clock runs behind, or a household member's push stamped earlier than our cursor, is skipped permanently.
+3. **A failed table still advances the cursor.**
+   - Per-table errors are collected, but `syncNow()` still sets status `success` (`sync.service.ts:112`).
+   - The next push moves `MAX(syncedAt)` forward, so the failed table's remote changes are never pulled.
+4. **No pagination.** The pull is a single `select('*')`. Supabase caps responses (1000 rows by default), so large tables are truncated without an error.
+5. **Conflict detection is unreachable.**
+   - The push runs before the pull (`sync.service.ts:98-103`) and upserts with no version check, so local always overwrites remote.
+   - By the time the pull compares versions, the remote row is our own write.
+   - `SyncConflictDialog` is never opened anywhere.
+6. **Pulled household rows are never shown.** The pull inserts other members' rows with their `userId`, but every local read is scoped to `userId = ?` (`db.service.ts:991`).
+7. **Edits to shared rows are never pushed.** `getChangedRecords()` selects only `userId = <me>`.
+8. **Nutrition data is not synced.** `nutrition_logs` and `nutrition_goals` exist in Supabase (`001_initial_schema.sql:174,203`) but are not in `SYNC_TABLES`.
+9. **Sync timing.**
+   - Auto-sync starts only from `HomeComponent.ngOnInit`, and its first run is 5 minutes later. There is no sync on sign-in.
+   - The household is loaded only by the settings page (`household-settings.component.ts:44`), so sync pulls only your own data until that page is opened.
+10. **Performance.** Every `DbService.exec()` re-serialises and persists the whole database (`db.service.ts:777`), so pulling N rows causes N full writes. `sync_log` is never pruned.
+
+**Fix outline:** see A1, the sync redesign. The minimum fixes to ship first:
+- Convert list deletes to `softDelete()`.
+- Keep a per-table cursor that advances only on success, and report partial failure as an error.
+- Paginate the pull.
+- Apply each pull inside `execBatch()`.
+- Sync on sign-in.
+
+**Acceptance:** two-device tests, with mocked Supabase, for each of the following:
+- delete propagation;
+- clock skew;
+- one table failing;
+- more than 1000 rows;
+- concurrent edits resolved by the documented policy.
+
+### B4. Password reset link has no route - P1, Local
+
+**[Verified]** `resetPassword()` sends users to `/auth/reset-password` (`auth.service.ts:222`). `auth.routes.ts` defines no such route, so the wildcard redirects to `/auth/login` and the user cannot set a new password. `updatePassword()` exists (`auth.service.ts:243`) but has no UI.
+
+**Fix:** add a reset-password page that waits for the `PASSWORD_RECOVERY` session and calls `updatePassword()`. Add `/auth/reset-password` to the Supabase redirect allowlist [External].
+
+**Acceptance:** Playwright covers the request → link → new password → sign-in flow, with mocked auth.
+
+### B5. Household sharing does not work end to end - P1, Needs Supabase
+
+**[Verified]** in code:
+- `acceptInvitation()` has no caller, and there is no invitation inbox.
+- `inviteMember()` only inserts a row but reports "Invitation sent" (`household.service.ts:116`). No email is sent.
+- `loadHousehold()` ignores query errors, so any RLS failure looks like "no household".
+- See B3.6 and B3.9: shared rows are never shown, and the household is loaded too late.
+
+**[Inferred - confirm live]** in `002_family_sharing.sql` and `003_fix_rls.sql`:
+- **Creating a household is blocked.** `households` has a `FOR ALL` policy that requires the user to already be a member, and no separate `WITH CHECK` (`002:43`). The creator is not a member yet, so the insert is rejected.
+- **The creator cannot add the owner row.** The `household_members` insert depends on reading `households`, which needs membership.
+- **RLS recursion.** "Members can read household" on `household_members` queries `household_members` (`003:39`). `households` and `household_members` also query each other. Expect Postgres error 42P17 (infinite recursion in policy).
+- **The invitation policy fails or leaks.**
+  - It reads `auth.users` (`002:66`), which the `authenticated` role cannot select, so expect "permission denied".
+  - The unqualified `household_id` in `hm.household_id = household_id` resolves to `hm.household_id`. The condition is therefore always true for any member of any household.
+- **Invitees cannot join.** Only owners may insert into `household_members` (`003:53`).
+- **Sharing is read-only and partial.**
+  - Shared SELECT policies exist only for `inventory` and `ingredients`.
+  - Recipes, recipe ingredients, meal plans, and categories are not shared at all.
+
+**Fix:** see A2, the household ownership model:
+- SECURITY DEFINER RPCs (`create_household`, `invite_member`, `accept_invitation`);
+- non-recursive membership helpers;
+- `auth.jwt() ->> 'email'` in place of `auth.users`;
+- an invitation inbox.
+
+**Acceptance:** RLS tests prove each of the following:
+- the owner creates a household;
+- an invitee sees only their own invitations and can accept;
+- members read and edit shared rows;
+- outsiders see nothing.
+
+### B6. Delete account deletes nothing - P1, Needs Supabase
+
+**[Inferred - confirm live]** `UserProfileService.deleteAccount()` deletes from `users` (`user-profile.service.ts:230`). Migration 003 defines no DELETE policy, so RLS filters the row out, the call returns no error, and the app shows "Account deleted successfully".
+
+The code comment "cascade will delete all related data" is false:
+- data tables hold `user_id TEXT` with no foreign key;
+- the auth user is never removed.
+
+**[Verified]** `ProfileComponent` also uses the native `prompt()` for the typed confirmation (`profile.component.ts:166`).
+
+**Fix:**
+- A `delete-account` Edge Function that uses the service role and removes all user rows, household memberships, and the auth user.
+- Offer a data export first.
+- Replace `prompt()` with a typed-confirmation dialog.
+
+**Acceptance:** after deletion, every table holds zero rows for that user id, sign-in fails, and local data is cleared.
+
+### B7. Memory-only persistence fallback is wrong - P2, Local
+
+**[Verified]** When sql.js cannot load, `DbService` falls back to an in-memory map that holds only three tables (`db.service.ts:116`).
+
+The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751`). The details update passes nine parameters (`db.service.ts:635`), so its id is at index 8. `setInventoryQuantity()` (`:646`) passes three. Editing in fallback mode therefore silently does nothing. Recipes, meal plans, and nutrition simply do not work in fallback mode.
+
+**Fix:**
+- Either make the fallback a real in-memory sql.js database, which needs the WASM to load at all,
+- or show a blocking "storage unavailable" state instead of a half-working app.
+
+**Acceptance:** the fallback path either round-trips every CRUD operation or is replaced by a tested error state.
+
+### B8. Schema has no single source of truth - P1, Needs Supabase
+
+**[Verified]**
+- `SUPABASE_SETUP.md:52` defines `users` and `UUID` foreign keys to `auth.users`.
+- `001_initial_schema.sql` defines `user_id TEXT` with no foreign keys. It also starts with `DROP TABLE ... CASCADE` (`001:9-16`), so re-running it wipes production data.
+- No migration creates `users`, although `003` alters it and the app reads it.
+- `updated_at` is `TEXT` everywhere and is set by the client.
+- It is unknown which schema the live project actually has.
+
+**Fix:** see A3. Pull the live schema with the Supabase CLI, commit it as the baseline migration, and delete the contradicting SQL from `SUPABASE_SETUP.md`.
+
+### B9. Repository hygiene - P3, Local
+
+**[Verified]**
+- `ng-serve.err`, `ng-serve.log`, and `ng-watch.log` are tracked.
+- `README.md` still describes the "Angular 20 Starter" and manual WASM copying, which `postinstall` now does.
+- There is no lint script or ESLint config.
+- There are 126 `any` annotations or casts in production code.
+- `SkeletonComponent` is never used.
+- The 21 snackbar literals in services are hard-coded English, despite en/it i18n.
+
+## Part 2 - Missing Against The Original Plan
+
+The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`, SEC-01 to SEC-10 and BUG-02 to BUG-25) are mostly delivered.
+
+| Original task | Status | Notes |
+| --- | --- | --- |
+| 1.1 Recipe schema | Done | |
+| 1.2 Notification polling leak | Done | `stopPolling()` |
+| 1.3 Error handling | Done | Service messages not localized (B9) |
+| 1.4 Observable leaks | Done | `takeUntilDestroyed()` everywhere |
+| 1.5 Scanner stream cleanup | Done | |
+| 2.1 Duplicate barcode prevention | Done | User-scoped unique index |
+| 2.2 Product API cache | Done | IndexedDB via `idb` |
+| 2.3 Batch DB operations | Partial | `execBatch()` exists; sync pull and single `exec()` still persist per statement (B3.10) |
+| 3.1 Smart meal of the day | Done | Expiry/availability scoring |
+| 3.2 Search, filter, sort | Done | Inventory search, location, and expiry filters |
+| 3.3 Unit conversions | Done | Used by cart, meal plan, nutrition |
+| 3.4 Analytics and waste reports | **Not started** | Needs a product decision (F7) |
+| 4.1-4.4 UI redesign | Done | Card grid, theme, bottom sheets; phone-width visual review outstanding |
+| 4.5 Loading skeletons | **Unused** | Component exists but is not used |
+| 5.1 Confirmation dialogs | Done | Except `prompt()` in delete account (B6) |
+| 5.2 Keyboard shortcuts | Done | |
+
+The original plan's "Future enhancements" list is also mostly built:
+- authentication;
+- cloud sync;
+- recipe import;
+- meal calendar;
+- shopping list export;
+- nutrition;
+- voice;
+- image recognition.
+
+Two are not. **Barcode generation for homemade items** was never built. **Multi-user/household** is built but broken (B5).
+
+Security audit items were closed in `ee70179`. Spot checks this review found them still in place:
+- SEC-03: `escapeHtml` in the export print window;
+- SEC-09: encoded proxy URLs;
+- BUG-03 and BUG-04: sync listener and interval handling.
+
+Two items carried over from the previous plan are still open:
+- the third-party recipe CORS proxy (A4);
+- the analytics scope decision (F7).
+
+## Part 3 - Worth Having: Architecture
+
+### A1. Sync redesign - High value, Local + Needs Supabase
+
+Replace timestamp-diff sync with an explicit protocol:
+- **Server-owned time.**
+  - `updated_at timestamptz` is set by a trigger.
+  - A per-table monotonic cursor is taken from the server's response, not the client clock.
+- **Tombstones everywhere.** Use soft delete only, with a purge job after a retention window.
+- **Ordering.** Pull, then push. Each push upserts with `version` as an optimistic check, so a stale write fails and becomes a conflict.
+- **One documented conflict policy.** For example, last-writer-wins per row for most tables, with `SyncConflictDialog` reserved for inventory quantity. Wire the dialog or delete it.
+- **Efficient apply.** Paginate pulls (`range()`), apply each page in one `execBatch()`, and persist once per sync.
+- **Error handling.** Partial failure is reported as an error with a retry, and the cursor never advances past a failed table.
+- **Scope.** Add `nutrition_logs`, `nutrition_goals`, and user settings to the synced set.
+- **Later.** Optionally use Supabase Realtime for live household updates once the above is correct.
+
+### A2. Household ownership model - High value, Needs Supabase
+
+Add `household_id` to shareable rows instead of inferring sharing from `user_id` joins. With that column:
+- RLS becomes simply "a member of this row's household";
+- local reads filter by `userId = me OR householdId = myHousehold`;
+- edits by any member push under the row's household.
+
+All membership changes go through SECURITY DEFINER RPCs with explicit checks. A helper `is_household_member(hh)` function avoids policy recursion.
+
+### A3. Supabase as code - High value, Needs Supabase
+
+- Initialise the Supabase CLI.
+- Pull the live schema as a baseline migration.
+- Make migrations additive only, with no `DROP TABLE`.
+- Add a seed file and run a local stack for development and Playwright.
+- Test RLS with pgTAP, or with SQL tests in CI against a local stack: owner, member, outsider, and invitee for every table.
+- Generate TypeScript types (`supabase gen types`) and use them in `SyncService` and `HouseholdService` in place of `any`.
+
+### A4. Edge Functions for server-side duties - Medium-High value, Needs Supabase
+
+- `recipe-proxy`: replaces the third-party CORS proxies (`recipe-import.service.ts:344`). It takes validated public URLs only, with a timeout and a size cap.
+- `delete-account`: see B6.
+- `send-invitation`: sends a real email with a signed accept link.
+
+### A5. Delivery pipeline and environments - Medium-High value, Local + [External]
+
+- Commit the lockfile and fix CI (B1). Add `ng lint` with ESLint and a `tsc --noEmit` check.
+- Add Dependabot or Renovate for dependency updates.
+- Make CI a required check on `main` and use PRs, with Vercel preview deploys.
+- Add a separate staging Supabase project for previews, so previews never touch production data.
+- Add a post-deploy smoke test (B2) and an uptime probe.
+
+### A6. Client structure - Medium value, Local
+
+- Split `DbService` (1,197 lines) into:
+  - a connection/persistence layer (OPFS/IndexedDB);
+  - schema migrations;
+  - per-domain repositories (inventory, recipes, meal plans, nutrition, sync metadata).
+- Debounce persistence: write once per transaction or idle tick, not per statement.
+- Reduce `any` usage, starting with sync and household code, and use the generated types.
+- Move hard-coded service strings to Transloco keys.
+
+### A7. Security headers and observability - Medium value, Local
+
+- Add CSP, `Referrer-Policy`, `Permissions-Policy` (camera and microphone for self only), and `X-Content-Type-Options` in `vercel.json`. Allow only the Supabase, Open Food Facts, and analytics origins.
+- Add client error reporting, such as Sentry or a Vercel log drain. Today production failures, including the B2 outage, are invisible until a user reports them.
+- Show sync and auth failures in a user-visible status, not only in `console.error`.
+
+## Part 4 - Worth Having: Functional
+
+| # | Feature | Why | Depends on |
+| --- | --- | --- | --- |
+| F1 | Invitation inbox and join-by-link | Sharing is unusable without it | B5, A2, A4 |
+| F2 | Sync status panel: last sync, pending count, errors, retry, conflict review | Users cannot tell whether data is safe | A1 |
+| F3 | Shared shopping list with live check-off | Strongest household use case | A1, A2 |
+| F4 | Expiry reminders via Web Push, not only while the app is open | Core pantry value; polling only runs in an open tab | A4 |
+| F5 | Data export and import (JSON backup), offered before account deletion | Trust, portability, GDPR-style deletion | B6 |
+| F6 | First-run onboarding and sample data | Empty app after sign-up; the seed adds one stray "Eggs" row | - |
+| F7 | Waste and consumption analytics | Original task 3.4; needs a product decision on metrics and retention | A1 |
+| F8 | Barcode/label generation for homemade or bulk items | Original future enhancement, never built | - |
+| F9 | Accessibility pass (keyboard, screen reader, contrast) and phone-width visual review | Outstanding from the dialog consistency work | - |
+| F10 | Recipe scaling by servings and "cook this" inventory deduction preview | Builds on unit conversions | - |
+
+## Roadmap
+
+1. **Phase 0: unblock** (days)
+   - B1: CI green.
+   - B2: sign-in restored, plus hardening.
+   - B4: reset-password page.
+   - B9: hygiene quick wins.
+2. **Phase 1: data correctness**
+   - A3: Supabase as code, starting from the live schema.
+   - B8: single schema source of truth.
+   - B3 minimum fixes: soft deletes, per-table cursor, pagination, sync on sign-in.
+   - B6: delete-account function.
+   - B7: storage fallback decision.
+3. **Phase 2: sharing**
+   - A2: household ownership model with RPCs and RLS tests.
+   - B5 fixes.
+   - F1: invitation inbox.
+   - A4: `send-invitation`.
+4. **Phase 3: platform**
+   - A1: full sync redesign, including nutrition sync.
+   - A6: `DbService` split and debounced persistence.
+   - A7: headers and observability.
+   - A4: `recipe-proxy`.
+   - A5: staging project and PR flow.
+5. **Phase 4: features**
+   - F2 to F10, in table order, unless product priorities say otherwise.
+
+## Test Strategy And Coverage
+
+- Local unit suite: 745 tests in 63 spec files. The last local `npm run test:coverage` measured:
+
+  | Metric | Coverage |
+  | --- | --- |
+  | Statements | 76.81% |
+  | Branches | 69.54% |
+  | Functions | 76.01% |
+  | Lines | 77.4% |
+
+  The gate in `vitest.config.mts` is 70/65/70/70. It takes effect once CI runs (B1).
+- Lowest-covered files, next in line for the 80% stage:
+
+  | File | Statement coverage |
+  | --- | --- |
+  | `inventory-edit.dialog.ts` | 29% |
+  | `db.service.ts` | 32% (needs a real sql.js harness) |
+  | `nutrition.service.ts` | 51% |
+  | `products.service.ts` | 58% |
+  | `cache.service.ts` | 58% |
+  | `ingredient-list.component.ts` | 58% |
+
+- Add tests where current mocks hide real failures:
+  - **sync:** two-device scenarios against a mocked or local Supabase (B3);
+  - **RLS:** tests against a local Supabase stack (A3);
+  - **auth flows** in Playwright: OAuth callback, password reset, sign-out.
+- Replace route-level Playwright smoke checks with UI assertions for:
+  - save;
+  - product lookup;
+  - the scanner;
+  - OCR;
+  - the persistence fallback;
+  - permissions;
+  - household isolation.
+- Keep `TEST_MATRIX.md` current, so that every production file maps to a Vitest spec and a Playwright workflow.
+- Targets: 80%, then 90% on all four metrics.
+
+## Acceptance Gate
+
+The project is release-ready when all of the following hold:
+
+1. CI is green on `main` and is a required check.
+2. All supported sign-in methods, password reset, and sign-out work on production.
+3. Two-device sync tests pass for deletes, skew, partial failure, and more than 1000 rows.
+4. RLS tests pass for every table and role.
+5. A household can be created, joined, and shared end to end.
+6. Account deletion removes all server data and the auth user.
+7. The live schema matches the committed migrations.
+8. Vitest reaches 90% on all four metrics.
+9. The production bundle contains no secret keys. The publishable anon key is expected.
 
 ## Verification Commands
 
 ```text
-npm test
 npm run test:coverage
 npm run build
 npm run e2e
 ```
 
-The repository requires unit tests, full Vitest coverage, a production build, and Playwright for release. Vitest and Playwright coverage must span the entire production codebase and all routes; security, sync, persistence-fallback, scanner, cart, filtering, and household isolation require dedicated tests rather than incidental coverage.
+## Appendix - Completed Work (Summary)
+
+- Environment files hold placeholders. Supabase values are generated at build time, and keys were rotated on 2026-08-27.
+- Typed, user-scoped `DbService` methods replace all component SQL, and dynamic SQL identifiers are allowlisted.
+- User-scoped barcode uniqueness has migration and isolation tests.
+- Error handling and subscription cleanup were audited, and failure paths are tested.
+- Recipe URL validation rejects private and local network targets, and a proxy privacy notice is shown.
+- Every component, dialog, and service has a co-located spec, and the coverage gate was raised to the 70% stage.
+- Dialog Save buttons are disabled until required input is valid.
+- Fixes for Vercel build and deploy: the `idb` type import, Node 26 engines, and environment variables scoped to every target.

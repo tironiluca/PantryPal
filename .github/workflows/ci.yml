@@ -12,11 +12,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      # The build and tests only need syntactically valid values; real project
-      # values are supplied by Vercel at deploy time. Repository secrets, when
-      # configured, take precedence over the placeholders.
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ci-placeholder.supabase.co' }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+      # The build and tests only need syntactically valid values and mock every Supabase
+      # call; real project values are supplied by Vercel at deploy time.
+      SUPABASE_URL: https://ci-placeholder.supabase.co
+      SUPABASE_ANON_KEY: ci-placeholder-anon-key
       NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - name: Check out repository

@@ -16,13 +16,14 @@ jobs:
   supabase-auth:
     runs-on: ubuntu-latest
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # Dedicated names so CI's build and tests keep using placeholders, never production values.
+      SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
     steps:
       - name: Skip when production secrets are not configured
         if: env.SUPABASE_URL == '' || env.SUPABASE_ANON_KEY == ''
         run: |
-          echo "::notice::SUPABASE_URL / SUPABASE_ANON_KEY repository secrets are not set; skipping the auth smoke check."
+          echo "::notice::PROD_SUPABASE_URL / PROD_SUPABASE_ANON_KEY repository secrets are not set; skipping the auth smoke check."
 
       - name: Query the auth settings endpoint
         if: env.SUPABASE_URL != '' && env.SUPABASE_ANON_KEY != ''

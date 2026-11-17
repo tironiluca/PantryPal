@@ -3,8 +3,9 @@
 # the SQL behaviour tests against them. Connection comes from the standard PG* variables
 # (PGHOST, PGPORT, PGUSER, PGPASSWORD); the user needs CREATEDB and superuser-like rights.
 #
-# Two schema starting points are checked, because the live project may have been created from either:
-#   migrations - supabase/migrations/001-003 (TEXT user ids)
+# Three schema starting points are checked, because the live project may have been created from any:
+#   migrations - supabase/migrations/001-003 as historically applied (TEXT user ids)
+#   fresh      - the documented new-project path: 001, 002, 004 (no 003)
 #   legacy     - the schema from the former SUPABASE_SETUP.md (UUID user ids)
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -34,5 +35,10 @@ run_variant migrations \
   supabase/migrations/002_family_sharing.sql \
   supabase/tests/fixtures/users_table.sql \
   supabase/migrations/003_fix_rls.sql
+
+# New project following SUPABASE_SETUP.md: 001 and 002, then 004 (003 is skipped).
+run_variant fresh \
+  supabase/migrations/001_initial_schema.sql \
+  supabase/migrations/002_family_sharing.sql
 
 run_variant legacy supabase/tests/fixtures/legacy_setup_schema.sql

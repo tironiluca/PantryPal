@@ -60,7 +60,13 @@ export class SyncService {
   /**
    * Sync now - push local changes and pull remote changes
    */
-  async syncNow(): Promise<SyncResult> {
+  /** Errors last shown to the user, so background retries do not repeat the same message. */
+  private lastReportedErrors = '';
+
+  /**
+   * @param options.manual true when the user asked for this sync; failures are then always reported.
+   */
+  async syncNow(options: { manual?: boolean } = {}): Promise<SyncResult> {
     const userId = this.auth.getCurrentUserId();
 
     if (!userId) {
@@ -133,7 +139,11 @@ export class SyncService {
         // dirty rows and pull cursors, and are retried on the next run.
         result.success = false;
         this.syncStatusSignal.set('error');
-        this.snackbar.error(`Sync incomplete: ${result.errors.length} table(s) failed. Will retry.`);
+        const errorKey = result.errors.join('|');
+        if (options.manual || errorKey !== this.lastReportedErrors) {
+          this.snackbar.error(`Sync incomplete: ${result.errors.length} table(s) failed. Will retry.`);
+        }
+        this.lastReportedErrors = errorKey;
         return result;
       }
 
@@ -142,6 +152,7 @@ export class SyncService {
 
       this.lastSyncTimeSignal.set(new Date());
       this.syncStatusSignal.set('success');
+      this.lastReportedErrors = '';
 
       if (result.pushedCount > 0 || result.pulledCount > 0) {
         this.snackbar.success(

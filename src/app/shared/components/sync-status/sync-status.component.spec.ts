@@ -158,7 +158,7 @@ describe('SyncStatusComponent', () => {
     it('delegates to the sync service', async () => {
       await setup();
       await component.onSyncClick();
-      expect(syncSpy.syncNow).toHaveBeenCalled();
+      expect(syncSpy.syncNow).toHaveBeenCalledWith({ manual: true });
     });
   });
 });

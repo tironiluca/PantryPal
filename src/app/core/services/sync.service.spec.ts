@@ -48,6 +48,7 @@ function bare(): SyncService & Record<string, any> {
   service.SYNC_TABLES = SYNC_TABLES;
   service.CHILD_TABLES = new Set(['recipe_ingredients']);
   service.syncIntervalHandle = null;
+  service.lastReportedErrors = '';
   service.onlineHandler = () => {
     if (service.auth.isAuthenticated() && !service.isSyncingSignal()) {
       service.syncNow();
@@ -184,6 +185,36 @@ describe('SyncService', () => {
       expect(service.syncStatus()).toBe('error');
       expect(service.snackbar.error).toHaveBeenCalledWith('Sync incomplete: 1 table(s) failed. Will retry.');
       expect(service.profileService.updateLastSync).not.toHaveBeenCalled();
+    });
+
+    it('reports a repeated background failure once, but always for a manual sync', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      service.db = makeDb({ getChangedRecords: vi.fn((table: string) => (table === 'ingredients' ? [{ id: 'i1', userId: 'u1' }] : [])) });
+      routeTables(service, { ingredients: supabaseTable({ upsertError: { message: 'upsert failed' } }) });
+
+      await service.syncNow();
+      await service.syncNow();
+      expect(service.snackbar.error).toHaveBeenCalledTimes(1);
+
+      await service.syncNow({ manual: true });
+      expect(service.snackbar.error).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports a background failure again after a successful sync in between', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1' };
+      const failing = makeDb({ getChangedRecords: vi.fn((table: string) => (table === 'ingredients' ? [{ id: 'i1', userId: 'u1' }] : [])) });
+      routeTables(service, { ingredients: supabaseTable({ upsertError: { message: 'upsert failed' } }) });
+
+      service.db = failing;
+      await service.syncNow();
+      service.db = makeDb();
+      await service.syncNow();
+      service.db = failing;
+      await service.syncNow();
+
+      expect(service.snackbar.error).toHaveBeenCalledTimes(2);
     });
 
     it('inserts a newly pulled record and advances the cursor to the server timestamp', async () => {

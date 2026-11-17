@@ -69,6 +69,21 @@ ALTER TABLE public.households ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_invitations ENABLE ROW LEVEL SECURITY;
 
+-- Columns the app syncs that projects created from the former SUPABASE_SETUP.md lack.
+-- Sync uploads every local column, so one missing column rejects that table's whole push,
+-- and the pull filters on updated_at.
+DO $$
+BEGIN
+  IF to_regclass('public.ingredients') IS NOT NULL THEN
+    ALTER TABLE public.ingredients ADD COLUMN IF NOT EXISTS barcode TEXT;
+    ALTER TABLE public.ingredients ADD COLUMN IF NOT EXISTS sugar_g REAL;
+  END IF;
+  IF to_regclass('public.recipe_ingredients') IS NOT NULL THEN
+    ALTER TABLE public.recipe_ingredients ADD COLUMN IF NOT EXISTS created_at TEXT;
+    ALTER TABLE public.recipe_ingredients ADD COLUMN IF NOT EXISTS updated_at TEXT;
+  END IF;
+END $$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Membership helpers. SECURITY DEFINER so policies can call them without
 -- re-entering household_members' own RLS (which caused infinite recursion).

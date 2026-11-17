@@ -78,7 +78,7 @@ export class SyncStatusComponent {
   });
 
   async onSyncClick(): Promise<void> {
-    await this.syncService.syncNow();
+    await this.syncService.syncNow({ manual: true });
   }
 
   private getTimeAgo(date: Date): string {

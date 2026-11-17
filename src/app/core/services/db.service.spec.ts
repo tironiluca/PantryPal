@@ -716,3 +716,65 @@ describe('DbService nutrition reads (real SQLite schema)', () => {
     expect(service.getNutritionGoals()?.dailyKcalGoal).toBe(2000);
   });
 });
+
+describe('DbService coalesced persistence (real SQLite schema)', () => {
+  let service: DbService;
+  let persist: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    TestBed.configureTestingModule({
+      providers: [DbService, { provide: AuthService, useValue: { getCurrentUserId: () => 'me' } }],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    persist = vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+  });
+
+  const write = (id: string) => service.exec('INSERT INTO ingredient_categories (id, name, userId) VALUES (?, ?, ?)', [id, id, 'me']);
+
+  it('writes the file once for a burst of statements, and resolves every caller after the write', async () => {
+    const pending = [write('a'), write('b'), write('c')];
+    expect(persist).not.toHaveBeenCalled();
+
+    await Promise.all(pending);
+
+    expect(persist).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes again for changes made after the previous write', async () => {
+    await write('a');
+    await write('b');
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
+  it('flushes immediately when the page is hidden', async () => {
+    const pending = write('a');
+    const started = Date.now();
+
+    window.dispatchEvent(new Event('pagehide'));
+    await pending;
+
+    expect(Date.now() - started).toBeLessThan(DbService.PERSIST_DELAY_MS);
+    expect(persist).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing on flush when no write is scheduled', async () => {
+    await service.flushPersist();
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it('settles callers even when the write fails', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    persist.mockRejectedValueOnce(new Error('quota exceeded'));
+
+    await expect(write('a')).resolves.toBeUndefined();
+    expect(error).toHaveBeenCalledWith('Failed to save the local database', expect.any(Error));
+  });
+
+  it('keeps the data readable before the write happens', () => {
+    void write('a');
+    expect((service as any).query('SELECT id FROM ingredient_categories').map((r: any) => r.id)).toEqual(['a']);
+  });
+});

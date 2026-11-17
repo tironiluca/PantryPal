@@ -766,7 +766,7 @@ export class DbService {
     stmt.bind(params);
     stmt.step();
     stmt.free();
-    return this.persist();
+    return this.schedulePersist();
   }
 
   /**
@@ -794,8 +794,8 @@ export class DbService {
       // Commit transaction
       this.db.run('COMMIT');
 
-      // Persist once at the end
-      return this.persist();
+      // Persist once at the end (coalesced with other writes)
+      return this.schedulePersist();
     } catch (error) {
       // Rollback on error
       if (this.db) {
@@ -871,6 +871,57 @@ export class DbService {
     }));
 
     return this.execBatch(statements);
+  }
+
+  /** Delay before writing the database file, so bursts of writes produce one file write. */
+  static readonly PERSIST_DELAY_MS = 250;
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingPersist: Promise<void> | null = null;
+  private resolvePendingPersist: (() => void) | null = null;
+  /** Serializes file writes so two exports never write the same file at once. */
+  private persistChain: Promise<void> = Promise.resolve();
+  private flushListenersRegistered = false;
+
+  /**
+   * Write the database file soon. Every write within PERSIST_DELAY_MS shares one file write;
+   * the returned promise settles once the data is saved (or saving was skipped).
+   */
+  schedulePersist(): Promise<void> {
+    this.registerFlushListeners();
+    if (!this.pendingPersist) {
+      this.pendingPersist = new Promise<void>(resolve => { this.resolvePendingPersist = resolve; });
+      this.persistTimer = setTimeout(() => void this.flushPersist(), DbService.PERSIST_DELAY_MS);
+    }
+    return this.pendingPersist;
+  }
+
+  /** Write any scheduled changes now, e.g. when the page is being hidden or closed. */
+  flushPersist(): Promise<void> {
+    if (this.persistTimer !== null) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = null;
+    }
+    const resolve = this.resolvePendingPersist;
+    if (!resolve) {
+      return this.persistChain;
+    }
+    this.pendingPersist = null;
+    this.resolvePendingPersist = null;
+    this.persistChain = this.persistChain
+      .then(() => this.persist())
+      .catch(error => console.error('Failed to save the local database', error))
+      .finally(resolve);
+    return this.persistChain;
+  }
+
+  private registerFlushListeners(): void {
+    if (this.flushListenersRegistered || typeof window === 'undefined') return;
+    this.flushListenersRegistered = true;
+    const flush = () => void this.flushPersist();
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush();
+    });
   }
 
   async persist() {

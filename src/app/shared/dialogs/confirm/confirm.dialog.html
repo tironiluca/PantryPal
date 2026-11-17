@@ -7,12 +7,18 @@
       </h2>
       <div mat-dialog-content>
         <p>{{ data.message }}</p>
+        @if (data.requireText) {
+          <mat-form-field appearance="outline" class="require-text">
+            <mat-label>Type {{ data.requireText }} to confirm</mat-label>
+            <input matInput name="requireText" [(ngModel)]="typedText" autocomplete="off" (keyup.enter)="confirm()" />
+          </mat-form-field>
+        }
       </div>
       <div mat-dialog-actions align="end">
         <button mat-button (click)="cancel()">
           {{ data.cancelLabel ?? 'Cancel' }}
         </button>
-        <button mat-flat-button [color]="data.confirmColor ?? 'primary'" (click)="confirm()">
+        <button mat-flat-button [color]="data.confirmColor ?? 'primary'" (click)="confirm()" [disabled]="!canConfirm()">
           {{ data.confirmLabel ?? 'Confirm' }}
         </button>
       </div>

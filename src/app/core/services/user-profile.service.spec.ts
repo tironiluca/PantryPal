@@ -303,25 +303,41 @@ describe('UserProfileService', () => {
       await expect(service.deleteAccount()).resolves.toBe(false);
     });
 
-    it('deletes the row, signs out, and reports success', async () => {
+    it('deletes the account server-side, clears local data, signs out locally, and reports success', async () => {
       const service = bare();
       const signOut = vi.fn(async () => {});
       service.auth = { getCurrentUserId: () => 'u1', signOut };
-      service.supabase = { from: vi.fn(() => chainable({ error: null })) };
+      service.db = { deleteLocalUserData: vi.fn() };
+      service.supabase = { rpc: vi.fn(async () => ({ data: null, error: null })) };
 
       await expect(service.deleteAccount()).resolves.toBe(true);
-      expect(signOut).toHaveBeenCalled();
+      expect(service.supabase.rpc).toHaveBeenCalledWith('delete_my_account');
+      expect(service.db.deleteLocalUserData).toHaveBeenCalledWith('u1');
+      expect(signOut).toHaveBeenCalledWith('local');
       expect(service.snackbar.success).toHaveBeenCalledWith('Account deleted successfully');
     });
 
-    it('fails and does not sign out when the delete errors', async () => {
+    it('fails, keeps local data and does not sign out when the server delete errors', async () => {
       const service = bare();
       const signOut = vi.fn(async () => {});
       service.auth = { getCurrentUserId: () => 'u1', signOut };
-      service.supabase = { from: vi.fn(() => chainable({ error: new Error('locked') })) };
+      service.db = { deleteLocalUserData: vi.fn() };
+      service.supabase = { rpc: vi.fn(async () => ({ data: null, error: { message: 'locked' } })) };
 
       await expect(service.deleteAccount()).resolves.toBe(false);
+      expect(service.db.deleteLocalUserData).not.toHaveBeenCalled();
       expect(signOut).not.toHaveBeenCalled();
+      expect(service.errorHandler.handle).toHaveBeenCalledWith(expect.objectContaining({ message: 'locked' }), 'Failed to delete account');
+    });
+
+    it('explains that the database needs migrating when the function is missing', async () => {
+      const service = bare();
+      service.auth = { getCurrentUserId: () => 'u1', signOut: vi.fn() };
+      service.db = { deleteLocalUserData: vi.fn() };
+      service.supabase = { rpc: vi.fn(async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } })) };
+
+      await expect(service.deleteAccount()).resolves.toBe(false);
+      expect(service.errorHandler.handle.mock.calls[0][0].message).toContain('apply migration 004');
     });
   });
 

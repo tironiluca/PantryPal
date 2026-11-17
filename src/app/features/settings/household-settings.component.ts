@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -11,7 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { TranslocoModule } from '@jsverse/transloco';
-import { HouseholdService } from '../../core/services/household.service';
+import { HouseholdMember, HouseholdService } from '../../core/services/household.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 
 @Component({
@@ -36,12 +37,43 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
 export class HouseholdSettingsComponent implements OnInit {
   householdService = inject(HouseholdService);
   private errorHandler = inject(ErrorHandlerService);
+  private auth = inject(AuthService);
+
+  isOwner = computed(() => this.householdService.household()?.ownerId === this.auth.currentUser()?.id);
 
   householdName = '';
   inviteEmail = '';
 
   ngOnInit(): void {
     this.householdService.loadHousehold();
+  }
+
+  reload(): void {
+    this.householdService.loadHousehold();
+  }
+
+  async acceptInvitation(id: string): Promise<void> {
+    try {
+      await this.householdService.acceptInvitation(id);
+    } catch (err) {
+      this.errorHandler.handle(err, 'Failed to join household');
+    }
+  }
+
+  async declineInvitation(id: string): Promise<void> {
+    try {
+      await this.householdService.declineInvitation(id);
+    } catch (err) {
+      this.errorHandler.handle(err, 'Failed to decline invitation');
+    }
+  }
+
+  async removeMember(member: HouseholdMember): Promise<void> {
+    try {
+      await this.householdService.removeMember(member.userId);
+    } catch (err) {
+      this.errorHandler.handle(err, 'Failed to remove member');
+    }
   }
 
   async createHousehold(): Promise<void> {

@@ -31,7 +31,7 @@ describe('SettingsComponent', () => {
       providers: [
         { provide: ThemeService, useValue: themeSpy },
         { provide: LanguageService, useValue: langSpy },
-        { provide: HouseholdService, useValue: { household: signal(null), members: signal([]), loading: signal(false), loadHousehold: vi.fn() } },
+        { provide: HouseholdService, useValue: { household: signal(null), members: signal([]), loading: signal(false), loadHousehold: vi.fn(), invitations: signal([]), loadError: signal(null) } },
         { provide: ErrorHandlerService, useValue: { handle: vi.fn() } },
       ],
     }).compileComponents();

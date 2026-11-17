@@ -62,4 +62,38 @@ describe('ConfirmDialog', () => {
     fixture.detectChanges();
     expect(dialogRefSpy.close).toHaveBeenCalledWith(false);
   });
+
+  describe('typed confirmation', () => {
+    it('keeps confirm disabled and ignores confirm() until the exact text is typed', () => {
+      setup({ title: 'Delete account', message: 'Permanent.', confirmLabel: 'Delete', requireText: 'DELETE' });
+      const button = () =>
+        Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(b => b.textContent?.includes('Delete')) as HTMLButtonElement;
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('input[name="requireText"]')).not.toBeNull();
+      expect(button().disabled).toBe(true);
+
+      const input = (fixture.nativeElement as HTMLElement).querySelector('input[name="requireText"]') as HTMLInputElement;
+      const type = (value: string) => {
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+      };
+
+      type('delete');
+      component.confirm();
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+      expect(button().disabled).toBe(true);
+
+      type(' DELETE ');
+      expect(button().disabled).toBe(false);
+      component.confirm();
+      expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+    });
+
+    it('shows no text field without requireText', () => {
+      setup({ title: 'Delete item?', message: 'Sure?' });
+      expect((fixture.nativeElement as HTMLElement).querySelector('input[name="requireText"]')).toBeNull();
+      expect(component.canConfirm()).toBe(true);
+    });
+  });
 });

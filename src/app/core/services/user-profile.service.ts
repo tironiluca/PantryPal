@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService, UserProfile } from './auth.service';
 import { SnackbarService } from './snackbar.service';
 import { ErrorHandlerService } from './error-handler.service';
+import { DbService } from './db.service';
+import { toUserError } from './household.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,6 +12,7 @@ export class UserProfileService {
   private auth = inject(AuthService);
   private snackbar = inject(SnackbarService);
   private errorHandler = inject(ErrorHandlerService);
+  private db = inject(DbService);
 
   private supabase = this.auth.getSupabaseClient();
 
@@ -217,7 +220,8 @@ export class UserProfileService {
   }
 
   /**
-   * Delete user account and all associated data
+   * Delete the user's account: all cloud data, household membership and the sign-in account
+   * (server function `delete_my_account`, migration 004), then the data stored on this device.
    */
   async deleteAccount(): Promise<boolean> {
     try {
@@ -227,18 +231,16 @@ export class UserProfileService {
         throw new Error('Not authenticated');
       }
 
-      // Delete user profile (cascade will delete all related data)
-      const { error } = await this.supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
+      const { error } = await this.supabase.rpc('delete_my_account');
 
       if (error) {
-        throw error;
+        throw toUserError(error);
       }
 
-      // Sign out
-      await this.auth.signOut();
+      this.db.deleteLocalUserData(userId);
+
+      // The account no longer exists server-side, so only clear the local session.
+      await this.auth.signOut('local');
 
       this.snackbar.success('Account deleted successfully');
       return true;

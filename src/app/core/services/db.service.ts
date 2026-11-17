@@ -1035,6 +1035,17 @@ export class DbService {
   }
 
   /**
+   * Remove everything stored on this device for one user (after their account is deleted).
+   */
+  deleteLocalUserData(userId: string): void {
+    const tables = ['recipe_ingredients', 'meal_plans', 'nutrition_logs', 'nutrition_goals', 'inventory', 'recipes',
+      'ingredients', 'ingredient_categories', 'voice_settings', 'voice_command_log', 'image_recognition_log',
+      'user_settings', 'sync_state'];
+    this.execBatch(tables.map(table => ({ sql: `DELETE FROM ${table} WHERE userId = ?`, params: [userId] })))
+      .catch(error => console.error('Failed to clear local data for deleted account', error));
+  }
+
+  /**
    * Delete sync log entries older than the given ISO timestamp.
    */
   pruneSyncLog(olderThan: string): void {

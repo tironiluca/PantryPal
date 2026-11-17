@@ -1,4 +1,11 @@
     <div class="household-container" *transloco="let t">
+      @if (householdService.loadError(); as loadError) {
+        <div class="load-error" role="alert" data-testid="household-load-error">
+          <mat-icon>error</mat-icon>
+          <span>{{ loadError }}</span>
+          <button mat-button (click)="reload()">Retry</button>
+        </div>
+      }
       @if (householdService.loading()) {
         <div class="loading"><mat-spinner diameter="32"></mat-spinner></div>
       } @else if (householdService.household(); as hh) {
@@ -15,10 +22,20 @@
               @for (member of householdService.members(); track member.userId) {
                 <mat-list-item>
                   <mat-icon matListItemIcon>person</mat-icon>
-                  <span matListItemTitle>{{ member.userId }}</span>
-                  <mat-chip matListItemMeta [color]="member.role === 'owner' ? 'primary' : 'default'" highlighted>
-                    {{ member.role === 'owner' ? t('settings.owner') : t('settings.member') }}
-                  </mat-chip>
+                  <span matListItemTitle>{{ member.displayName || member.email }}</span>
+                  @if (member.displayName) {
+                    <span matListItemLine>{{ member.email }}</span>
+                  }
+                  <span matListItemMeta class="member-meta">
+                    <mat-chip [color]="member.role === 'owner' ? 'primary' : 'default'" highlighted>
+                      {{ member.role === 'owner' ? t('settings.owner') : t('settings.member') }}
+                    </mat-chip>
+                    @if (isOwner() && member.role !== 'owner') {
+                      <button mat-icon-button (click)="removeMember(member)" [attr.aria-label]="'Remove ' + member.email">
+                        <mat-icon>person_remove</mat-icon>
+                      </button>
+                    }
+                  </span>
                 </mat-list-item>
               }
             </mat-list>
@@ -46,6 +63,29 @@
           </mat-card-actions>
         </mat-card>
       } @else {
+        @if (householdService.invitations().length > 0) {
+          <mat-card class="invitations" data-testid="household-invitations">
+            <mat-card-header>
+              <mat-icon mat-card-avatar>mail</mat-icon>
+              <mat-card-title>Invitations</mat-card-title>
+              <mat-card-subtitle>Join a household to share its pantry</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-list>
+                @for (inv of householdService.invitations(); track inv.id) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>group</mat-icon>
+                    <span matListItemTitle>{{ inv.householdName }}</span>
+                    <span matListItemMeta class="member-meta">
+                      <button mat-button (click)="declineInvitation(inv.id)">Decline</button>
+                      <button mat-raised-button color="primary" (click)="acceptInvitation(inv.id)">Join</button>
+                    </span>
+                  </mat-list-item>
+                }
+              </mat-list>
+            </mat-card-content>
+          </mat-card>
+        }
         <!-- No household -->
         <mat-card>
           <mat-card-header>

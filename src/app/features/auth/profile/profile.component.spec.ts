@@ -19,7 +19,7 @@ function bare(): ProfileComponent & Record<string, any> {
     deleteAccount: vi.fn().mockResolvedValue(true),
   };
   component.router = { navigate: vi.fn().mockResolvedValue(true) };
-  component.snackbar = { error: vi.fn() };
+  component.snackbar = { error: vi.fn(), info: vi.fn() };
   component.transloco = { translate: (key: string) => key };
   component.dialog = { open: vi.fn(() => ({ afterClosed: () => of(true) })) };
   return component;
@@ -159,31 +159,30 @@ describe('ProfileComponent', () => {
   });
 
   describe('deleteAccount', () => {
-    it('does nothing when the first confirmation is declined', async () => {
+    it('asks for typed DELETE confirmation in the app dialog, never the native prompt', async () => {
       const component = bare();
-      component.dialog.open.mockReturnValue({ afterClosed: () => of(false) });
       const promptSpy = vi.fn();
       vi.stubGlobal('prompt', promptSpy);
 
       await component.deleteAccount();
 
+      expect(component.dialog.open.mock.calls[0][1].data).toMatchObject({ requireText: 'DELETE', confirmColor: 'warn' });
       expect(promptSpy).not.toHaveBeenCalled();
-      expect(component.profileService.deleteAccount).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
     });
 
-    it('cancels with an error unless DELETE is typed exactly', async () => {
+    it('does nothing but report cancellation when the dialog is dismissed', async () => {
       const component = bare();
-      vi.stubGlobal('prompt', vi.fn(() => 'delete'));
+      component.dialog.open.mockReturnValue({ afterClosed: () => of(false) });
 
       await component.deleteAccount();
 
-      expect(component.snackbar.error).toHaveBeenCalledWith('auth.accountDeletionCancelled');
       expect(component.profileService.deleteAccount).not.toHaveBeenCalled();
+      expect(component.snackbar.info).toHaveBeenCalledWith('auth.accountDeletionCancelled');
     });
 
-    it('deletes the account and returns to login after both confirmations', async () => {
+    it('deletes the account and returns to login after confirmation', async () => {
       const component = bare();
-      vi.stubGlobal('prompt', vi.fn(() => 'DELETE'));
 
       await component.deleteAccount();
 
@@ -194,7 +193,6 @@ describe('ProfileComponent', () => {
 
     it('stays on the page when deletion fails', async () => {
       const component = bare();
-      vi.stubGlobal('prompt', vi.fn(() => 'DELETE'));
       component.profileService.deleteAccount.mockResolvedValue(false);
 
       await component.deleteAccount();

@@ -13,3 +13,28 @@
     }
     .invite-field { flex: 1; }
     .description { color: var(--text-secondary); font-size: 14px; margin-bottom: var(--spacing-md); }
+
+.load-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container, #f9dedc);
+  color: var(--mat-sys-on-error-container, #410e0b);
+
+  span {
+    flex: 1;
+  }
+}
+
+.member-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.invitations {
+  margin-bottom: 16px;
+}

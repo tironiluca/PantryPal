@@ -546,3 +546,34 @@ describe('DbService sync bookkeeping (real SQLite schema)', () => {
     expect(service.getChangedRecords<any>('ingredients').map(r => r.name)).toEqual(['Renamed']);
   });
 });
+
+describe('DbService local account cleanup (real SQLite schema)', () => {
+  let service: DbService;
+
+  beforeEach(async () => {
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    TestBed.configureTestingModule({
+      providers: [DbService, { provide: AuthService, useValue: { getCurrentUserId: () => 'user-1' } }],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+  });
+
+  it('removes only the deleted user\'s rows, including sync cursors', async () => {
+    for (const user of ['user-1', 'user-2']) {
+      service.exec('INSERT INTO ingredients (id, name, userId) VALUES (?, ?, ?)', [`ing-${user}`, 'Flour', user]);
+      service.exec('INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, userId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [`inv-${user}`, `ing-${user}`, 1, 'g', 0, user, '2026-01-01', '2026-01-01']);
+      service.setSyncCursor(user, 'inventory', '2026-01-01T00:00:00Z');
+    }
+
+    service.deleteLocalUserData('user-1');
+    await Promise.resolve();
+
+    const q = (sql: string) => (service as any).query(sql).map((r: any) => r.userId);
+    expect(q('SELECT userId FROM ingredients')).toEqual(['user-2']);
+    expect(q('SELECT userId FROM inventory')).toEqual(['user-2']);
+    expect(q('SELECT userId FROM sync_state')).toEqual(['user-2']);
+  });
+});

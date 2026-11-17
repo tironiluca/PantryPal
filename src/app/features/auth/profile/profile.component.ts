@@ -155,18 +155,13 @@ export class ProfileComponent implements OnInit {
           confirmColor: 'warn',
           icon: 'warning',
           confirmLabel: 'Delete Account',
+          requireText: 'DELETE',
         },
       }).afterClosed()
     );
 
     if (!confirmed) {
-      return;
-    }
-
-    const doubleConfirm = prompt('Type "DELETE" to confirm account deletion:');
-
-    if (doubleConfirm !== 'DELETE') {
-      this.snackbar.error(this.transloco.translate('auth.accountDeletionCancelled'));
+      this.snackbar.info(this.transloco.translate('auth.accountDeletionCancelled'));
       return;
     }
 

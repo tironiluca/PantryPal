@@ -198,9 +198,9 @@ export class AuthService {
   /**
    * Sign out the current user
    */
-  async signOut(): Promise<void> {
+  async signOut(scope: 'global' | 'local' = 'global'): Promise<void> {
     try {
-      const { error } = await this.supabase.auth.signOut();
+      const { error } = await this.supabase.auth.signOut({ scope });
 
       if (error) {
         throw error;

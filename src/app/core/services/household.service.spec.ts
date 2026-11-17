@@ -1,15 +1,13 @@
 import { signal } from '@angular/core';
-import { HouseholdService } from './household.service';
+import { HOUSEHOLD_MIGRATION_MISSING_MESSAGE, HouseholdService, toUserError } from './household.service';
 
 function chainable(result: { data?: any; error?: any } = { data: null, error: null }) {
   const obj: any = {
     select: vi.fn(() => obj),
     eq: vi.fn(() => obj),
-    insert: vi.fn(() => obj),
-    update: vi.fn(() => obj),
-    delete: vi.fn(() => obj),
-    maybeSingle: vi.fn(async () => result),
-    then: (resolve: any, reject?: any) => Promise.resolve(result).then(resolve, reject),
+    maybeSingle: vi.fn(async () => ({ data: result.data ?? null, error: result.error ?? null })),
+    then: (resolve: any, reject?: any) =>
+      Promise.resolve({ data: result.data ?? null, error: result.error ?? null }).then(resolve, reject),
   };
   return obj;
 }
@@ -18,308 +16,306 @@ function bare(): HouseholdService & Record<string, any> {
   const service = Object.create(HouseholdService.prototype) as HouseholdService & Record<string, any>;
   service.household = signal(null);
   service.members = signal([]);
+  service.invitations = signal([]);
   service.loading = signal(false);
+  service.loadError = signal(null);
   service.snackbar = { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() };
+  service.auth = { getCurrentUserId: () => 'u1' };
+  service.supabase = { from: vi.fn(() => chainable()), rpc: vi.fn(async () => ({ data: null, error: null })) };
   return service;
 }
 
+const HOUSEHOLD = { id: 'hh1', name: 'Home', ownerId: 'u1', createdAt: '2026-01-01' };
+
+describe('toUserError', () => {
+  it('explains a missing database function as a pending migration', () => {
+    expect(toUserError({ code: 'PGRST202', message: 'Could not find the function public.create_household' }).message)
+      .toBe(HOUSEHOLD_MIGRATION_MISSING_MESSAGE);
+    expect(toUserError({ message: 'Could not find the function x in the schema cache' }).message)
+      .toBe(HOUSEHOLD_MIGRATION_MISSING_MESSAGE);
+  });
+
+  it('keeps other database messages', () => {
+    expect(toUserError({ code: '23505', message: 'You already belong to a household' }).message)
+      .toBe('You already belong to a household');
+    expect(toUserError(null).message).toBe('Unknown error');
+  });
+});
+
 describe('HouseholdService', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   describe('loadHousehold', () => {
     it('does nothing when no user is authenticated', async () => {
       const service = bare();
       service.auth = { getCurrentUserId: () => null };
-      service.supabase = { from: vi.fn() };
 
       await service.loadHousehold();
 
       expect(service.supabase.from).not.toHaveBeenCalled();
     });
 
-    it('clears household state when the user has no membership row', async () => {
+    it('clears household state and loads invitations when the user has no membership', async () => {
       const service = bare();
-      service.household.set({ id: 'old', name: 'Old', ownerId: 'u1', createdAt: '2026-01-01' });
+      service.household.set(HOUSEHOLD);
       service.members.set([{ userId: 'u1', email: 'u1', role: 'owner', joinedAt: '2026-01-01' }]);
-      service.auth = { getCurrentUserId: () => 'u1' };
-      service.supabase = { from: vi.fn(() => chainable({ data: null, error: null })) };
+      service.supabase.rpc = vi.fn(async () => ({
+        data: [{ id: 'inv1', household_id: 'hh9', household_name: 'Olive home', invited_at: '2026-02-01' }],
+        error: null,
+      }));
 
       await service.loadHousehold();
 
       expect(service.household()).toBeNull();
       expect(service.members()).toEqual([]);
-    });
-
-    it('loads the household and its members when a membership row exists', async () => {
-      const service = bare();
-      service.auth = { getCurrentUserId: () => 'u1' };
-      const householdMembers = chainable({
-        data: { household_id: 'hh1', role: 'owner', joined_at: '2026-01-01' },
-      });
-      const households = chainable({
-        data: { id: 'hh1', name: 'Home', owner_id: 'u1', created_at: '2026-01-01' },
-      });
-      const members = chainable({
-        data: [{ user_id: 'u1', role: 'owner', joined_at: '2026-01-01' }],
-      });
-      let householdMembersCall = 0;
-      service.supabase = {
-        from: vi.fn((table: string) => {
-          if (table === 'households') return households;
-          if (table === 'household_members') {
-            householdMembersCall += 1;
-            return householdMembersCall === 1 ? householdMembers : members;
-          }
-          throw new Error(`unexpected table ${table}`);
-        }),
-      };
-
-      await service.loadHousehold();
-
-      expect(service.household()).toEqual({
-        id: 'hh1',
-        name: 'Home',
-        ownerId: 'u1',
-        createdAt: '2026-01-01',
-      });
-      expect(service.members()).toEqual([
-        { userId: 'u1', email: 'u1', role: 'owner', joinedAt: '2026-01-01' },
+      expect(service.supabase.rpc).toHaveBeenCalledWith('my_pending_invitations', undefined);
+      expect(service.invitations()).toEqual([
+        { id: 'inv1', householdId: 'hh9', householdName: 'Olive home', invitedAt: '2026-02-01' },
       ]);
       expect(service.loading()).toBe(false);
     });
 
-    it('resets the loading flag even when the lookup throws', async () => {
+    it('loads the household and member details with emails', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => 'u1' };
-      service.supabase = {
-        from: vi.fn(() => {
-          throw new Error('network down');
-        }),
-      };
+      service.supabase.from = vi.fn((table: string) =>
+        table === 'household_members'
+          ? chainable({ data: { household_id: 'hh1', role: 'owner', joined_at: '2026-01-01' } })
+          : chainable({ data: { id: 'hh1', name: 'Home', owner_id: 'u1', created_at: '2026-01-01' } })
+      );
+      service.supabase.rpc = vi.fn(async () => ({
+        data: [
+          { user_id: 'u1', email: 'olive@example.test', display_name: 'Olive', role: 'owner', joined_at: '2026-01-01' },
+          { user_id: 'u2', email: null, display_name: null, role: 'member', joined_at: '2026-01-02' },
+        ],
+        error: null,
+      }));
 
       await service.loadHousehold();
 
+      expect(service.household()).toEqual(HOUSEHOLD);
+      expect(service.supabase.rpc).toHaveBeenCalledWith('household_member_details', undefined);
+      expect(service.members()).toEqual([
+        { userId: 'u1', email: 'olive@example.test', displayName: 'Olive', role: 'owner', joinedAt: '2026-01-01' },
+        { userId: 'u2', email: 'u2', displayName: undefined, role: 'member', joinedAt: '2026-01-02' },
+      ]);
+      expect(service.loadError()).toBeNull();
+    });
+
+    it('surfaces a query error instead of presenting "no household"', async () => {
+      const service = bare();
+      service.supabase.from = vi.fn(() =>
+        chainable({ error: { code: '42P17', message: 'infinite recursion detected in policy for relation "household_members"' } })
+      );
+
+      await service.loadHousehold();
+
+      expect(service.loadError()).toContain('infinite recursion');
       expect(service.loading()).toBe(false);
+    });
+
+    it('reports a pending migration when the invitation function is missing', async () => {
+      const service = bare();
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }));
+
+      await service.loadHousehold();
+
+      expect(service.loadError()).toBe(HOUSEHOLD_MIGRATION_MISSING_MESSAGE);
     });
   });
 
   describe('createHousehold', () => {
-    it('rejects when the user is not authenticated', async () => {
+    it('creates the household through the database function and reloads', async () => {
+      const service = bare();
+      service.loadHousehold = vi.fn().mockResolvedValue(undefined);
+
+      await service.createHousehold('Home');
+
+      expect(service.supabase.rpc).toHaveBeenCalledWith('create_household', { p_name: 'Home' });
+      expect(service.loadHousehold).toHaveBeenCalled();
+      expect(service.snackbar.success).toHaveBeenCalledWith('Household created!');
+    });
+
+    it('throws when not authenticated', async () => {
       const service = bare();
       service.auth = { getCurrentUserId: () => null };
 
       await expect(service.createHousehold('Home')).rejects.toThrow('Not authenticated');
+      expect(service.supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('throws and stops when the household insert fails', async () => {
+    it('propagates database errors without reporting success', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => 'u1' };
-      const householdError = new Error('insert failed');
-      const householdsChain = chainable({ error: householdError });
-      const membersChain = chainable({ error: null });
-      service.supabase = {
-        from: vi.fn((table: string) => (table === 'households' ? householdsChain : membersChain)),
-      };
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { code: '23505', message: 'You already belong to a household' } }));
 
-      await expect(service.createHousehold('Home')).rejects.toBe(householdError);
-      expect(membersChain.insert).not.toHaveBeenCalled();
+      await expect(service.createHousehold('Home')).rejects.toThrow('You already belong to a household');
+      expect(service.snackbar.success).not.toHaveBeenCalled();
     });
 
-    it('creates the household, adds the owner membership, and reloads', async () => {
+    it('fails visibly when the database has not been migrated', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => 'u1' };
-      const householdsChain = chainable({ error: null });
-      const membersChain = chainable({ error: null });
-      service.supabase = {
-        from: vi.fn((table: string) => (table === 'households' ? householdsChain : membersChain)),
-      };
-      service.loadHousehold = vi.fn(async () => {});
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }));
 
-      await service.createHousehold('Home');
-
-      expect(householdsChain.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Home', owner_id: 'u1' })
-      );
-      expect(membersChain.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ user_id: 'u1', role: 'owner' })
-      );
-      expect(service.loadHousehold).toHaveBeenCalled();
-      expect(service.snackbar.success).toHaveBeenCalledWith('Household created!');
+      await expect(service.createHousehold('Home')).rejects.toThrow(HOUSEHOLD_MIGRATION_MISSING_MESSAGE);
     });
   });
 
   describe('inviteMember', () => {
-    it('rejects when there is no current household', async () => {
-      const service = bare();
-      await expect(service.inviteMember('a@b.com')).rejects.toThrow('No household');
+    it('throws when there is no household', async () => {
+      await expect(bare().inviteMember('a@b.test')).rejects.toThrow('No household');
     });
 
-    it('inserts a pending invitation and notifies on success', async () => {
+    it('creates the invitation without claiming an email was sent', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'u1', createdAt: '2026-01-01' });
-      const invitations = chainable({ error: null });
-      service.supabase = { from: vi.fn(() => invitations) };
+      service.household.set(HOUSEHOLD);
 
-      await service.inviteMember('a@b.com');
+      await service.inviteMember('mia@example.test');
 
-      expect(invitations.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ household_id: 'hh1', invited_email: 'a@b.com', status: 'pending' })
-      );
-      expect(service.snackbar.success).toHaveBeenCalledWith('Invitation sent to a@b.com');
+      expect(service.supabase.rpc).toHaveBeenCalledWith('invite_household_member', { p_email: 'mia@example.test' });
+      const message: string = service.snackbar.success.mock.calls[0][0];
+      expect(message).toContain('Invitation created for mia@example.test');
+      expect(message).not.toMatch(/sent/i);
     });
 
-    it('propagates a Supabase error without notifying', async () => {
+    it('propagates errors', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'u1', createdAt: '2026-01-01' });
-      const error = new Error('duplicate invite');
-      service.supabase = { from: vi.fn(() => chainable({ error })) };
+      service.household.set(HOUSEHOLD);
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { message: 'Enter a valid email address' } }));
 
-      await expect(service.inviteMember('a@b.com')).rejects.toBe(error);
-      expect(service.snackbar.success).not.toHaveBeenCalled();
+      await expect(service.inviteMember('x')).rejects.toThrow('Enter a valid email address');
     });
   });
 
-  describe('acceptInvitation', () => {
-    it('rejects when not authenticated', async () => {
+  describe('invitations', () => {
+    it('accepts an invitation and reloads the household', async () => {
+      const service = bare();
+      service.loadHousehold = vi.fn().mockResolvedValue(undefined);
+
+      await service.acceptInvitation('inv1');
+
+      expect(service.supabase.rpc).toHaveBeenCalledWith('accept_household_invitation', { p_invitation_id: 'inv1' });
+      expect(service.loadHousehold).toHaveBeenCalled();
+      expect(service.snackbar.success).toHaveBeenCalledWith('Joined household!');
+    });
+
+    it('requires authentication to accept', async () => {
       const service = bare();
       service.auth = { getCurrentUserId: () => null };
       await expect(service.acceptInvitation('inv1')).rejects.toThrow('Not authenticated');
     });
 
-    it('rejects when the invitation cannot be found', async () => {
+    it('propagates a used or foreign invitation error', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => 'u2' };
-      service.supabase = { from: vi.fn(() => chainable({ data: null })) };
-
-      await expect(service.acceptInvitation('inv1')).rejects.toThrow(
-        'Invitation not found or already used'
-      );
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { message: 'Invitation not found or already used' } }));
+      await expect(service.acceptInvitation('inv1')).rejects.toThrow('Invitation not found or already used');
     });
 
-    it('joins the household and marks the invitation accepted', async () => {
+    it('declines an invitation and removes it from the inbox', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => 'u2' };
-      const invitations = chainable({ data: { household_id: 'hh1', status: 'pending' } });
-      const members = chainable({ error: null });
-      service.supabase = {
-        from: vi.fn((table: string) => (table === 'household_invitations' ? invitations : members)),
-      };
-      service.loadHousehold = vi.fn(async () => {});
+      service.invitations.set([
+        { id: 'inv1', householdId: 'h1', householdName: 'A', invitedAt: '' },
+        { id: 'inv2', householdId: 'h2', householdName: 'B', invitedAt: '' },
+      ]);
 
-      await service.acceptInvitation('inv1');
+      await service.declineInvitation('inv1');
 
-      expect(members.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ household_id: 'hh1', user_id: 'u2', role: 'member' })
-      );
-      expect(invitations.update).toHaveBeenCalledWith({ status: 'accepted' });
-      expect(service.loadHousehold).toHaveBeenCalled();
-      expect(service.snackbar.success).toHaveBeenCalledWith('Joined household!');
+      expect(service.supabase.rpc).toHaveBeenCalledWith('decline_household_invitation', { p_invitation_id: 'inv1' });
+      expect(service.invitations().map((i) => i.id)).toEqual(['inv2']);
     });
   });
 
   describe('leaveHousehold', () => {
-    it('does nothing without an authenticated user or household', async () => {
+    it('does nothing without a household', async () => {
       const service = bare();
-      service.auth = { getCurrentUserId: () => null };
-      service.supabase = { from: vi.fn() };
-
       await service.leaveHousehold();
-
-      expect(service.supabase.from).not.toHaveBeenCalled();
+      expect(service.supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('removes the membership and clears household state', async () => {
+    it('leaves through the database function and clears local state', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.members.set([{ userId: 'u2', email: 'u2', role: 'member', joinedAt: '2026-01-01' }]);
-      service.auth = { getCurrentUserId: () => 'u2' };
-      service.supabase = { from: vi.fn(() => chainable({ error: null })) };
+      service.household.set(HOUSEHOLD);
+      service.members.set([{ userId: 'u1', email: 'u1', role: 'owner', joinedAt: '' }]);
 
       await service.leaveHousehold();
 
+      expect(service.supabase.rpc).toHaveBeenCalledWith('leave_household', undefined);
       expect(service.household()).toBeNull();
       expect(service.members()).toEqual([]);
-      expect(service.snackbar.success).toHaveBeenCalledWith('You left the household');
     });
 
-    it('throws when the delete fails', async () => {
+    it('keeps the household when leaving fails', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.auth = { getCurrentUserId: () => 'u2' };
-      const error = new Error('delete failed');
-      service.supabase = { from: vi.fn(() => chainable({ error })) };
+      service.household.set(HOUSEHOLD);
+      service.supabase.rpc = vi.fn(async () => ({ data: null, error: { message: 'boom' } }));
 
-      await expect(service.leaveHousehold()).rejects.toBe(error);
-      expect(service.household()).not.toBeNull();
+      await expect(service.leaveHousehold()).rejects.toThrow('boom');
+      expect(service.household()).toEqual(HOUSEHOLD);
     });
   });
 
   describe('removeMember', () => {
-    it('does nothing without a current household', async () => {
+    it('does nothing without a household', async () => {
       const service = bare();
-      service.supabase = { from: vi.fn() };
       await service.removeMember('u2');
-      expect(service.supabase.from).not.toHaveBeenCalled();
+      expect(service.supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('rejects when a non-owner tries to remove someone else', async () => {
+    it('refuses to let a non-owner remove someone else', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.auth = { getCurrentUserId: () => 'u2' };
-
-      await expect(service.removeMember('u3')).rejects.toThrow(
-        'Only the household owner can remove other members'
-      );
+      service.household.set({ ...HOUSEHOLD, ownerId: 'u9' });
+      await expect(service.removeMember('u2')).rejects.toThrow('Only the household owner can remove other members');
     });
 
-    it('allows a member to remove themselves', async () => {
+    it('removes a member through the database function and reloads members', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.auth = { getCurrentUserId: () => 'u2' };
-      const members = chainable({ error: null });
-      service.supabase = { from: vi.fn(() => members) };
-      service.loadMembers = vi.fn(async () => {});
+      service.household.set(HOUSEHOLD);
+      service.supabase.rpc = vi.fn(async (fn: string) => ({ data: fn === 'household_member_details' ? [] : null, error: null }));
 
       await service.removeMember('u2');
 
-      expect(members.delete).toHaveBeenCalled();
+      expect(service.supabase.rpc).toHaveBeenCalledWith('remove_household_member', { p_user_id: 'u2' });
+      expect(service.supabase.rpc).toHaveBeenCalledWith('household_member_details', undefined);
       expect(service.snackbar.success).toHaveBeenCalledWith('Member removed');
-    });
-
-    it('allows the owner to remove another member', async () => {
-      const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.auth = { getCurrentUserId: () => 'owner' };
-      const members = chainable({ error: null });
-      service.supabase = { from: vi.fn(() => members) };
-      service.loadMembers = vi.fn(async () => {});
-
-      await service.removeMember('u2');
-
-      expect(members.delete).toHaveBeenCalled();
-      expect(service.loadMembers).toHaveBeenCalledWith('hh1');
     });
   });
 
   describe('getHouseholdUserIds', () => {
-    it('returns just the current user when there is no household', async () => {
-      const service = bare();
-      service.auth = { getCurrentUserId: () => 'u1' };
-      await expect(service.getHouseholdUserIds()).resolves.toEqual(['u1']);
+    it('returns only the current user without a household', async () => {
+      expect(await bare().getHouseholdUserIds()).toEqual(['u1']);
     });
 
-    it('returns an empty list when there is no household and no user', async () => {
+    it('returns an empty list when signed out and without a household', async () => {
       const service = bare();
       service.auth = { getCurrentUserId: () => null };
-      await expect(service.getHouseholdUserIds()).resolves.toEqual([]);
+      expect(await service.getHouseholdUserIds()).toEqual([]);
     });
 
-    it('returns every member id when a household exists', async () => {
+    it('returns every member of the household', async () => {
       const service = bare();
-      service.household.set({ id: 'hh1', name: 'Home', ownerId: 'owner', createdAt: '2026-01-01' });
-      service.supabase = {
-        from: vi.fn(() => chainable({ data: [{ user_id: 'owner' }, { user_id: 'u2' }] })),
-      };
+      service.household.set(HOUSEHOLD);
+      service.supabase.from = vi.fn(() => chainable({ data: [{ user_id: 'u1' }, { user_id: 'u2' }] }));
 
-      await expect(service.getHouseholdUserIds()).resolves.toEqual(['owner', 'u2']);
+      expect(await service.getHouseholdUserIds()).toEqual(['u1', 'u2']);
+    });
+
+    it('falls back to the current user when members cannot be read', async () => {
+      const service = bare();
+      service.household.set(HOUSEHOLD);
+      service.supabase.from = vi.fn(() => chainable({ error: { message: 'denied' } }));
+
+      expect(await service.getHouseholdUserIds()).toEqual(['u1']);
+    });
+  });
+
+  describe('init', () => {
+    it('loads the household', async () => {
+      const service = bare();
+      service.loadHousehold = vi.fn().mockResolvedValue(undefined);
+      await service.init();
+      expect(service.loadHousehold).toHaveBeenCalled();
     });
   });
 });

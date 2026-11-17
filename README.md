@@ -1,31 +1,41 @@
-# PantryPal Angular 20 Starter
+# PantryPal
+
+An offline-first pantry, recipe, meal-planning and nutrition PWA built with Angular 21. Data lives in a local SQLite database (sql.js, persisted to OPFS or IndexedDB) and syncs to Supabase, which also provides authentication and household sharing.
 
 ## Quick start
 
 ```bash
-npm i
+cp .env.example .env   # fill in SUPABASE_URL and SUPABASE_ANON_KEY
+npm ci
 npm start
 ```
 
-Open http://localhost:4200 — you should see an Inventory table with Add/Edit/Delete (CRUD).
+Open http://localhost:4200.
 
-### Notes
+- `npm ci` copies `sql-wasm.wasm` into `src/assets/` through the `postinstall` script.
+- `npm start` and `npm run build` generate `src/environments/*.ts` from `SUPABASE_URL` and `SUPABASE_ANON_KEY`. The anon (publishable) key is meant to be public; never use the service-role key here.
+- The committed environment files contain placeholders. Regenerating them locally changes tracked files, so don't commit those changes.
 
-- This starter includes a **sql.js** (SQLite/wasm) integration with OPFS persistence. If the `sql-wasm.wasm` asset is not found, the app automatically falls back to an in-memory store so you can still try CRUD immediately.
-- To enable SQLite persistence, download `sql-wasm.wasm` from the `sql.js` package and place it in `src/assets/`.
-- PWA service worker is enabled. Use an HTTPS origin or `localhost` for notifications.
-- Recipe import sends the entered URL to the configured third-party CORS proxy so the page can be fetched from the browser. Do not import private, authenticated, or sensitive URLs. The proxy may log requests and can change availability or response content; a first-party Supabase Edge Function should replace it before production use.
+## Scripts
 
-### CI requirements
+| Command | Purpose |
+| --- | --- |
+| `npm start` | Dev server |
+| `npm run build` | Production build into `dist/pantrypal` |
+| `npm run test:coverage` | Vitest unit tests with the coverage gate from `vitest.config.mts` |
+| `npm run e2e` | Playwright end-to-end tests (starts the dev server) |
+| `npm run format` / `format:check` | Prettier |
 
-- Configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` as repository or environment secrets. They are required only when generating local or CI environment files and must never be committed.
-- The CI workflow runs unit tests, coverage, the production build, and Playwright. See [TEST_MATRIX.md](TEST_MATRIX.md) for current coverage gaps.
+Set `PLAYWRIGHT_CHROMIUM_PATH` to use an already-installed Chromium for `npm run e2e` instead of downloading one.
 
-### Formatting
+## CI and deployment
 
-Use Prettier to keep Angular templates, TypeScript, and SCSS indented consistently:
+- `.github/workflows/ci.yml` installs from `package-lock.json`, then runs unit tests with coverage, the production build and Playwright. Without repository secrets it uses placeholder Supabase values, which is enough for the build and the mocked tests.
+- Vercel deploys `main` to production and supplies the real `SUPABASE_URL`/`SUPABASE_ANON_KEY`.
+- Commit `package-lock.json` whenever dependencies change; CI uses `npm ci`.
 
-```bash
-npm run format       # writes fixes
-npm run format:check # verifies formatting
-```
+## Notes
+
+- Recipe import fetches pages through third-party CORS proxies, which can log the requested URL. Don't import private or authenticated URLs. See `IMPLEMENTATION_PLAN.md` (A4) for the planned first-party proxy.
+- Supabase schema, policies and setup steps: `supabase/migrations/` and `SUPABASE_SETUP.md`.
+- Work in progress and known issues: `IMPLEMENTATION_PLAN.md`. Test ownership: `TEST_MATRIX.md`.

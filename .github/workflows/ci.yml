@@ -12,8 +12,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # The build and tests only need syntactically valid values; real project
+      # values are supplied by Vercel at deploy time. Repository secrets, when
+      # configured, take precedence over the placeholders.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ci-placeholder.supabase.co' }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -27,17 +31,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm test -- --watch=false
+      - name: Generate environment files
+        run: node scripts/generate-environments.mjs
 
-      - name: Collect unit coverage
+      - name: Run unit tests with coverage gate
         run: npm run test:coverage -- --watch=false
 
       - name: Build production bundle
         run: npm run build
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
       - name: Run Playwright tests
-        run: npm run e2e
+        run: npm run e2e -- --trace off
 
       - name: Upload test artifacts
         if: always()

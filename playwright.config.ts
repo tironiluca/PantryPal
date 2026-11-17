@@ -6,10 +6,14 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
   workers: process.env['CI'] ? 1 : undefined,
-  reporter: 'html',
+  reporter: process.env['CI'] ? [['html', { open: 'never' }], ['list']] : 'html',
   use: {
     baseURL: 'http://localhost:4200',
     trace: 'on-first-retry',
+    // Lets environments with a preinstalled Chromium reuse it instead of downloading one.
+    launchOptions: process.env['PLAYWRIGHT_CHROMIUM_PATH']
+      ? { executablePath: process.env['PLAYWRIGHT_CHROMIUM_PATH'] }
+      : {},
   },
 
   projects: [

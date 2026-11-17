@@ -58,20 +58,20 @@ These cannot be done from the repository. Until they are, the related features s
 | --- | --- | --- |
 | B1 CI | **Done, verified** | CI green on every push since `251a4f4`; Vercel installs with `npm ci` |
 | B2 Sign-in | Repository part done; outage **open** | Raw error logging, unreachable-service message, `auth-smoke.yml`. `/auth/callback` was deliberately not added while the outage is undiagnosed |
-| B3 Sync | **Minimum fixes done, verified** in unit and real-SQLite tests | Soft deletes, per-row dirty tracking, per-table server cursors, paging, batched apply, partial failure reported, sync on sign-in. Clock skew is fixed only once 004's server `updated_at` trigger is live |
+| B3 Sync | **Minimum fixes done, verified** in unit and real-SQLite tests | Soft deletes, per-row dirty tracking, per-table server cursors, paging, batched apply, partial failure reported, sync on sign-in. Upgrading devices resume from their last sync, so rows hard-deleted earlier are not pulled back; a brand-new device still receives them (they were never deleted on the server). Clock skew is fixed only once 004's server `updated_at` trigger is live. Not run against the live project |
 | B4 Password reset | **Done**; link handoff not verified live | Page and e2e use a stored session, not a real recovery link |
-| B5 Households | **Done in code**, needs 004 applied | 34 SQL checks pass on three schema variants; old policies reproduced as "infinite recursion detected" |
+| B5 Households | **Done in code**, needs 004 applied | 39 SQL checks pass on three schema variants; old policies reproduced as "infinite recursion detected". Invitations are matched on the caller's **confirmed** email, so they depend on email confirmation being enabled for email/password sign-ups |
 | B6 Delete account | **Done in code**, needs 004 applied | `DELETE FROM auth.users` inside `delete_my_account()` is untested against the live role's privileges |
 | B7 Storage fallback | **Done, verified** | Data stays readable when saving fails; a blocking alert when SQLite cannot start |
 | B8 Schema source | **Done** | Migrations are the only schema; 001 no longer drops tables; 003 marked superseded |
 | B9 Hygiene | **Mostly done** | Logs untracked, README rewritten, ESLint added. Service messages are still English-only |
 | A1 Sync redesign | Partly done (B3, server timestamps in 004) | Version-checked upserts and nutrition sync wait for the live schema |
-| A2 Household ownership | Read-only sharing done locally | Members' rows are visible and read-only. Shared editing needs `household_id`, which waits for the live schema |
+| A2 Household ownership | Read-only sharing done locally | Members' rows (including recipe ingredients) are visible and read-only; a new member's existing rows are back-filled. Shared editing needs `household_id`, which waits for the live schema |
 | A3 Supabase as code | Partly done | Migration tests in CI with an auth shim. Generated types and a local Supabase stack need the live schema |
 | A4 Edge Functions | `recipe-proxy` written, **not deployed** | `delete-account` is not needed (it is a database function); `send-invitation` is not started |
 | A5 Pipeline | Lint and lockfile done | Dependabot not enabled (it opens PRs); staging project and PR flow need the owner |
 | A6 Client structure | Coalesced, serialized writes done | Splitting `DbService` is deferred: specs reach into its internals |
-| A7 Headers | **Done**; CSP report-only | Enforced CSP is blocked on testing OCR, image models and recipe import |
+| A7 Headers | **Done**; CSP report-only | The policy has no report endpoint, so violations appear only in each browser's console. Enforcing it needs a manual pass over OCR, image recognition and recipe import (or a `report-to` endpoint) first |
 
 ### Bugs found and fixed during the pass (not in the original review)
 
@@ -80,6 +80,7 @@ These cannot be done from the repository. Until they are, the related features s
 - **Recipe import dropped steps** grouped in schema.org `HowToSection` blocks.
 - **Projects created from the old setup guide lacked synced columns** (`ingredients.barcode`, `sugar_g`; `recipe_ingredients.created_at`, `updated_at`), so every push of those tables would fail. Migration 004 adds them.
 - **`updateMeal()` could never report "not found"**, because it treated a row as an array.
+- **Pulled recipe ingredients were unreadable on other devices.** The server table has no owner column, so they arrived ownerless and owner-scoped reads hid them. Found in review of this pass's own sync changes and fixed.
 
 Rows already stored on devices without a `userId` (from the first bug) stay as guest data. Adopting them automatically could take another person's guest data on a shared device, so it is left as a decision for the owner.
 

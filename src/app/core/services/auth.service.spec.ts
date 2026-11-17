@@ -238,6 +238,33 @@ describe('AuthService', () => {
       const service = bare();
       expect(service.getAuthErrorMessage({})).toBe('An authentication error occurred');
     });
+
+    it('reports an unreachable service when the request never reached Supabase', () => {
+      const service = bare();
+      expect(
+        service.getAuthErrorMessage({ name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch' })
+      ).toBe('The sign-in service is unavailable. Check your connection and try again later.');
+    });
+
+    it('reports an unreachable service for server-side failures', () => {
+      const service = bare();
+      expect(service.getAuthErrorMessage({ status: 503, message: 'Service Unavailable' })).toBe(
+        'The sign-in service is unavailable. Check your connection and try again later.'
+      );
+    });
+
+    it('logs the raw status and code alongside the mapped message', () => {
+      const service = bare();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      service.getAuthErrorMessage({ name: 'AuthApiError', status: 400, code: 'invalid_credentials', message: 'Invalid login credentials' });
+      expect(spy).toHaveBeenCalledWith('Supabase auth error', {
+        name: 'AuthApiError',
+        status: 400,
+        code: 'invalid_credentials',
+        message: 'Invalid login credentials',
+      });
+      spy.mockRestore();
+    });
   });
 
   describe('ensureUserProfile', () => {

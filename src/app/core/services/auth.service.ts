@@ -334,6 +334,22 @@ export class AuthService {
 
     const authError = error as AuthError;
 
+    // Keep the raw failure visible for diagnosis; the snackbar only shows the mapped text.
+    console.error('Supabase auth error', {
+      name: authError?.name,
+      status: authError?.status,
+      code: (authError as { code?: string })?.code,
+      message: authError?.message,
+    });
+
+    // The client could not reach Supabase at all, or the project is unavailable (for example paused).
+    if (
+      authError?.name === 'AuthRetryableFetchError' ||
+      (typeof authError?.status === 'number' && authError.status >= 500)
+    ) {
+      return 'The sign-in service is unavailable. Check your connection and try again later.';
+    }
+
     // Common Supabase auth error messages
     switch (authError.message) {
       case 'Invalid login credentials':

@@ -1,0 +1,41 @@
+name: Auth smoke check
+
+# Fails when the production Supabase project is paused, deleted, or rejects the
+# publishable key, which breaks every sign-in method at once.
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  supabase-auth:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Skip when production secrets are not configured
+        if: env.SUPABASE_URL == '' || env.SUPABASE_ANON_KEY == ''
+        run: |
+          echo "::notice::SUPABASE_URL / SUPABASE_ANON_KEY repository secrets are not set; skipping the auth smoke check."
+
+      - name: Query the auth settings endpoint
+        if: env.SUPABASE_URL != '' && env.SUPABASE_ANON_KEY != ''
+        run: |
+          status=$(curl -sS -o settings.json -w '%{http_code}' \
+            --max-time 30 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL%/}/auth/v1/settings" || echo "000")
+          echo "HTTP status: ${status}"
+          if [ "${status}" != "200" ]; then
+            echo "::error::Supabase auth settings returned HTTP ${status}. The project may be paused or the key rejected."
+            head -c 500 settings.json 2>/dev/null || true
+            exit 1
+          fi
+          # Report which sign-in methods the project has enabled (no secrets in this payload).
+          node -e "const s=require('./settings.json');const e=s.external||{};console.log('email:',!!e.email,'google:',!!e.google,'github:',!!e.github,'signup disabled:',!!s.disable_signup)"

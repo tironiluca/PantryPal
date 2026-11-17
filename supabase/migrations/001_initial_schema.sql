@@ -6,14 +6,8 @@
 -- NOTE: user_id is TEXT (not UUID FK) because the local SQLite stores UUIDs as strings.
 -- RLS policies enforce data isolation — no FK to auth.users needed.
 
-DROP TABLE IF EXISTS nutrition_goals CASCADE;
-DROP TABLE IF EXISTS nutrition_logs CASCADE;
-DROP TABLE IF EXISTS meal_plans CASCADE;
-DROP TABLE IF EXISTS recipe_ingredients CASCADE;
-DROP TABLE IF EXISTS recipes CASCADE;
-DROP TABLE IF EXISTS inventory CASCADE;
-DROP TABLE IF EXISTS ingredients CASCADE;
-DROP TABLE IF EXISTS ingredient_categories CASCADE;
+-- This file previously began by dropping every table, so re-running it wiped all data.
+-- It now only creates what is missing; later migrations change existing objects.
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- INGREDIENT CATEGORIES
@@ -29,6 +23,7 @@ CREATE TABLE IF NOT EXISTS ingredient_categories (
 );
 
 ALTER TABLE ingredient_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own categories" ON ingredient_categories;
 CREATE POLICY "Users manage own categories"
   ON ingredient_categories FOR ALL
   USING (auth.uid()::text = user_id);
@@ -60,6 +55,7 @@ CREATE TABLE IF NOT EXISTS ingredients (
 );
 
 ALTER TABLE ingredients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own ingredients" ON ingredients;
 CREATE POLICY "Users manage own ingredients"
   ON ingredients FOR ALL
   USING (auth.uid()::text = user_id);
@@ -84,6 +80,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 );
 
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own inventory" ON inventory;
 CREATE POLICY "Users manage own inventory"
   ON inventory FOR ALL
   USING (auth.uid()::text = user_id);
@@ -111,6 +108,7 @@ CREATE TABLE IF NOT EXISTS recipes (
 );
 
 ALTER TABLE recipes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own recipes" ON recipes;
 CREATE POLICY "Users manage own recipes"
   ON recipes FOR ALL
   USING (auth.uid()::text = user_id);
@@ -133,6 +131,7 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
 -- recipe_ingredients inherits ownership via recipe; no user_id column needed.
 -- RLS: allow if the referenced recipe belongs to the current user.
 ALTER TABLE recipe_ingredients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage ingredients of own recipes" ON recipe_ingredients;
 CREATE POLICY "Users manage ingredients of own recipes"
   ON recipe_ingredients FOR ALL
   USING (
@@ -164,6 +163,7 @@ CREATE TABLE IF NOT EXISTS meal_plans (
 CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON meal_plans(user_id, date);
 
 ALTER TABLE meal_plans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own meal plans" ON meal_plans;
 CREATE POLICY "Users manage own meal plans"
   ON meal_plans FOR ALL
   USING (auth.uid()::text = user_id);
@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS nutrition_logs (
 CREATE INDEX IF NOT EXISTS idx_nutrition_logs_user_date ON nutrition_logs(user_id, date);
 
 ALTER TABLE nutrition_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own nutrition logs" ON nutrition_logs;
 CREATE POLICY "Users manage own nutrition logs"
   ON nutrition_logs FOR ALL
   USING (auth.uid()::text = user_id);
@@ -213,6 +214,7 @@ CREATE TABLE IF NOT EXISTS nutrition_goals (
 );
 
 ALTER TABLE nutrition_goals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own nutrition goals" ON nutrition_goals;
 CREATE POLICY "Users manage own nutrition goals"
   ON nutrition_goals FOR ALL
   USING (auth.uid()::text = user_id);

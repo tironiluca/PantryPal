@@ -1,4 +1,6 @@
 -- Migration 003: Fix Row Level Security policies
+-- Superseded: do not run on a new project, and never after 004. It assumes a public.users table that no
+-- earlier migration creates, and its household_members policies recurse (42P17). Migration 004 replaces them.
 -- Addresses SEC-06 (household_members over-permissive policy) and SEC-10 (users table missing RLS)
 -- Run this migration in the Supabase SQL editor after 002_family_sharing.sql
 

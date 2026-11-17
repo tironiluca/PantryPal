@@ -56,3 +56,31 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
+  supabase-sql:
+    # Applies the Supabase migrations to a plain PostgreSQL with a minimal auth shim and runs the
+    # RLS/RPC behaviour tests as the `authenticated` role.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run migration and policy tests
+        run: ./scripts/test-supabase-sql.sh

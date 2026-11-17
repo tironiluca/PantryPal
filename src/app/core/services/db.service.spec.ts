@@ -175,7 +175,7 @@ describe('DbService typed mutation methods', () => {
 
     expect(exec).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO inventory'),
-      ['inv-1', 'ing-1', 2, 'kg', 1, '2026-05-01', 'fridge', '123', 't1', 't1']
+      ['inv-1', 'ing-1', 2, 'kg', 1, '2026-05-01', 'fridge', '123', null, 1, 0, 't1', 't1']
     );
   });
 
@@ -205,7 +205,7 @@ describe('DbService typed mutation methods', () => {
 
     expect(exec).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO ingredients'),
-      ['ing-1', 'Flour', 'cat-1', 30, 3, 1]
+      ['ing-1', 'Flour', 'cat-1', 30, 3, 1, null, 1, 0, expect.any(String), expect.any(String)]
     );
   });
 
@@ -575,5 +575,37 @@ describe('DbService local account cleanup (real SQLite schema)', () => {
     expect(q('SELECT userId FROM ingredients')).toEqual(['user-2']);
     expect(q('SELECT userId FROM inventory')).toEqual(['user-2']);
     expect(q('SELECT userId FROM sync_state')).toEqual(['user-2']);
+  });
+});
+
+describe('DbService rows created while signed in (real SQLite schema)', () => {
+  let service: DbService;
+
+  beforeEach(async () => {
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    TestBed.configureTestingModule({
+      providers: [DbService, { provide: AuthService, useValue: { getCurrentUserId: () => 'user-1' } }],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+  });
+
+  it('lists and queues for sync an inventory item created in the dialog', () => {
+    service.createInventoryItem({
+      id: 'inv-1', ingredientId: 'ing-1', quantity: 2, unit: 'kg', minRestock: 1,
+      expiry: null, location: null, barcode: null, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(service.queryByUser<any>('inventory').map(r => r.id)).toEqual(['inv-1']);
+    expect(service.getChangedRecords<any>('inventory').map(r => r.id)).toEqual(['inv-1']);
+  });
+
+  it('lists and queues for sync an ingredient created in the dialog', () => {
+    service.createIngredient({ id: 'ing-9', name: 'Flour', categoryId: null, defaultShelfLifeDays: null, notifyStartDays: null, notifyRepeatDays: null });
+
+    expect(service.queryByUser<any>('ingredients').map(r => r.id)).toEqual(['ing-9']);
+    expect(service.getChangedRecords<any>('ingredients').map(r => r.id)).toEqual(['ing-9']);
   });
 });

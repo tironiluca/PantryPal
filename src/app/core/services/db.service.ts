@@ -619,11 +619,12 @@ export class DbService {
     id: string; ingredientId: string; quantity: number; unit: string; minRestock: number;
     expiry: string | null; location: string | null; barcode: string | null; createdAt: string; updatedAt: string;
   }): void {
+    // Owned by the signed-in user (NULL for guest data), so it is listed and synced.
     this.exec(
-      'INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO inventory (id, ingredientId, quantity, unit, minRestock, expiry, location, barcode, userId, version, isDeleted, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
       [
         item.id, item.ingredientId, item.quantity, item.unit, item.minRestock,
-        item.expiry, item.location, item.barcode, item.createdAt, item.updatedAt,
+        item.expiry, item.location, item.barcode, this.getCurrentUserId(), 1, 0, item.createdAt, item.updatedAt,
       ]
     );
   }
@@ -653,9 +654,12 @@ export class DbService {
     id: string; name: string; categoryId: string | null;
     defaultShelfLifeDays: number | null; notifyStartDays: number | null; notifyRepeatDays: number | null;
   }): void {
+    const now = new Date().toISOString();
+    // Owned by the signed-in user (NULL for guest data), so it is listed and synced.
     this.exec(
-      'INSERT INTO ingredients (id, name, categoryId, defaultShelfLifeDays, notifyStartDays, notifyRepeatDays) VALUES (?,?,?,?,?,?)',
-      [item.id, item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays]
+      'INSERT INTO ingredients (id, name, categoryId, defaultShelfLifeDays, notifyStartDays, notifyRepeatDays, userId, version, isDeleted, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [item.id, item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays,
+        this.getCurrentUserId(), 1, 0, now, now]
     );
   }
 

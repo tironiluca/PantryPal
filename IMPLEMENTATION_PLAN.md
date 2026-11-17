@@ -33,7 +33,7 @@ The weak points are everything that touches the server: sign-in, sync, sharing, 
 | Area | State |
 | --- | --- |
 | Production sign-in | **Down** - all methods fail on the production site |
-| CI | **Has never run a test** - 12 of 12 runs failed before installing dependencies |
+| CI | **Has never run a test** - all 12 runs failed within about 15 seconds; the latest failed at Node setup |
 | Cloud sync | Works on the happy path; several silent data-loss paths |
 | Household sharing | Likely non-functional end to end |
 | Password reset | Broken - the email link has no route |
@@ -46,13 +46,13 @@ Ordered by priority. Fix B1 first, because until CI runs, no other fix is verifi
 
 ### B1. CI has never executed tests - P0, Local + [External] secrets
 
-**[Verified]** Every run of `.github/workflows/ci.yml` fails in the "Set up Node.js" step. The latest is run 42667749268 on `main@39102e9`. The error is:
+**[Verified]** All 12 runs of `.github/workflows/ci.yml` on `main` failed within 10-16 seconds. The latest is run 42667749268 on `main@39102e9`, and its job log was inspected. It failed in the "Set up Node.js" step with:
 
 > Dependencies lock file is not found ... Supported file patterns: package-lock.json, npm-shrinkwrap.json, yarn.lock
 
 `/package-lock.json` is listed in `.gitignore:17`, yet the workflow uses `cache: npm` and `npm ci`, and both require a lockfile. The same log shows `SUPABASE_URL` and `SUPABASE_ANON_KEY` as empty. So after the lockfile is fixed, `prebuild` (`scripts/generate-environments.mjs`) would fail next.
 
-The previous plan claimed that "CI runs unit tests, coverage, production build, and Playwright" and that the 70% gate is "enforced in CI". Neither claim was ever true.
+The previous plan claimed that "CI runs unit tests, coverage, production build, and Playwright" and that the 70% gate is "enforced in CI". Neither holds. Only the latest log was inspected, but every run's 10-16 second duration is consistent with the same setup failure, since the lockfile has never been committed.
 
 The missing lockfile also explains the earlier `idb` build break. Vercel resolves dependencies fresh on every deploy.
 
@@ -66,15 +66,15 @@ The missing lockfile also explains the earlier `idb` build break. Vercel resolve
 
 ### B2. Production sign-in is down - P0, [External] first, then Local
 
-**[Verified]** On https://pantry-vibe-pal.vercel.app/auth/login, email/password, Google, and GitHub all fail.
+**[Reported by the owner, not reproduced here]** On https://pantry-vibe-pal.vercel.app/auth/login, email/password, Google, and GitHub all fail. This environment cannot reach Supabase.
 
-The deployment itself is healthy:
+**[Verified]** The deployment itself is healthy:
 - deployment `dpl_4vM263SQ9DqF5XHHKLaJ5WB92Zg6` is READY;
 - the bundle carries real values for project `yszsmwuremvxajibydem`;
 - no CSP or Vercel header blocks requests to Supabase;
 - the client code paths are correct.
 
-The profile upsert in `AuthService.ensureUserProfile()` (`auth.service.ts:284`) swallows its own errors. A missing `users` table therefore cannot cause the outage.
+The client-side profile check in `AuthService.ensureUserProfile()` (`auth.service.ts:284`) swallows its own errors, so a missing `users` table cannot break sign-in through that path. Neither checked-in schema defines a trigger on `auth.users`. A server-side trigger added outside the repository could still break sign-up and first OAuth sign-in; check for one in the dashboard.
 
 All three methods fail together, which points at the Supabase project. Check these in order [External]:
 
@@ -106,6 +106,7 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
    - The deleted row therefore stays in Supabase and comes back on every other device and on a fresh install.
    - Only `meal_plans` uses `softDelete()`.
 2. **One global cursor on client clocks.**
+   - `getChangedRecords()` selects rows by `updatedAt > <global cursor>` rather than by `updatedAt > syncedAt` (`db.service.ts:1023`). After one failed push, a later successful push of another table moves the cursor past rows that were never uploaded, so those rows are never pushed.
    - `lastSyncTime` is `MAX(syncedAt)` across five tables (`db.service.ts:1162`).
    - The push stamps `updated_at` with the device clock (`sync.service.ts:185`), into a `TEXT` column.
    - Remote rows are pulled with `gt('updated_at', lastSyncTime)` (`sync.service.ts:290`).
@@ -122,7 +123,8 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 7. **Edits to shared rows are never pushed.** `getChangedRecords()` selects only `userId = <me>`.
 8. **Nutrition data is not synced.** `nutrition_logs` and `nutrition_goals` exist in Supabase (`001_initial_schema.sql:174,203`) but are not in `SYNC_TABLES`.
 9. **Sync timing.**
-   - Auto-sync starts only from `HomeComponent.ngOnInit`, and its first run is 5 minutes later. There is no sync on sign-in.
+   - Auto-sync starts from `HomeComponent.ngOnInit`, and its first run is 5 minutes later.
+   - The only immediate sync on sign-in comes from `MigrationService` (`migration.service.ts:111`). It runs once per user, only when there is unmigrated guest data. A normal sign-in on a new device waits 5 minutes, or for a manual sync from the sync-status button, before any data appears.
    - The household is loaded only by the settings page (`household-settings.component.ts:44`), so sync pulls only your own data until that page is opened.
 10. **Performance.** Every `DbService.exec()` re-serialises and persists the whole database (`db.service.ts:777`), so pulling N rows causes N full writes. `sync_log` is never pruned.
 
@@ -131,7 +133,7 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 - Keep a per-table cursor that advances only on success, and report partial failure as an error.
 - Paginate the pull.
 - Apply each pull inside `execBatch()`.
-- Sync on sign-in.
+- Sync immediately on every sign-in.
 
 **Acceptance:** two-device tests, with mocked Supabase, for each of the following:
 - delete propagation;
@@ -142,7 +144,7 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B4. Password reset link has no route - P1, Local
 
-**[Verified]** `resetPassword()` sends users to `/auth/reset-password` (`auth.service.ts:222`). `auth.routes.ts` defines no such route, so the wildcard redirects to `/auth/login` and the user cannot set a new password. `updatePassword()` exists (`auth.service.ts:243`) but has no UI.
+**[Verified]** `resetPassword()` sends users to `/auth/reset-password` (`auth.service.ts:222`). `auth.routes.ts` defines no such route, so the wildcard redirects to `/auth/login`. `updatePassword()` exists (`auth.service.ts:243`), but nothing in `src/app` calls it, so there is no form anywhere to enter a new password. A user who forgot their password cannot recover the account.
 
 **Fix:** add a reset-password page that waits for the `PASSWORD_RECOVERY` session and calls `updatePassword()`. Add `/auth/reset-password` to the Supabase redirect allowlist [External].
 
@@ -182,11 +184,13 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B6. Delete account deletes nothing - P1, Needs Supabase
 
-**[Inferred - confirm live]** `UserProfileService.deleteAccount()` deletes from `users` (`user-profile.service.ts:230`). Migration 003 defines no DELETE policy, so RLS filters the row out, the call returns no error, and the app shows "Account deleted successfully".
+**[Inferred - confirm live]** `UserProfileService.deleteAccount()` deletes from `users` (`user-profile.service.ts:230`). Neither migration 003 nor `SUPABASE_SETUP.md` defines a DELETE policy on `users`. RLS therefore filters the row out, the call returns no error, and the app shows "Account deleted successfully".
 
-The code comment "cascade will delete all related data" is false:
-- data tables hold `user_id TEXT` with no foreign key;
-- the auth user is never removed.
+The comment "cascade will delete all related data" depends on which schema is live (B8):
+- Under `SUPABASE_SETUP.md`, data tables reference `users` with `ON DELETE CASCADE`, so a successful delete would cascade. The delete itself is still blocked.
+- Under `001_initial_schema.sql`, data tables hold `user_id TEXT` with no foreign key, so nothing would cascade.
+
+The auth user is never removed under either schema, and the client cannot remove it.
 
 **[Verified]** `ProfileComponent` also uses the native `prompt()` for the typed confirmation (`profile.component.ts:166`).
 
@@ -227,7 +231,6 @@ The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751
 - `README.md` still describes the "Angular 20 Starter" and manual WASM copying, which `postinstall` now does.
 - There is no lint script or ESLint config.
 - There are 126 `any` annotations or casts in production code.
-- `SkeletonComponent` is never used.
 - The 21 snackbar literals in services are hard-coded English, despite en/it i18n.
 
 ## Part 2 - Missing Against The Original Plan
@@ -245,11 +248,11 @@ The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`
 | 2.2 Product API cache | Done | IndexedDB via `idb` |
 | 2.3 Batch DB operations | Partial | `execBatch()` exists; sync pull and single `exec()` still persist per statement (B3.10) |
 | 3.1 Smart meal of the day | Done | Expiry/availability scoring |
-| 3.2 Search, filter, sort | Done | Inventory search, location, and expiry filters |
+| 3.2 Search, filter, sort | Done | Inventory search, location/expiry filters, sort column and direction |
 | 3.3 Unit conversions | Done | Used by cart, meal plan, nutrition |
 | 3.4 Analytics and waste reports | **Not started** | Needs a product decision (F7) |
 | 4.1-4.4 UI redesign | Done | Card grid, theme, bottom sheets; phone-width visual review outstanding |
-| 4.5 Loading skeletons | **Unused** | Component exists but is not used |
+| 4.5 Loading skeletons | Done | `pp-skeleton` in inventory, recipes, cart |
 | 5.1 Confirmation dialogs | Done | Except `prompt()` in delete account (B6) |
 | 5.2 Keyboard shortcuts | Done | |
 
@@ -270,9 +273,18 @@ Security audit items were closed in `ee70179`. Spot checks this review found the
 - SEC-09: encoded proxy URLs;
 - BUG-03 and BUG-04: sync listener and interval handling.
 
-Two items carried over from the previous plan are still open:
+The 2026-08-27 plan (`145251f`) also listed four items. Three were confirmed fixed in this review:
+- the database fallback now uses IndexedDB, not localStorage;
+- `ProductsService` awaits cache readiness before lookups;
+- the cart converts units through `UnitConverterService`, and inventory has visible sort controls.
+
+The fourth, meal-of-day missing-ingredient labels showing ids instead of names, was not re-verified.
+
+Items carried over from the previous plan that are still open:
 - the third-party recipe CORS proxy (A4);
-- the analytics scope decision (F7).
+- the analytics scope decision (F7);
+- verifying that git history and the production bundle hold no active credentials after the 2026-08-27 rotation [External];
+- a test account, or an approved Supabase mock strategy, for authenticated Playwright workflows [External]. A3's local Supabase stack can satisfy this.
 
 ## Part 3 - Worth Having: Architecture
 

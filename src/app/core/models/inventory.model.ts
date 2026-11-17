@@ -8,6 +8,8 @@ export interface InventoryItem {
   expiry?: string;
   location?: 'fridge' | 'freezer' | 'pantry' | 'other';
   barcode?: string;
+  /** Owner; rows from other household members are read-only. NULL for guest data. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

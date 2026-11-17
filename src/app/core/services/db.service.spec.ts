@@ -609,3 +609,110 @@ describe('DbService rows created while signed in (real SQLite schema)', () => {
     expect(service.getChangedRecords<any>('ingredients').map(r => r.id)).toEqual(['ing-9']);
   });
 });
+
+describe('DbService household sharing on this device (real SQLite schema)', () => {
+  let service: DbService;
+
+  beforeEach(async () => {
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    TestBed.configureTestingModule({
+      providers: [DbService, { provide: AuthService, useValue: { getCurrentUserId: () => 'me' } }],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+    for (const [id, owner] of [['mine', 'me'], ['theirs', 'partner'], ['stranger', 'someone-else']]) {
+      service.exec('INSERT INTO ingredients (id, name, userId, updatedAt) VALUES (?, ?, ?, ?)', [id, id, owner, '2026-01-01T00:00:00.000Z']);
+    }
+    service.exec('INSERT INTO nutrition_logs (id, userId, date, createdAt) VALUES (?, ?, ?, ?)', ['log-p', 'partner', '2026-01-01', '2026-01-01']);
+  });
+
+  const ids = (table: string) => service.queryByUser<any>(table).map(r => r.id).sort();
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  it('shows only the user\'s own rows without a household', () => {
+    expect(ids('ingredients')).toEqual(['mine']);
+  });
+
+  it('includes household members\' rows in shared tables only', async () => {
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    expect(ids('ingredients')).toEqual(['mine', 'theirs']);
+    expect(ids('nutrition_logs')).toEqual([]);
+  });
+
+  it('keeps members\' rows read-only and out of the push queue', async () => {
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    expect(service.canModify({ userId: 'partner' })).toBe(false);
+    expect(service.canModify({ userId: 'me' })).toBe(true);
+    expect(service.canModify({ userId: null })).toBe(true);
+    expect(() => service.softDelete('ingredients', 'theirs')).toThrow('only they can change it');
+    expect(() => service.updateIngredientDetails('theirs', {
+      name: 'x', categoryId: null, defaultShelfLifeDays: null, notifyStartDays: null, notifyRepeatDays: null,
+    })).toThrow('only they can change it');
+    expect(service.getChangedRecords<any>('ingredients').map(r => r.id)).not.toContain('theirs');
+  });
+
+  it('resets pull cursors when a new member joins, so their older rows are fetched', async () => {
+    service.setSyncCursor('me', 'ingredients', '2026-06-01T00:00:00Z');
+    service.setHouseholdMembers(['me']);
+    await flush();
+    expect(service.getSyncCursor('me', 'ingredients')).toBe('2026-06-01T00:00:00Z');
+
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    expect(service.getSyncCursor('me', 'ingredients')).toBeNull();
+  });
+
+  it('does nothing when the member set is unchanged', async () => {
+    service.setHouseholdMembers(['partner', 'me']);
+    await flush();
+    service.setSyncCursor('me', 'ingredients', '2026-06-01T00:00:00Z');
+
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    expect(service.getSyncCursor('me', 'ingredients')).toBe('2026-06-01T00:00:00Z');
+  });
+
+  it('removes a former member\'s rows from this device when they leave, keeping other accounts\' data', async () => {
+    service.setHouseholdMembers(['me', 'partner']);
+    await flush();
+
+    service.setHouseholdMembers(['me']);
+    await flush();
+
+    const all = (service as any).query('SELECT id FROM ingredients ORDER BY id').map((r: any) => r.id);
+    expect(all).toEqual(['mine', 'stranger']);
+    expect(ids('ingredients')).toEqual(['mine']);
+  });
+});
+
+describe('DbService nutrition reads (real SQLite schema)', () => {
+  let service: DbService;
+
+  beforeEach(async () => {
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    TestBed.configureTestingModule({
+      providers: [DbService, { provide: AuthService, useValue: { getCurrentUserId: () => 'me' } }],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+  });
+
+  it('reads nutrition logs and goals, which have no soft-delete column', () => {
+    service.exec('INSERT INTO nutrition_logs (id, userId, date, totalKcal, createdAt) VALUES (?, ?, ?, ?, ?)', ['l1', 'me', '2026-01-02', 500, '2026-01-02']);
+    service.exec('INSERT INTO nutrition_goals (userId, dailyKcalGoal, updatedAt) VALUES (?, ?, ?)', ['me', 2000, '2026-01-01']);
+
+    expect(service.getNutritionLogs('2026-01-02').map(l => l.id)).toEqual(['l1']);
+    expect(service.getNutritionLogsForRange('2026-01-01', '2026-01-31').map(l => l.id)).toEqual(['l1']);
+    expect(service.getNutritionGoals()?.dailyKcalGoal).toBe(2000);
+  });
+});

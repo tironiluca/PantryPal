@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { DbService } from './db.service';
+import { DbService, SHARED_ROW_READ_ONLY_MESSAGE } from './db.service';
 import { AuthService } from './auth.service';
 
 export interface MealPlan {
@@ -153,8 +153,11 @@ export class MealPlanService {
     const userId = this.db.getCurrentUserId();
     const existing = this.db.getMealPlan(id);
 
-    if (existing.length === 0) {
+    if (!existing) {
       throw new Error(`Meal plan ${id} not found`);
+    }
+    if (!this.db.canModify(existing)) {
+      throw new Error(SHARED_ROW_READ_ONLY_MESSAGE);
     }
 
     const now = new Date().toISOString();

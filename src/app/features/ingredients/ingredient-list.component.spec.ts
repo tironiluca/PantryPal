@@ -37,7 +37,7 @@ describe('IngredientListComponent', () => {
       providers: [
         { provide: ProductsService, useValue: productsSpy },
         { provide: ErrorHandlerService, useValue: errorHandlerSpy },
-        { provide: DbService, useValue: { queryByUser: vi.fn(() => []), query: vi.fn(() => []) } },
+        { provide: DbService, useValue: { queryByUser: vi.fn(() => []), query: vi.fn(() => []), canModify: vi.fn(() => true) } },
         { provide: DataEventsService, useValue: { on: vi.fn(() => of()) } },
         {
           provide: KeyboardService,

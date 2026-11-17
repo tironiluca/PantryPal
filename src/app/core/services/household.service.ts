@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import { SnackbarService } from './snackbar.service';
+import { DbService } from './db.service';
 
 export interface Household {
   id: string;
@@ -44,6 +45,7 @@ export function toUserError(error: { message?: string; code?: string } | null | 
 export class HouseholdService {
   private auth = inject(AuthService);
   private snackbar = inject(SnackbarService);
+  private db = inject(DbService);
   private supabase = this.auth.getSupabaseClient();
 
   household = signal<Household | null>(null);
@@ -82,6 +84,7 @@ export class HouseholdService {
       if (!memberRow) {
         this.household.set(null);
         this.members.set([]);
+        this.db.setHouseholdMembers([]);
         await this.loadInvitations();
         return;
       }
@@ -163,6 +166,7 @@ export class HouseholdService {
 
     this.household.set(null);
     this.members.set([]);
+    this.db.setHouseholdMembers([]);
     this.snackbar.success('You left the household');
   }
 
@@ -205,6 +209,8 @@ export class HouseholdService {
 
   private async loadMembers(): Promise<void> {
     const rows = await this.rpc<any[]>('household_member_details');
+    // Lets local reads include members' synced rows (read-only) and refreshes cursors on change.
+    this.db.setHouseholdMembers((Array.isArray(rows) ? rows : []).map((r) => r.user_id));
     this.members.set(
       (Array.isArray(rows) ? rows : []).map((r) => ({
         userId: r.user_id,

@@ -10,7 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
-import { DbService } from '../../core/services/db.service';
+import { DbService, SHARED_ROW_READ_ONLY_MESSAGE } from '../../core/services/db.service';
 import { DietAdviceService } from '../../core/services/diet-advice.service';
 import { RecipeEditDialog } from './recipe-edit.dialog';
 import { RecipeImportDialog } from './recipe-import.dialog';
@@ -128,6 +128,10 @@ export class RecipeListComponent {
   }
 
   edit(r: any) {
+    if (!this.db.canModify(r)) {
+      this.snackbar.info(SHARED_ROW_READ_ONLY_MESSAGE);
+      return;
+    }
     this.dialog
       .open(RecipeEditDialog, { data: r })
       .afterClosed()
@@ -136,6 +140,10 @@ export class RecipeListComponent {
   }
 
   remove(r: any) {
+    if (!this.db.canModify(r)) {
+      this.snackbar.info(SHARED_ROW_READ_ONLY_MESSAGE);
+      return;
+    }
     this.dialog
       .open(ConfirmDialog, {
         data: {

@@ -60,6 +60,7 @@ describe('RecipeListComponent', () => {
       ]),
       deleteRecipeIngredientsByRecipe: vi.fn(),
       softDelete: vi.fn(),
+      canModify: vi.fn(() => true),
     };
     dietAdviceSpy = { getIngredientAvailability: vi.fn().mockReturnValue(100) };
     dialogSpy = { open: vi.fn() };

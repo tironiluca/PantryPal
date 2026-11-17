@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { DbService } from '../../core/services/db.service';
+import { DbService, SHARED_ROW_READ_ONLY_MESSAGE } from '../../core/services/db.service';
 import { InventoryItem } from '../../core/models/inventory.model';
 import { InventoryEditDialog } from './inventory-edit/inventory-edit.dialog';
 import { BarcodeScannerDialog } from './barcode-scanner.dialog';
@@ -283,6 +283,10 @@ export class InventoryListComponent {
   }
 
   edit(row: InventoryItem) {
+    if (!this.db.canModify(row)) {
+      this.snackbar.info(SHARED_ROW_READ_ONLY_MESSAGE);
+      return;
+    }
     this.dialog
       .open(InventoryEditDialog, { data: row })
       .afterClosed()
@@ -291,6 +295,10 @@ export class InventoryListComponent {
   }
 
   remove(row: InventoryItem) {
+    if (!this.db.canModify(row)) {
+      this.snackbar.info(SHARED_ROW_READ_ONLY_MESSAGE);
+      return;
+    }
     this.dialog
       .open(ConfirmDialog, {
         data: {

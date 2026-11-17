@@ -21,6 +21,7 @@ function bare(): HouseholdService & Record<string, any> {
   service.loadError = signal(null);
   service.snackbar = { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() };
   service.auth = { getCurrentUserId: () => 'u1' };
+  service.db = { setHouseholdMembers: vi.fn() };
   service.supabase = { from: vi.fn(() => chainable()), rpc: vi.fn(async () => ({ data: null, error: null })) };
   return service;
 }
@@ -72,6 +73,7 @@ describe('HouseholdService', () => {
 
       expect(service.household()).toBeNull();
       expect(service.members()).toEqual([]);
+      expect(service.db.setHouseholdMembers).toHaveBeenCalledWith([]);
       expect(service.supabase.rpc).toHaveBeenCalledWith('my_pending_invitations', undefined);
       expect(service.invitations()).toEqual([
         { id: 'inv1', householdId: 'hh9', householdName: 'Olive home', invitedAt: '2026-02-01' },
@@ -98,6 +100,7 @@ describe('HouseholdService', () => {
 
       expect(service.household()).toEqual(HOUSEHOLD);
       expect(service.supabase.rpc).toHaveBeenCalledWith('household_member_details', undefined);
+      expect(service.db.setHouseholdMembers).toHaveBeenCalledWith(['u1', 'u2']);
       expect(service.members()).toEqual([
         { userId: 'u1', email: 'olive@example.test', displayName: 'Olive', role: 'owner', joinedAt: '2026-01-01' },
         { userId: 'u2', email: 'u2', displayName: undefined, role: 'member', joinedAt: '2026-01-02' },
@@ -242,6 +245,7 @@ describe('HouseholdService', () => {
       await service.leaveHousehold();
 
       expect(service.supabase.rpc).toHaveBeenCalledWith('leave_household', undefined);
+      expect(service.db.setHouseholdMembers).toHaveBeenCalledWith([]);
       expect(service.household()).toBeNull();
       expect(service.members()).toEqual([]);
     });

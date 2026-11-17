@@ -21,7 +21,7 @@ function daysFromNow(days: number): string {
 describe('InventoryListComponent', () => {
   let fixture: ComponentFixture<InventoryListComponent>;
   let component: InventoryListComponent;
-  let dbSpy: { queryByUser: ReturnType<typeof vi.fn>; getIngredientsByIds: ReturnType<typeof vi.fn>; softDelete: ReturnType<typeof vi.fn> };
+  let dbSpy: { queryByUser: ReturnType<typeof vi.fn>; getIngredientsByIds: ReturnType<typeof vi.fn>; softDelete: ReturnType<typeof vi.fn>; canModify: ReturnType<typeof vi.fn> };
   let ocrSpy: { extractExpiry: ReturnType<typeof vi.fn> };
   let dialogSpy: { open: ReturnType<typeof vi.fn> };
   let errorHandlerSpy: { handle: ReturnType<typeof vi.fn> };
@@ -64,6 +64,7 @@ describe('InventoryListComponent', () => {
       queryByUser: vi.fn().mockReturnValue(baseRows.map(r => ({ ...r }))),
       getIngredientsByIds: vi.fn().mockReturnValue([{ id: 'ing-1', name: 'Milk' }, { id: 'ing-2', name: 'Eggs' }]),
       softDelete: vi.fn(),
+      canModify: vi.fn(() => true),
     };
     ocrSpy = { extractExpiry: vi.fn() };
     dialogSpy = { open: vi.fn() };
@@ -373,6 +374,21 @@ describe('InventoryListComponent', () => {
 
       expect(dialogSpy.open).toHaveBeenCalledWith(expect.anything(), { data: row });
       expect(refreshSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('shared household items', () => {
+    it('does not open the editor or delete an item owned by another member', async () => {
+      await setup();
+      dbSpy.canModify.mockReturnValue(false);
+      dialogSpy.open.mockClear();
+
+      component.edit({ id: 'i1', userId: 'u2' } as any);
+      component.remove({ id: 'i1', userId: 'u2' } as any);
+
+      expect(dialogSpy.open).not.toHaveBeenCalled();
+      expect(dbSpy.softDelete).not.toHaveBeenCalled();
+      expect(snackbarSpy.info).toHaveBeenCalledWith(expect.stringContaining('only they can change it'));
     });
   });
 

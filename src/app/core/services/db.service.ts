@@ -34,6 +34,17 @@ export const DB_TABLE_COLUMNS: Record<string, readonly string[]> = {
 
 const ALLOWED_TABLES = new Set(Object.keys(DB_TABLE_COLUMNS));
 
+/** Tables whose rows household members can read (migration 004). Writes stay owner-only. */
+export const HOUSEHOLD_SHARED_TABLES: ReadonlySet<string> = new Set([
+  'ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients', 'meal_plans',
+]);
+
+export const SHARED_ROW_READ_ONLY_MESSAGE =
+  'This item belongs to another household member, so only they can change it.';
+
+/** Pseudo-table name in sync_state that remembers the household member set. */
+const HOUSEHOLD_STATE_KEY = '_household_members';
+
 export const DATABASE_UNAVAILABLE_MESSAGE =
   'Local storage is unavailable in this browser, so changes cannot be saved.';
 
@@ -115,6 +126,8 @@ export class DbService {
   /** False when the SQLite engine itself could not start; the app cannot store anything. */
   private databaseAvailableSignal = signal(true);
   readonly databaseAvailable = this.databaseAvailableSignal.asReadonly();
+  /** Other members of the current user's household (excluding the user). */
+  private householdMemberIds: string[] = [];
   // Deduplicates concurrent init() calls (BUG-02)
   private initPromise: Promise<void> | null = null;
 
@@ -633,6 +646,7 @@ export class DbService {
     ingredientId: string; quantity: number; unit: string; minRestock: number;
     expiry: string | null; location: string | null; barcode: string | null; updatedAt: string;
   }): void {
+    this.assertCanModify('inventory', 'id = ?', [id]);
     this.exec(
       'UPDATE inventory SET ingredientId=?, quantity=?, unit=?, minRestock=?, expiry=?, location=?, barcode=?, updatedAt=? WHERE id=?',
       [
@@ -644,6 +658,7 @@ export class DbService {
 
   /** Set an inventory row's quantity directly, e.g. when deducting stock consumed by a cooked meal. */
   setInventoryQuantity(id: string, quantity: number, updatedAt: string): void {
+    this.assertCanModify('inventory', 'id = ?', [id]);
     this.exec(
       'UPDATE inventory SET quantity = ?, updatedAt = ?, version = version + 1 WHERE id = ?',
       [quantity, updatedAt, id]
@@ -667,6 +682,7 @@ export class DbService {
     name: string; categoryId: string | null;
     defaultShelfLifeDays: number | null; notifyStartDays: number | null; notifyRepeatDays: number | null;
   }): void {
+    this.assertCanModify('ingredients', 'id = ?', [id]);
     this.exec(
       'UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=?, updatedAt=? WHERE id=?',
       [item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays, new Date().toISOString(), id]
@@ -706,6 +722,7 @@ export class DbService {
     name: string; steps: string; servings: number; prepTime: number | null; cookTime: number | null;
     imageUrl: string | null; notes: string | null; updatedAt: string;
   }): void {
+    this.assertCanModify('recipes', 'id = ?', [id]);
     this.exec(
       `UPDATE recipes
        SET name = ?, steps = ?, servings = ?, prepTime = ?, cookTime = ?, imageUrl = ?, notes = ?,
@@ -717,6 +734,7 @@ export class DbService {
 
   /** Soft-delete every recipe_ingredients row for a recipe, typically before rewriting them on edit. */
   clearRecipeIngredients(recipeId: string, updatedAt: string): void {
+    this.assertCanModify('recipes', 'id = ?', [recipeId]);
     this.exec(
       'UPDATE recipe_ingredients SET isDeleted = 1, updatedAt = ? WHERE recipeId = ?',
       [updatedAt, recipeId]
@@ -725,6 +743,7 @@ export class DbService {
 
   /** Permanently remove every recipe_ingredients row for a recipe, e.g. when the recipe itself is deleted. */
   deleteRecipeIngredientsByRecipe(recipeId: string): void {
+    this.assertCanModify('recipes', 'id = ?', [recipeId]);
     this.exec('DELETE FROM recipe_ingredients WHERE recipeId = ?', [recipeId]);
   }
 
@@ -937,6 +956,67 @@ export class DbService {
     return this.auth.getCurrentUserId();
   }
 
+  /** True when the current user (or a guest, for guest rows) may change this row. */
+  canModify(row: { userId?: string | null } | null | undefined): boolean {
+    if (!row) return true;
+    const owner = row.userId ?? null;
+    return owner === null || owner === '' || owner === this.getCurrentUserId();
+  }
+
+  /** Throw when a row belongs to another household member; the server would reject the change anyway. */
+  private assertCanModify(table: string, where: string, params: any[]): void {
+    if (!this.db || !this.getCurrentUserId()) return;
+    for (const row of this.query<{ userId: string | null }>(`SELECT userId FROM ${table} WHERE ${where}`, params)) {
+      if (!this.canModify(row)) {
+        throw new Error(SHARED_ROW_READ_ONLY_MESSAGE);
+      }
+    }
+  }
+
+  /**
+   * Record the current household's members. When the set changes, pull cursors are reset so
+   * a new member's older rows are fetched, and rows of members who are no longer in the
+   * household are removed from this device.
+   */
+  setHouseholdMembers(memberIds: string[]): void {
+    const userId = this.getCurrentUserId();
+    if (!userId || !this.db) {
+      this.householdMemberIds = [];
+      return;
+    }
+
+    const others = [...new Set(memberIds.filter(id => id && id !== userId))].sort();
+    const previousRow = this.query<{ pullCursor: string | null }>(
+      'SELECT pullCursor FROM sync_state WHERE userId = ? AND tableName = ?',
+      [userId, HOUSEHOLD_STATE_KEY]
+    )[0];
+    const previous: string[] = previousRow?.pullCursor ? JSON.parse(previousRow.pullCursor) : [];
+    this.householdMemberIds = others;
+
+    if (JSON.stringify(previous) === JSON.stringify(others)) {
+      return;
+    }
+
+    const statements: Array<{ sql: string; params: any[] }> = [];
+    const removed = previous.filter(id => !others.includes(id));
+    if (removed.length > 0) {
+      const placeholders = removed.map(() => '?').join(',');
+      for (const table of HOUSEHOLD_SHARED_TABLES) {
+        statements.push({ sql: `DELETE FROM ${table} WHERE userId IN (${placeholders})`, params: removed });
+      }
+    }
+    if (others.some(id => !previous.includes(id))) {
+      // New members' rows may be older than our cursors; pull everything again.
+      statements.push({ sql: 'DELETE FROM sync_state WHERE userId = ? AND tableName <> ?', params: [userId, HOUSEHOLD_STATE_KEY] });
+    }
+    statements.push({
+      sql: `INSERT INTO sync_state (userId, tableName, pullCursor, updatedAt) VALUES (?, ?, ?, ?)
+            ON CONFLICT(userId, tableName) DO UPDATE SET pullCursor = excluded.pullCursor, updatedAt = excluded.updatedAt`,
+      params: [userId, HOUSEHOLD_STATE_KEY, JSON.stringify(others), new Date().toISOString()],
+    });
+    this.execBatch(statements).catch(error => console.error('Failed to update household membership locally', error));
+  }
+
   /**
    * Query records for the current user (filters by userId automatically)
    * @param table Table name
@@ -953,16 +1033,24 @@ export class DbService {
     this.assertAllowedTable(table);
     const userId = this.getCurrentUserId();
 
-    // If no user is logged in, return guest data (userId IS NULL)
-    const userFilter = userId ? `userId = ?` : `userId IS NULL`;
-    const deletedFilter = includeDeleted ? '' : ` AND (isDeleted IS NULL OR isDeleted = 0)`;
+    // If no user is logged in, return guest data (userId IS NULL).
+    // Shared tables also include rows synced from the user's household members.
+    const owners = userId
+      ? [userId, ...(HOUSEHOLD_SHARED_TABLES.has(table) ? this.householdMemberIds : [])]
+      : [];
+    const userFilter = !userId
+      ? `userId IS NULL`
+      : owners.length === 1 ? `userId = ?` : `userId IN (${owners.map(() => '?').join(',')})`;
+    // Only tables with soft deletes have an isDeleted column (nutrition tables do not).
+    const hasSoftDelete = DB_TABLE_COLUMNS[table]?.includes('isDeleted') ?? false;
+    const deletedFilter = includeDeleted || !hasSoftDelete ? '' : ` AND (isDeleted IS NULL OR isDeleted = 0)`;
 
     const where = whereClause
       ? `WHERE ${userFilter} AND ${whereClause}${deletedFilter}`
       : `WHERE ${userFilter}${deletedFilter}`;
 
     const sql = `SELECT * FROM ${table} ${where}`;
-    const finalParams = userId ? [userId, ...params] : params;
+    const finalParams = [...owners, ...params];
 
     return this.query<T>(sql, finalParams);
   }
@@ -1063,6 +1151,7 @@ export class DbService {
    */
   softDelete(table: string, id: string): void {
     this.assertAllowedTable(table);
+    this.assertCanModify(table, 'id = ?', [id]);
     const now = new Date().toISOString();
     const sql = `
       UPDATE ${table}
@@ -1080,6 +1169,7 @@ export class DbService {
    */
   hardDelete(table: string, id: string): void {
     this.assertAllowedTable(table);
+    this.assertCanModify(table, 'id = ?', [id]);
     const sql = `DELETE FROM ${table} WHERE id = ?`;
     this.exec(sql, [id]);
   }

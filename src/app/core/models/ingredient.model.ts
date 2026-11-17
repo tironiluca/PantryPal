@@ -6,4 +6,6 @@ export interface Ingredient {
   defaultShelfLifeDays?: number;
   notifyStartDays?: number;
   notifyRepeatDays?: number;
+  /** Owner; rows from other household members are read-only. NULL for guest data. */
+  userId?: string | null;
 }

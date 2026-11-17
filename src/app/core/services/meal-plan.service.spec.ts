@@ -134,16 +134,30 @@ describe('MealPlanService', () => {
   describe('updateMeal', () => {
     it('throws when the meal plan does not exist', () => {
       const service = bare();
-      service.db = { getCurrentUserId: () => 'u1', getMealPlan: vi.fn(() => []) };
+      service.db = { getCurrentUserId: () => 'u1', getMealPlan: vi.fn(() => undefined), canModify: () => true };
 
       expect(() => service.updateMeal('missing', { servings: 2 })).toThrow('Meal plan missing not found');
+    });
+
+    it('refuses to change a meal plan shared by another household member', () => {
+      const service = bare();
+      service.db = {
+        getCurrentUserId: () => 'u1',
+        getMealPlan: vi.fn(() => ({ id: 'm1', userId: 'u2' })),
+        canModify: vi.fn(() => false),
+        exec: vi.fn(),
+      };
+
+      expect(() => service.updateMeal('m1', { servings: 2 })).toThrow('only they can change it');
+      expect(service.db.exec).not.toHaveBeenCalled();
     });
 
     it('is a no-op when no fields are provided', () => {
       const service = bare();
       service.db = {
         getCurrentUserId: () => 'u1',
-        getMealPlan: vi.fn(() => [{ id: 'm1' }]),
+        getMealPlan: vi.fn(() => ({ id: 'm1', userId: 'u1' })),
+        canModify: () => true,
         exec: vi.fn(),
       };
 
@@ -156,7 +170,8 @@ describe('MealPlanService', () => {
       const service = bare();
       service.db = {
         getCurrentUserId: () => 'u1',
-        getMealPlan: vi.fn(() => [{ id: 'm1' }]),
+        getMealPlan: vi.fn(() => ({ id: 'm1', userId: 'u1' })),
+        canModify: () => true,
         exec: vi.fn(),
       };
 

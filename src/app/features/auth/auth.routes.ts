@@ -26,6 +26,13 @@ export const AUTH_ROUTES: Routes = [
     title: 'Reset Password - PantryPal',
   },
   {
+    // No guard: the recovery link signs the user in, which guestGuard would redirect away from.
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+    title: 'Choose a New Password - PantryPal',
+  },
+  {
     path: 'profile',
     loadComponent: () =>
       import('./profile/profile.component').then((m) => m.ProfileComponent),

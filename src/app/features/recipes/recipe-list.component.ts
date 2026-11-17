@@ -151,7 +151,7 @@ export class RecipeListComponent {
         if (!ok) return;
         try {
           this.db.deleteRecipeIngredientsByRecipe(r.id);
-          this.db.hardDelete('recipes', r.id);
+          this.db.softDelete('recipes', r.id);
           this.dataEvents.emit('recipes', 'delete', r.id);
           this.snackbar.success('Recipe deleted successfully');
           this.refresh();

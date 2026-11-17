@@ -49,6 +49,14 @@ export class SyncService {
     'meal_plans',
   ];
 
+  /** Rows fetched per pull request; below Supabase's default 1000-row response cap. */
+  static readonly PULL_PAGE_SIZE = 500;
+  /** Max recipe ids per `in()` filter, to keep request URLs short. */
+  private static readonly ID_CHUNK = 100;
+  /** Sync log entries older than this are pruned after each sync. */
+  private static readonly SYNC_LOG_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+  private static readonly EPOCH = new Date(0).toISOString();
+
   /**
    * Sync now - push local changes and pull remote changes
    */
@@ -78,6 +86,18 @@ export class SyncService {
       };
     }
 
+    // Overlapping runs (auto-sync, online event, post-migration sync, manual button) would
+    // read the same dirty rows and cursors; let the running sync finish instead.
+    if (this.isSyncingSignal()) {
+      return {
+        success: false,
+        pushedCount: 0,
+        pulledCount: 0,
+        conflictCount: 0,
+        errors: ['Sync already in progress'],
+      };
+    }
+
     this.isSyncingSignal.set(true);
     this.syncStatusSignal.set('syncing');
 
@@ -90,20 +110,32 @@ export class SyncService {
     };
 
     try {
-      // Get last sync time
-      const stats = this.db.getSyncStats();
-      const lastSyncTime = stats.lastSyncTime || new Date(0).toISOString();
+      // Household membership decides whose rows are pulled; it is otherwise only loaded by the settings page.
+      if (!this.householdService.household()) {
+        await this.householdService.loadHousehold();
+      }
 
       // Push local changes to cloud
-      const pushResult = await this.pushChanges(userId, lastSyncTime);
+      const pushResult = await this.pushChanges(userId);
       result.pushedCount = pushResult.count;
       result.errors.push(...pushResult.errors);
 
       // Pull remote changes to local
-      const pullResult = await this.pullChanges(userId, lastSyncTime);
+      const pullResult = await this.pullChanges(userId);
       result.pulledCount = pullResult.count;
       result.conflictCount = pullResult.conflicts;
       result.errors.push(...pullResult.errors);
+
+      this.db.pruneSyncLog(new Date(Date.now() - SyncService.SYNC_LOG_RETENTION_MS).toISOString());
+
+      if (result.errors.length > 0) {
+        // A partially failed sync must not look successful: failed tables keep their
+        // dirty rows and pull cursors, and are retried on the next run.
+        result.success = false;
+        this.syncStatusSignal.set('error');
+        this.snackbar.error(`Sync incomplete: ${result.errors.length} table(s) failed. Will retry.`);
+        return result;
+      }
 
       // Update last sync time in profile
       await this.profileService.updateLastSync();
@@ -188,6 +220,16 @@ export class SyncService {
   }
 
   /**
+   * Normalize a timestamp to the ISO form used locally, so text comparisons between
+   * local `updatedAt` and `syncedAt` stay meaningful whatever format the server returns.
+   */
+  private toIso(value: unknown): string | null {
+    if (typeof value !== 'string' || value === '') return null;
+    const ms = Date.parse(value);
+    return Number.isNaN(ms) ? value : new Date(ms).toISOString();
+  }
+
+  /**
    * Convert snake_case Supabase record back to camelCase for local storage
    */
   private remoteToLocal(record: any): any {
@@ -196,24 +238,31 @@ export class SyncService {
       const camel = key.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
       result[camel] = value;
     }
-    result['syncedAt'] = new Date().toISOString();
+    const updatedAt = this.toIso(result['updatedAt']);
+    if (updatedAt) result['updatedAt'] = updatedAt;
+    // A pulled row is clean. If the writer's clock ran ahead of ours, mark it synced at its
+    // own timestamp so it is not mistaken for a local edit and pushed straight back.
+    const now = new Date().toISOString();
+    result['syncedAt'] = updatedAt && updatedAt > now ? updatedAt : now;
     return result;
+  }
+
+  /** True when a local row has edits that have not been pushed. */
+  private isDirty(local: any): boolean {
+    return !local.syncedAt || (!!local.updatedAt && local.updatedAt > local.syncedAt);
   }
 
   /**
    * Push local changes to Supabase
    */
-  private async pushChanges(
-    userId: string,
-    lastSyncTime: string
-  ): Promise<{ count: number; errors: string[] }> {
+  private async pushChanges(userId: string): Promise<{ count: number; errors: string[] }> {
     let count = 0;
     const errors: string[] = [];
 
     for (const table of this.SYNC_TABLES) {
       try {
-        // Get local changes since last sync
-        const changes = this.db.getChangedRecords(table, lastSyncTime);
+        // Rows edited since their own last sync, independent of other tables' progress
+        const changes = this.db.getChangedRecords(table);
 
         if (changes.length === 0) {
           continue;
@@ -235,27 +284,15 @@ export class SyncService {
           throw error;
         }
 
-        // Mark records as synced in local DB
-        const syncTime = new Date().toISOString();
-        if (isChild) {
-          for (const change of changes) {
-            this.db.exec(
-              `UPDATE recipe_ingredients SET syncedAt = ?, version = version + 1 WHERE recipeId = ? AND ingredientId = ?`,
-              [syncTime, change.recipeId, change.ingredientId]
-            );
-          }
-        } else {
-          const ids = changes.map((r: any) => r.id);
-          this.db.markAsSynced(table, ids, syncTime);
-        }
+        // Mark only the rows that were not edited again while the upsert was in flight
+        await this.db.markRowsSynced(table, changes, new Date().toISOString());
 
         // Log success
         changes.forEach((r: any) => this.db.logSync(table, 'push', this.getRecordId(r, table), true));
 
         count += changes.length;
-        console.log(`Pushed ${changes.length} changes to ${table}`);
       } catch (error) {
-        const errorMsg = `Failed to push ${table}: ${error}`;
+        const errorMsg = `Failed to push ${table}: ${this.describeError(error)}`;
         errors.push(errorMsg);
         console.error(errorMsg);
 
@@ -268,12 +305,59 @@ export class SyncService {
   }
 
   /**
+   * Fetch every remote row changed at or after the table's cursor, page by page in a stable order.
+   * Rows equal to the cursor are re-read so rows sharing a timestamp are never skipped;
+   * unchanged rows are filtered out when applied.
+   */
+  private async fetchRemoteChanges(table: string, cursor: string, pullUserIds: string[], recipeIds: string[] | null): Promise<any[]> {
+    const isChild = this.CHILD_TABLES.has(table);
+    const pageSize = SyncService.PULL_PAGE_SIZE;
+    const filters: string[][] = isChild ? this.chunk(recipeIds ?? [], SyncService.ID_CHUNK) : [pullUserIds];
+    const rows: any[] = [];
+
+    for (const ids of filters) {
+      for (let from = 0; ; from += pageSize) {
+        let query = this.supabase.from(table).select('*').gte('updated_at', cursor);
+        query = isChild ? query.in('recipe_id', ids) : query.in('user_id', ids);
+        query = query.order('updated_at', { ascending: true });
+        query = isChild
+          ? query.order('recipe_id', { ascending: true }).order('ingredient_id', { ascending: true })
+          : query.order('id', { ascending: true });
+
+        const { data, error } = await query.range(from, from + pageSize - 1);
+        if (error) {
+          throw error;
+        }
+
+        const page = data ?? [];
+        rows.push(...page);
+        if (page.length < pageSize) {
+          break;
+        }
+      }
+    }
+
+    return rows;
+  }
+
+  private chunk<T>(items: T[], size: number): T[][] {
+    const out: T[][] = [];
+    for (let i = 0; i < items.length; i += size) {
+      out.push(items.slice(i, i + size));
+    }
+    return out;
+  }
+
+  private describeError(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    if (error && typeof error === 'object' && 'message' in error) return String((error as any).message);
+    return String(error);
+  }
+
+  /**
    * Pull remote changes from Supabase
    */
-  private async pullChanges(
-    userId: string,
-    lastSyncTime: string
-  ): Promise<{ count: number; conflicts: number; errors: string[] }> {
+  private async pullChanges(userId: string): Promise<{ count: number; conflicts: number; errors: string[] }> {
     let count = 0;
     let conflicts = 0;
     const errors: string[] = [];
@@ -285,133 +369,90 @@ export class SyncService {
     for (const table of this.SYNC_TABLES) {
       try {
         const isChild = this.CHILD_TABLES.has(table);
+        const cursor = this.db.getSyncCursor(userId, table) ?? SyncService.EPOCH;
 
-        // Fetch remote changes since last sync
-        let query = this.supabase.from(table).select('*').gt('updated_at', lastSyncTime);
-        if (!isChild) {
-          query = query.in('user_id', pullUserIds);
-        } else {
+        let recipeIds: string[] | null = null;
+        if (isChild) {
           // For child tables (recipe_ingredients), include recipes from all household members (BUG-20)
           const placeholders = pullUserIds.map(() => '?').join(',');
-          const sharedRecipeIds = this.db.query<{id: string}>(
+          recipeIds = this.db.query<{id: string}>(
             `SELECT id FROM recipes WHERE userId IN (${placeholders}) AND (isDeleted IS NULL OR isDeleted = 0)`,
             pullUserIds
           ).map(r => r.id);
-          if (sharedRecipeIds.length === 0) continue;
-          query = query.in('recipe_id', sharedRecipeIds);
+          if (recipeIds.length === 0) continue;
         }
 
-        const { data, error } = await query;
+        const data = await this.fetchRemoteChanges(table, cursor, pullUserIds, recipeIds);
 
-        if (error) {
-          throw error;
-        }
-
-        if (!data || data.length === 0) {
+        if (data.length === 0) {
           continue;
         }
+
+        // The cursor comes from the server's own values, never from this device's clock.
+        const nextCursor: string = data[data.length - 1].updated_at ?? cursor;
 
         // Convert snake_case Supabase records to camelCase for local storage
         const records = data.map((record: any) => this.remoteToLocal(record));
 
-        const isCompositeKey = isChild;
-
         // Build WHERE clause for finding existing records
-        const findExistingQuery = isCompositeKey
+        const findExistingQuery = isChild
           ? `SELECT * FROM ${table} WHERE recipeId = ? AND ingredientId = ?`
           : `SELECT * FROM ${table} WHERE id = ?`;
 
-        const getFindParams = (record: any) => isCompositeKey
+        const getFindParams = (record: any) => isChild
           ? [record.recipeId, record.ingredientId]
           : [record.id];
 
-        // Check for conflicts (local changes that differ from remote)
-        const conflictingRecords: any[] = [];
-        const safeRecords: any[] = [];
+        // Filter columns against allowlist to prevent SQL injection via remote column names (BUG-12)
+        const allowedCols = DB_TABLE_COLUMNS[table] ?? [];
+        const statements: Array<{ sql: string; params: any[] }> = [];
+        const applied: any[] = [];
+        let tableConflicts = 0;
 
         for (const remoteRecord of records) {
-          const localRecords = this.db.query(findExistingQuery, getFindParams(remoteRecord));
+          const keyMissing = isChild ? !remoteRecord.recipeId || !remoteRecord.ingredientId : !remoteRecord.id;
+          if (keyMissing) {
+            throw new Error(`Pulled ${table} row is missing its primary key`);
+          }
+          const columns = Object.keys(remoteRecord).filter(c => allowedCols.includes(c));
+          const values = columns.map((col) => remoteRecord[col]);
+          const local = this.db.query(findExistingQuery, getFindParams(remoteRecord))[0];
 
-          if (localRecords.length > 0) {
-            const localRecord = localRecords[0];
-
-            // Check if local version is newer and different (conflict)
-            if (
-              localRecord.updatedAt &&
-              remoteRecord.updatedAt &&
-              localRecord.updatedAt > remoteRecord.updatedAt &&
-              localRecord.version !== remoteRecord.version
-            ) {
-              conflictingRecords.push({
-                local: localRecord,
-                remote: remoteRecord,
-              });
-              conflicts++;
+          if (local) {
+            if (this.isDirty(local)) {
+              // Unpushed local edits win for now; they are pushed on the next run.
+              tableConflicts++;
+              this.db.logSync(table, 'conflict', this.getRecordId(remoteRecord, table), false, 'Local changes not yet pushed');
               continue;
             }
-          }
-
-          safeRecords.push(remoteRecord);
-        }
-
-        // Insert/update non-conflicting records
-        if (safeRecords.length > 0) {
-          // Filter columns against allowlist to prevent SQL injection via remote column names (BUG-12)
-          const allowedCols = DB_TABLE_COLUMNS[table] ?? [];
-          const columns = Object.keys(safeRecords[0]).filter(c => allowedCols.includes(c));
-          if (columns.length === 0) {
-            throw new Error(`No allowed columns received for sync table: ${table}`);
-          }
-
-          for (const record of safeRecords) {
-            const placeholders = columns.map(() => '?').join(',');
-            const values = columns.map((col) => record[col]);
-
-            // Check if exists
-            const existing = this.db.query(findExistingQuery, getFindParams(record));
-
-            if (existing.length > 0) {
-              // Update
-              const setClause = columns.map((col) => `${col}=?`).join(',');
-              if (isCompositeKey) {
-                this.db.exec(
-                  `UPDATE ${table} SET ${setClause} WHERE recipeId=? AND ingredientId=?`,
-                  [...values, record.recipeId, record.ingredientId]
-                );
-              } else {
-                this.db.exec(
-                  `UPDATE ${table} SET ${setClause} WHERE id=?`,
-                  [...values, record.id]
-                );
-              }
-            } else {
-              // Insert
-              this.db.exec(
-                `INSERT INTO ${table} (${columns.join(',')}) VALUES (${placeholders})`,
-                values
-              );
+            if (local.updatedAt === remoteRecord.updatedAt && local.version === remoteRecord.version) {
+              continue; // already applied (re-read at the cursor boundary)
             }
+
+            const setClause = columns.map((col) => `${col}=?`).join(',');
+            statements.push(isChild
+              ? { sql: `UPDATE ${table} SET ${setClause} WHERE recipeId=? AND ingredientId=?`, params: [...values, remoteRecord.recipeId, remoteRecord.ingredientId] }
+              : { sql: `UPDATE ${table} SET ${setClause} WHERE id=?`, params: [...values, remoteRecord.id] });
+          } else {
+            statements.push({
+              sql: `INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
+              params: values,
+            });
           }
-
-          count += safeRecords.length;
-          console.log(`Pulled ${safeRecords.length} changes from ${table}`);
+          applied.push(remoteRecord);
         }
 
-        // Log conflicts
-        if (conflictingRecords.length > 0) {
-          console.warn(
-            `Found ${conflictingRecords.length} conflicts in ${table}:`,
-            conflictingRecords
-          );
-          conflictingRecords.forEach(({ remote }) =>
-            this.db.logSync(table, 'conflict', this.getRecordId(remote, table), false, 'Version conflict')
-          );
+        // One transaction and one persist per table
+        if (statements.length > 0) {
+          await this.db.execBatch(statements);
         }
+        this.db.setSyncCursor(userId, table, nextCursor);
 
-        // Log success
-        safeRecords.forEach((r) => this.db.logSync(table, 'pull', this.getRecordId(r, table), true));
+        applied.forEach((r) => this.db.logSync(table, 'pull', this.getRecordId(r, table), true));
+        count += applied.length;
+        conflicts += tableConflicts;
       } catch (error) {
-        const errorMsg = `Failed to pull ${table}: ${error}`;
+        const errorMsg = `Failed to pull ${table}: ${this.describeError(error)}`;
         errors.push(errorMsg);
         console.error(errorMsg);
 
@@ -437,15 +478,19 @@ export class SyncService {
   /**
    * Start auto-sync (periodic background sync)
    */
-  startAutoSync(intervalMinutes: number = 5): void {
+  startAutoSync(intervalMinutes: number = 5, syncImmediately = true): void {
     // Always clean up first to avoid duplicate listeners/intervals
     this.stopAutoSync();
+
+    // Sync right away (e.g. after sign-in) instead of waiting for the first interval
+    if (syncImmediately && this.auth.isAuthenticated() && navigator.onLine) {
+      void this.syncNow();
+    }
 
     const intervalMs = intervalMinutes * 60 * 1000;
 
     this.syncIntervalHandle = setInterval(async () => {
       if (this.auth.isAuthenticated() && navigator.onLine && !this.isSyncingSignal()) {
-        console.log('Auto-sync triggered');
         await this.syncNow();
       }
     }, intervalMs);

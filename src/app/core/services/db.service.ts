@@ -374,6 +374,18 @@ export class DbService {
     this.addColumnIfNotExists('meal_plans', 'createdAt', 'TEXT');
     this.addColumnIfNotExists('meal_plans', 'updatedAt', 'TEXT');
 
+    // Per-user, per-table pull cursors. Kept out of the synced tables so the cursor
+    // never travels to Supabase as a column.
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS sync_state (
+        userId TEXT NOT NULL,
+        tableName TEXT NOT NULL,
+        pullCursor TEXT,
+        updatedAt TEXT,
+        PRIMARY KEY (userId, tableName)
+      );
+    `);
+
     // User settings for language preferences
     this.db.run(`
       CREATE TABLE IF NOT EXISTS user_settings (
@@ -663,8 +675,8 @@ export class DbService {
     defaultShelfLifeDays: number | null; notifyStartDays: number | null; notifyRepeatDays: number | null;
   }): void {
     this.exec(
-      'UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=? WHERE id=?',
-      [item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays, id]
+      'UPDATE ingredients SET name=?, categoryId=?, defaultShelfLifeDays=?, notifyStartDays=?, notifyRepeatDays=?, updatedAt=? WHERE id=?',
+      [item.name, item.categoryId, item.defaultShelfLifeDays, item.notifyStartDays, item.notifyRepeatDays, new Date().toISOString(), id]
     );
   }
 
@@ -1002,11 +1014,12 @@ export class DbService {
   }
 
   /**
-   * Get records that have changed since last sync
+   * Get the current user's records that have local changes not yet pushed.
+   * A row is dirty when it was never synced or was updated after its last sync,
+   * independent of any other table's progress.
    * @param table Table name
-   * @param lastSyncTime ISO timestamp of last successful sync
    */
-  getChangedRecords<T = any>(table: string, lastSyncTime: string): T[] {
+  getChangedRecords<T = any>(table: string): T[] {
     this.assertAllowedTable(table);
     const userId = this.getCurrentUserId();
 
@@ -1017,34 +1030,65 @@ export class DbService {
     const sql = `
       SELECT * FROM ${table}
       WHERE userId = ?
-      AND (
-        syncedAt IS NULL
-        OR updatedAt > ?
-        OR (isDeleted = 1 AND updatedAt > ?)
-      )
+      AND (syncedAt IS NULL OR updatedAt > syncedAt)
     `;
 
-    return this.query<T>(sql, [userId, lastSyncTime, lastSyncTime]);
+    return this.query<T>(sql, [userId]);
   }
 
   /**
-   * Mark records as synced
+   * Mark pushed rows as synced, but only if they were not edited again while the push was in flight.
    * @param table Table name
-   * @param ids Record IDs to mark as synced
-   * @param syncTime ISO timestamp of sync
+   * @param rows The rows exactly as they were pushed (key columns and updatedAt are used)
+   * @param syncTime ISO timestamp of the push
    */
-  markAsSynced(table: string, ids: string[], syncTime: string): void {
+  markRowsSynced(table: string, rows: Array<Record<string, any>>, syncTime: string): Promise<void> {
     this.assertAllowedTable(table);
-    if (ids.length === 0) return;
+    if (rows.length === 0) return Promise.resolve();
 
-    const placeholders = ids.map(() => '?').join(',');
-    const sql = `
-      UPDATE ${table}
-      SET syncedAt = ?, version = version + 1
-      WHERE id IN (${placeholders})
-    `;
+    const composite = table === 'recipe_ingredients';
+    const statements = rows.map(row => composite
+      ? {
+          sql: `UPDATE recipe_ingredients SET syncedAt = ? WHERE recipeId = ? AND ingredientId = ? AND updatedAt IS ?`,
+          params: [syncTime, row['recipeId'], row['ingredientId'], row['updatedAt'] ?? null],
+        }
+      : {
+          sql: `UPDATE ${table} SET syncedAt = ? WHERE id = ? AND updatedAt IS ?`,
+          params: [syncTime, row['id'], row['updatedAt'] ?? null],
+        });
 
-    this.exec(sql, [syncTime, ...ids]);
+    return this.execBatch(statements);
+  }
+
+  /**
+   * Read the pull cursor (last remote updated_at applied) for one table.
+   */
+  getSyncCursor(userId: string, table: string): string | null {
+    this.assertAllowedTable(table);
+    const rows = this.query<{ pullCursor: string | null }>(
+      'SELECT pullCursor FROM sync_state WHERE userId = ? AND tableName = ?',
+      [userId, table]
+    );
+    return rows[0]?.pullCursor ?? null;
+  }
+
+  /**
+   * Store the pull cursor for one table. Called only after that table pulled successfully.
+   */
+  setSyncCursor(userId: string, table: string, cursor: string): void {
+    this.assertAllowedTable(table);
+    this.exec(
+      `INSERT INTO sync_state (userId, tableName, pullCursor, updatedAt) VALUES (?, ?, ?, ?)
+       ON CONFLICT(userId, tableName) DO UPDATE SET pullCursor = excluded.pullCursor, updatedAt = excluded.updatedAt`,
+      [userId, table, cursor, new Date().toISOString()]
+    );
+  }
+
+  /**
+   * Delete sync log entries older than the given ISO timestamp.
+   */
+  pruneSyncLog(olderThan: string): void {
+    this.exec('DELETE FROM sync_log WHERE timestamp < ?', [olderThan]);
   }
 
   /**

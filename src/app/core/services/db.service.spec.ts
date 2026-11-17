@@ -214,7 +214,7 @@ describe('DbService typed mutation methods', () => {
 
     expect(exec).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE ingredients SET'),
-      ['Flour', null, null, null, null, 'ing-1']
+      ['Flour', null, null, null, null, expect.any(String), 'ing-1']
     );
   });
 
@@ -401,5 +401,121 @@ describe('DbService barcode migration', () => {
 
     currentUserId = 'user-1';
     expect((service as any).queryByUser('inventory').map((row: any) => row.id)).toEqual(['user-first']);
+  });
+});
+describe('DbService sync bookkeeping (real SQLite schema)', () => {
+  let service: DbService;
+  let SQL: any;
+  let currentUserId: string | null;
+
+  beforeAll(async () => {
+    SQL = await initSqlJs({
+      locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}`,
+    });
+  });
+
+  beforeEach(() => {
+    currentUserId = 'user-1';
+    TestBed.configureTestingModule({
+      providers: [
+        DbService,
+        { provide: AuthService, useValue: { getCurrentUserId: () => currentUserId } },
+      ],
+    });
+    service = TestBed.inject(DbService);
+    (service as any).db = new SQL.Database();
+    (service as any).migrate();
+    vi.spyOn(service, 'persist').mockResolvedValue(undefined);
+  });
+
+  const insertIngredient = (id: string, updatedAt: string | null, syncedAt: string | null, userId = 'user-1') =>
+    service.exec(
+      'INSERT INTO ingredients (id, name, userId, updatedAt, syncedAt) VALUES (?, ?, ?, ?, ?)',
+      [id, id, userId, updatedAt, syncedAt]
+    );
+
+  it('returns only rows never synced or edited after their own last sync', () => {
+    insertIngredient('never-synced', '2026-01-01T00:00:00.000Z', null);
+    insertIngredient('edited', '2026-01-03T00:00:00.000Z', '2026-01-02T00:00:00.000Z');
+    insertIngredient('clean', '2026-01-02T00:00:00.000Z', '2026-01-03T00:00:00.000Z');
+    insertIngredient('other-user', null, null, 'user-2');
+
+    const ids = service.getChangedRecords<any>('ingredients').map(r => r.id).sort();
+
+    expect(ids).toEqual(['edited', 'never-synced']);
+  });
+
+  it('marks pushed rows synced unless they were edited again during the push', async () => {
+    insertIngredient('a', '2026-01-01T00:00:00.000Z', null);
+    insertIngredient('b', '2026-01-01T00:00:00.000Z', null);
+    const pushed = service.getChangedRecords<any>('ingredients');
+
+    // Row b is edited while the upsert is in flight.
+    service.exec('UPDATE ingredients SET name = ?, updatedAt = ? WHERE id = ?', ['b2', '2026-01-01T00:00:05.000Z', 'b']);
+    await service.markRowsSynced('ingredients', pushed, '2026-01-01T00:00:10.000Z');
+
+    expect(service.getChangedRecords<any>('ingredients').map(r => r.id)).toEqual(['b']);
+  });
+
+  it('marks recipe ingredients synced by their composite key', async () => {
+    service.exec(
+      'INSERT INTO recipe_ingredients (recipeId, ingredientId, quantity, unit, userId, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+      ['r1', 'i1', 1, 'g', 'user-1', '2026-01-01T00:00:00.000Z']
+    );
+    const pushed = service.getChangedRecords<any>('recipe_ingredients');
+
+    await service.markRowsSynced('recipe_ingredients', pushed, '2026-01-02T00:00:00.000Z');
+
+    expect(service.getChangedRecords<any>('recipe_ingredients')).toEqual([]);
+  });
+
+  it('stores pull cursors per user and table, and overwrites them', () => {
+    expect(service.getSyncCursor('user-1', 'inventory')).toBeNull();
+
+    service.setSyncCursor('user-1', 'inventory', '2026-01-01T00:00:00Z');
+    service.setSyncCursor('user-1', 'inventory', '2026-02-01T00:00:00Z');
+    service.setSyncCursor('user-2', 'inventory', '2026-03-01T00:00:00Z');
+
+    expect(service.getSyncCursor('user-1', 'inventory')).toBe('2026-02-01T00:00:00Z');
+    expect(service.getSyncCursor('user-1', 'recipes')).toBeNull();
+    expect(service.getSyncCursor('user-2', 'inventory')).toBe('2026-03-01T00:00:00Z');
+  });
+
+  it('keeps the cursor out of the synced tables', () => {
+    for (const table of ['ingredient_categories', 'ingredients', 'inventory', 'recipes', 'recipe_ingredients', 'meal_plans']) {
+      expect(DB_TABLE_COLUMNS[table]).not.toContain('pullCursor');
+    }
+    expect(() => service.getSyncCursor('user-1', 'sync_state')).toThrow();
+  });
+
+  it('prunes sync log entries older than the cutoff', () => {
+    service.logSync('inventory', 'push', 'old', true);
+    service.exec('UPDATE sync_log SET timestamp = ? WHERE recordId = ?', ['2020-01-01T00:00:00.000Z', 'old']);
+    service.logSync('inventory', 'push', 'new', true);
+
+    service.pruneSyncLog('2025-01-01T00:00:00.000Z');
+
+    const ids = (service as any).query('SELECT recordId FROM sync_log').map((r: any) => r.recordId);
+    expect(ids).toEqual(['new']);
+  });
+
+  it('soft-deleted rows become dirty so the deletion is pushed', async () => {
+    insertIngredient('gone', '2026-01-01T00:00:00.000Z', '2026-01-02T00:00:00.000Z');
+    expect(service.getChangedRecords<any>('ingredients')).toEqual([]);
+
+    service.softDelete('ingredients', 'gone');
+
+    const [row] = service.getChangedRecords<any>('ingredients');
+    expect(row).toMatchObject({ id: 'gone', isDeleted: 1 });
+  });
+
+  it('records the edit time when ingredient details change', () => {
+    insertIngredient('i1', '2026-01-01T00:00:00.000Z', '2026-01-02T00:00:00.000Z');
+
+    service.updateIngredientDetails('i1', {
+      name: 'Renamed', categoryId: null, defaultShelfLifeDays: null, notifyStartDays: null, notifyRepeatDays: null,
+    });
+
+    expect(service.getChangedRecords<any>('ingredients').map(r => r.name)).toEqual(['Renamed']);
   });
 });

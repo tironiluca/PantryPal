@@ -91,3 +91,23 @@
     transform: scale(1.05);
   }
 }
+
+.storage-unavailable {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 12px 16px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container, #f9dedc);
+  color: var(--mat-sys-on-error-container, #410e0b);
+
+  p {
+    margin: 4px 0 0;
+  }
+
+  &.storage-warning {
+    background: var(--mat-sys-tertiary-container, #fff4d6);
+    color: var(--mat-sys-on-tertiary-container, #3d2f00);
+  }
+}

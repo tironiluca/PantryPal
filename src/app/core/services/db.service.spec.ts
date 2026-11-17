@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import initSqlJs from 'sql.js/dist/sql-wasm.js';
 import { AuthService } from './auth.service';
-import { DB_TABLE_COLUMNS, DbService } from './db.service';
+import { DATABASE_UNAVAILABLE_MESSAGE, DB_TABLE_COLUMNS, DbService } from './db.service';
 import { SnackbarService } from './snackbar.service';
 
 const storage = vi.hoisted(() => new Map<string, Uint8Array>());
@@ -310,6 +310,33 @@ describe('DbService persistence fallback', () => {
 
     await expect(db.readFromOPFS('pantrypal.db')).resolves.toEqual(new Uint8Array([4, 5]));
     expect(service.persistenceAvailable()).toBe(true);
+  });
+
+  it('keeps the in-memory database readable after persistence fails', async () => {
+    openDbMock.mockRejectedValue(new Error('IndexedDB unavailable'));
+    const SQL = await initSqlJs({ locateFile: (file: string) => `${process.cwd()}/node_modules/sql.js/dist/${file}` });
+    const db = service as any;
+    db.db = new SQL.Database();
+    db.db.run('CREATE TABLE inventory (id TEXT PRIMARY KEY, quantity REAL)');
+
+    await service.exec('INSERT INTO inventory (id, quantity) VALUES (?, ?)', ['i1', 1]);
+    await service.exec('UPDATE inventory SET quantity = ? WHERE id = ?', [5, 'i1']);
+
+    expect(service.persistenceAvailable()).toBe(false);
+    expect(service.databaseAvailable()).toBe(true);
+    expect(service.query('SELECT id, quantity FROM inventory')).toEqual([{ id: 'i1', quantity: 5 }]);
+  });
+
+  it('reports the database unavailable and rejects writes when the engine cannot start', async () => {
+    const db = service as any;
+    db.db = null;
+    db.databaseAvailableSignal.set(false);
+
+    expect(service.databaseAvailable()).toBe(false);
+    expect(service.query('SELECT * FROM inventory')).toEqual([]);
+    expect(() => service.exec('INSERT INTO inventory (id) VALUES (?)', ['i1'])).toThrow(DATABASE_UNAVAILABLE_MESSAGE);
+    await expect(service.execBatch([{ sql: 'SELECT 1', params: [] }])).rejects.toThrow(DATABASE_UNAVAILABLE_MESSAGE);
+    await expect(service.persist()).resolves.toBeUndefined();
   });
 
   it('marks persistence unavailable and warns once when both backends fail', async () => {

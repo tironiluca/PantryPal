@@ -34,6 +34,9 @@ export const DB_TABLE_COLUMNS: Record<string, readonly string[]> = {
 
 const ALLOWED_TABLES = new Set(Object.keys(DB_TABLE_COLUMNS));
 
+export const DATABASE_UNAVAILABLE_MESSAGE =
+  'Local storage is unavailable in this browser, so changes cannot be saved.';
+
 export interface IngredientInventoryRow {
   quantity: number;
   unit: string;
@@ -105,19 +108,15 @@ export class DbService {
 
   private SQL!: any;
   private db!: any;
-  private memOnly = false;
   private persistenceWarningShown = false;
   private initialized = false;
   private persistenceAvailableSignal = signal(true);
   readonly persistenceAvailable = this.persistenceAvailableSignal.asReadonly();
+  /** False when the SQLite engine itself could not start; the app cannot store anything. */
+  private databaseAvailableSignal = signal(true);
+  readonly databaseAvailable = this.databaseAvailableSignal.asReadonly();
   // Deduplicates concurrent init() calls (BUG-02)
   private initPromise: Promise<void> | null = null;
-
-  private mem: Record<string, any[]> = {
-    ingredient_categories: [],
-    ingredients: [],
-    inventory: []
-  };
 
   async init(): Promise<void> {
     if (this.initialized) return;
@@ -140,11 +139,12 @@ export class DbService {
       // Mark initialized only after all async work succeeds
       this.initialized = true;
     } catch (e) {
-      console.warn('sql.js unavailable, falling back to in-memory store', e);
-      this.memOnly = true;
+      // Without the SQLite engine nothing can be stored. Fail visibly rather than
+      // pretending to work with a partial stand-in store.
+      console.error('Local database engine failed to start', e);
+      this.db = null;
+      this.databaseAvailableSignal.set(false);
       this.initialized = true;
-      // seed demo
-      this.mem['ingredients'].push({ id: 'ing-eggs', name: 'Eggs', categoryId: 'cat-fridge' });
     }
   }
 
@@ -455,19 +455,8 @@ export class DbService {
 
   query<T = any>(sql: string, params: any[] = []): T[] {
     if (!this.db) {
-      this.memOnly = true;
-    }
-
-    if (this.memOnly) {
-      // Extremely simplified parser for our demo list view only
-      if (sql.startsWith('SELECT * FROM inventory'))
-        return this.mem['inventory'] as any;
-
-      if (sql.startsWith('SELECT * FROM ingredients'))
-        return this.mem['ingredients'] as any;
-
-      return [] as any;     // fallthrough to sqlite below
-
+      // Not initialized yet, or the engine is unavailable: there is no data to read.
+      return [];
     }
 
     const stmt = this.db.prepare(sql);
@@ -747,40 +736,8 @@ export class DbService {
   }
 
   exec(sql: string, params: any[] = []) {
-    if (!this.db) { this.memOnly = true; }
-    if (this.memOnly) {
-      // naive handlers for INSERT/UPDATE/DELETE for inventory
-      if (sql.startsWith('INSERT INTO inventory')) {
-        const rec = {
-          id: params[0], ingredientId: params[1], quantity: params[2], unit: params[3],
-          minRestock: params[4], expiry: params[5], location: params[6], barcode: params[7],
-          createdAt: params[8], updatedAt: params[9]
-        };
-        this.mem['inventory'].push(rec);
-        return;
-      }
-      if (sql.startsWith('UPDATE inventory')) {
-        const id = params[9];
-        const idx = this.mem['inventory'].findIndex(r => r.id === id);
-        if (idx >= 0) {
-          this.mem['inventory'][idx] = {
-            ...this.mem['inventory'][idx],
-            ingredientId: params[0], quantity: params[1], unit: params[2], minRestock: params[3],
-            expiry: params[4], location: params[5], barcode: params[6], updatedAt: params[7]
-          };
-        }
-        return;
-      }
-      if (sql.startsWith('DELETE FROM inventory')) {
-        const id = params[0];
-        this.mem['inventory'] = this.mem['inventory'].filter(r => r.id !== id);
-        return;
-      }
-      if (sql.startsWith('INSERT INTO ingredients')) {
-        this.mem['ingredients'].push({ id: params[0], name: params[1], categoryId: params[2] });
-        return;
-      }
-      return;
+    if (!this.db) {
+      throw new Error(DATABASE_UNAVAILABLE_MESSAGE);
     }
     const stmt = this.db.prepare(sql);
     stmt.bind(params);
@@ -796,14 +753,7 @@ export class DbService {
    */
   execBatch(statements: Array<{ sql: string; params: any[] }>): Promise<void> {
     if (!this.db) {
-      this.memOnly = true;
-    }
-
-    if (this.memOnly) {
-      // NOTE: memOnly path executes statements individually and does NOT persist.
-      // No OPFS write occurs here — data lives only in-memory for this session.
-      statements.forEach(stmt => this.exec(stmt.sql, stmt.params));
-      return Promise.resolve();
+      return Promise.reject(new Error(DATABASE_UNAVAILABLE_MESSAGE));
     }
 
     try {
@@ -901,7 +851,8 @@ export class DbService {
   }
 
   async persist() {
-    if (this.memOnly) return;
+    // The in-memory database keeps working when it cannot be saved; only skip the write.
+    if (!this.db || !this.persistenceAvailableSignal()) return;
     const data = this.db.export();
     await this.writeToOPFS(DB_FILE, data);
   }
@@ -955,7 +906,7 @@ export class DbService {
         await fallback.put(DB_STORE, data, name);
         fallback.close();
       } catch (indexedDbError) {
-        this.markMemoryOnly();
+        this.markPersistenceUnavailable();
         console.warn('Database persistence unavailable; using memory-only mode', {
           opfsError,
           indexedDbError,
@@ -964,8 +915,7 @@ export class DbService {
     }
   }
 
-  private markMemoryOnly(): void {
-    this.memOnly = true;
+  private markPersistenceUnavailable(): void {
     this.persistenceAvailableSignal.set(false);
 
     if (!this.persistenceWarningShown) {

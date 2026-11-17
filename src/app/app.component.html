@@ -45,6 +45,27 @@
     </div>
   </mat-toolbar>
 
+  @if (!db.databaseAvailable()) {
+    <div class="storage-unavailable" role="alert" data-testid="storage-unavailable">
+      <mat-icon>error</mat-icon>
+      <div>
+        <strong>Local storage is unavailable</strong>
+        <p>
+          PantryPal could not start its on-device database in this browser, so nothing you enter can be saved.
+          Try a current version of Chrome, Edge, Firefox or Safari outside private browsing, then reload.
+        </p>
+      </div>
+    </div>
+  } @else if (!db.persistenceAvailable()) {
+    <div class="storage-unavailable storage-warning" role="status" data-testid="persistence-unavailable">
+      <mat-icon>warning</mat-icon>
+      <div>
+        <strong>Changes are not being saved on this device</strong>
+        <p>Browser storage is blocked, so your data lasts only until this tab closes. Signed-in data still syncs to the cloud.</p>
+      </div>
+    </div>
+  }
+
   <!-- Navigation dropdown — visible on mobile, accessible on all screens -->
   <mat-menu #navMenu="matMenu" [overlapTrigger]="false" panelClass="nav-dropdown">
     @for (tab of tabs; track tab.route) {

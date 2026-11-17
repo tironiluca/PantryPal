@@ -12,6 +12,7 @@ import { VoiceService } from './core/services/voice.service';
 import { VoiceCommandService } from './core/services/voice-command.service';
 import { SnackbarService } from './core/services/snackbar.service';
 import { SyncService } from './core/services/sync.service';
+import { DbService } from './core/services/db.service';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
@@ -29,6 +30,7 @@ describe('AppComponent', () => {
     logCommand: ReturnType<typeof vi.fn>;
   };
   let snackbarSpy: { warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
+  let dbSpy: { databaseAvailable: ReturnType<typeof signal<boolean>>; persistenceAvailable: ReturnType<typeof signal<boolean>> };
 
   async function setup(voiceSupported: boolean) {
     themeSpy = { mode: signal<'light' | 'dark'>('light'), set: vi.fn() };
@@ -44,6 +46,7 @@ describe('AppComponent', () => {
       logCommand: vi.fn(),
     };
     snackbarSpy = { warning: vi.fn(), error: vi.fn(), info: vi.fn() };
+    dbSpy = { databaseAvailable: signal(true), persistenceAvailable: signal(true) };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -59,6 +62,7 @@ describe('AppComponent', () => {
         { provide: VoiceService, useValue: voiceSpy },
         { provide: VoiceCommandService, useValue: { parseCommand: vi.fn(), executeCommand: vi.fn(), getSupportedCommands: vi.fn().mockReturnValue([]) } },
         { provide: SnackbarService, useValue: snackbarSpy },
+        { provide: DbService, useValue: dbSpy },
         {
           provide: SyncService,
           useValue: {
@@ -75,6 +79,32 @@ describe('AppComponent', () => {
     fixture = TestBed.createComponent(AppComponent);
     component = fixture.componentInstance;
   }
+
+  it('shows no storage banner when the database works normally', async () => {
+    await setup(false);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="storage-unavailable"]')).toBeNull();
+    expect(el.querySelector('[data-testid="persistence-unavailable"]')).toBeNull();
+  });
+
+  it('shows a blocking alert when the local database engine is unavailable', async () => {
+    await setup(false);
+    dbSpy.databaseAvailable.set(false);
+    fixture.detectChanges();
+    const alert = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="storage-unavailable"]');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('nothing you enter can be saved');
+  });
+
+  it('warns that changes are not saved when only persistence is unavailable', async () => {
+    await setup(false);
+    dbSpy.persistenceAvailable.set(false);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="persistence-unavailable"]')?.textContent).toContain('lasts only until this tab closes');
+    expect(el.querySelector('[data-testid="storage-unavailable"]')).toBeNull();
+  });
 
   it('reads voice support from the voice service at construction', async () => {
     await setup(true);

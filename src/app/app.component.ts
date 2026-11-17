@@ -10,6 +10,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { MigrationService } from './core/services/migration.service';
+import { DbService } from './core/services/db.service';
 import { VoiceService } from './core/services/voice.service';
 import { SnackbarService } from './core/services/snackbar.service';
 import { SyncStatusComponent } from './shared/components/sync-status/sync-status.component';
@@ -40,6 +41,7 @@ export class AppComponent {
 
   theme = inject(ThemeService);
   auth = inject(AuthService);
+  db = inject(DbService);
   private migration = inject(MigrationService);
   private voiceService = inject(VoiceService);
   private snackbar = inject(SnackbarService);

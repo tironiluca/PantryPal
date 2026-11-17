@@ -75,6 +75,28 @@ describe('RecipeImportService', () => {
     expect(http.get).toHaveBeenCalledTimes(2);
   });
 
+  it('numbers steps across HowToSection groups, plain strings and HowToStep objects', async () => {
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      '@type': 'Recipe',
+      name: 'Layer Cake',
+      recipeIngredient: ['flour'],
+      recipeInstructions: [
+        { '@type': 'HowToSection', name: 'Cake', itemListElement: [
+          { '@type': 'HowToStep', text: 'Mix the <b>batter</b>.' },
+          { '@type': 'HowToStep', text: 'Bake.' },
+        ] },
+        { '@type': 'HowToSection', name: 'Frosting', itemListElement: [{ '@type': 'HowToStep', text: 'Whip cream.' }] },
+        'Assemble.',
+        { '@type': 'HowToStep' },
+      ],
+    })}</script>`;
+    http.get.mockReturnValueOnce(of(html));
+
+    const recipe = await service.importFromUrl('https://example.com/cake');
+
+    expect(recipe.instructions).toBe('1. Mix the batter.\n\n2. Bake.\n\n3. Whip cream.\n\n4. Assemble.');
+  });
+
   it('maps imported ingredient quantities through the matching service', () => {
     const result = service.parseIngredientsWithQuantities(['2 tomatoes', 'salt to taste']);
 

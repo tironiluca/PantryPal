@@ -956,17 +956,14 @@ export class DbService {
     try {
       const dir = await this.rootDir();
       const handle = await dir.getFileHandle(name, { create: true });
-      // @ts-ignore
       if ('createSyncAccessHandle' in (handle as any)) {
-        // @ts-ignore
-        const access = await (handle as any).createSyncAccessHandle();
+          const access = await (handle as any).createSyncAccessHandle();
         await access.truncate(0);
         await access.write(data, { at: 0 });
         await access.flush();
         await access.close();
       } else if ('createWritable' in handle) {
-        // @ts-ignore
-        const writable = await (handle as any).createWritable();
+          const writable = await (handle as any).createWritable();
         await writable.write(data as Uint8Array);
         await writable.close();
       } else {

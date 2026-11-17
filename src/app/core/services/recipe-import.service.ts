@@ -209,16 +209,15 @@ export class RecipeImportService {
     }
 
     if (Array.isArray(instructions)) {
-      return instructions.map((step, index) => {
-        if (typeof step === 'string') {
-          return `${index + 1}. ${this.stripHtml(step)}`;
-        } else if (step.text) {
-          return `${index + 1}. ${this.stripHtml(step.text)}`;
-        } else if (step['@type'] === 'HowToStep' && step.text) {
-          return `${index + 1}. ${this.stripHtml(step.text)}`;
-        }
-        return '';
-      }).filter(step => step.length > 0).join('\n\n');
+      // Steps may be strings, HowToStep objects, or HowToSection groups of steps.
+      const flatten = (items: any[]): any[] =>
+        items.flatMap(item => (item && Array.isArray(item.itemListElement) ? flatten(item.itemListElement) : [item]));
+      return flatten(instructions)
+        .map(step => (typeof step === 'string' ? step : step?.text ?? ''))
+        .map(text => this.stripHtml(String(text)).trim())
+        .filter(text => text.length > 0)
+        .map((text, index) => `${index + 1}. ${text}`)
+        .join('\n\n');
     }
 
     if (instructions.text) {

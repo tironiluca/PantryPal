@@ -125,8 +125,8 @@ export class IngredientListComponent {
     }
 
     filtered.sort((a, b) => {
-      let aVal: any = a[this.sortColumn as keyof Ingredient];
-      let bVal: any = b[this.sortColumn as keyof Ingredient];
+      const aVal: any = a[this.sortColumn as keyof Ingredient];
+      const bVal: any = b[this.sortColumn as keyof Ingredient];
 
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;

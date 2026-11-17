@@ -6,7 +6,7 @@ export class OcrService {
   async extractExpiry(file: File): Promise<string | null> {
     const { data } = await Tesseract.recognize(file, 'eng+ita');
     const text = data.text.replace(/\n/g, ' ');
-    const m = text.match(/(\b\d{2}[\/.-]\d{2}[\/.-]\d{4}\b|\b\d{4}-\d{2}-\d{2}\b)/);
+    const m = text.match(/(\b\d{2}[/.-]\d{2}[/.-]\d{4}\b|\b\d{4}-\d{2}-\d{2}\b)/);
     if (!m) return null;
     const raw = m[0].replace(/[.-]/g, '/');
     const [a,b,c] = raw.split('/');

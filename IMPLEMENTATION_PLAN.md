@@ -1,6 +1,6 @@
 # PantryPal - Implementation Plan
 
-Rewritten 2026-11-17 after a full repository review. This replaces the previous backlog. The plan is in four parts:
+Rewritten 2026-11-17 after a full repository review; status updated the same day after the first implementation pass (see **Status**). This replaces the previous backlog. The plan is in four parts:
 
 1. what is broken now;
 2. what is still missing from the original plan;
@@ -30,21 +30,66 @@ Feature breadth is good. Inventory, ingredients, recipes with import, meal plann
 
 The weak points are everything that touches the server: sign-in, sync, sharing, account lifecycle, and the CI gate. These need to be made correct before more features are added.
 
-| Area | State |
-| --- | --- |
-| Production sign-in | **Down** - all methods fail on the production site |
-| CI | **Has never run a test** - all 12 runs failed within about 15 seconds; the latest failed at Node setup |
-| Cloud sync | Works on the happy path; several silent data-loss paths |
-| Household sharing | Likely non-functional end to end |
-| Password reset | Broken - the email link has no route |
-| Delete account | Reports success but deletes nothing |
-| Local features | Broadly complete; covered by unit specs |
+| Area | State at review | State now |
+| --- | --- | --- |
+| Production sign-in | **Down** - all methods fail on the production site | Still reported down; needs the dashboard checks in B2. Diagnostics and a smoke check are in place |
+| CI | **Has never run a test** - all 12 runs failed within about 15 seconds | Green on every push: lint, unit tests with coverage gate, build, Playwright, SQL/RLS tests |
+| Cloud sync | Works on the happy path; several silent data-loss paths | Minimum fixes shipped and tested (B3) |
+| Household sharing | Likely non-functional end to end | Fixed in code and migration 004; **works once 004 is applied** |
+| Password reset | Broken - the email link has no route | Reset page shipped; needs the redirect URL allowlisted |
+| Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; **works once 004 is applied** |
+| Local features | Broadly complete; covered by unit specs | Three more data bugs found and fixed with real-SQLite tests (see Status) |
+
+## Status (2026-11-17, after the first implementation pass)
+
+### Needs the project owner
+
+These cannot be done from the repository. Until they are, the related features stay broken in production.
+
+1. **Restore sign-in (B2).** In the Supabase dashboard, check whether project `yszsmwuremvxajibydem` is paused, and that Vercel's `SUPABASE_URL`/`SUPABASE_ANON_KEY` belong to it. Then check URL Configuration: Site URL, and `https://pantry-vibe-pal.vercel.app/**` in Redirect URLs, which also covers the new `/auth/reset-password` page. Then check the Google and GitHub providers. The browser console now logs the raw Supabase error (`Supabase auth error {name, status, code}`).
+2. **Apply migration 004** (`supabase/migrations/004_household_rpcs_and_account_deletion.sql`) in the Supabase SQL editor. It is one transaction and safe to re-run. Households, invitations and account deletion fail with "needs a database update" until it is applied. Never run 003 after it.
+3. **Add repository secrets `PROD_SUPABASE_URL` and `PROD_SUPABASE_ANON_KEY`** to enable the scheduled auth smoke check. Until then it passes by skipping. CI never reads these.
+4. **Deploy the recipe fetcher** (optional): `supabase functions deploy recipe-proxy`. Until then, recipe import keeps using third-party proxies.
+5. **Before the next schema change:** share a schema dump of the live project (`supabase db dump --schema public`). A2 (`household_id`), nutrition sync and version-checked upserts change the sync payload, so they wait for it.
+
+### Item status
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| B1 CI | **Done, verified** | CI green on every push since `251a4f4`; Vercel installs with `npm ci` |
+| B2 Sign-in | Repository part done; outage **open** | Raw error logging, unreachable-service message, `auth-smoke.yml`. `/auth/callback` was deliberately not added while the outage is undiagnosed |
+| B3 Sync | **Minimum fixes done, verified** in unit and real-SQLite tests | Soft deletes, per-row dirty tracking, per-table server cursors, paging, batched apply, partial failure reported, sync on sign-in. Clock skew is fixed only once 004's server `updated_at` trigger is live |
+| B4 Password reset | **Done**; link handoff not verified live | Page and e2e use a stored session, not a real recovery link |
+| B5 Households | **Done in code**, needs 004 applied | 34 SQL checks pass on three schema variants; old policies reproduced as "infinite recursion detected" |
+| B6 Delete account | **Done in code**, needs 004 applied | `DELETE FROM auth.users` inside `delete_my_account()` is untested against the live role's privileges |
+| B7 Storage fallback | **Done, verified** | Data stays readable when saving fails; a blocking alert when SQLite cannot start |
+| B8 Schema source | **Done** | Migrations are the only schema; 001 no longer drops tables; 003 marked superseded |
+| B9 Hygiene | **Mostly done** | Logs untracked, README rewritten, ESLint added. Service messages are still English-only |
+| A1 Sync redesign | Partly done (B3, server timestamps in 004) | Version-checked upserts and nutrition sync wait for the live schema |
+| A2 Household ownership | Read-only sharing done locally | Members' rows are visible and read-only. Shared editing needs `household_id`, which waits for the live schema |
+| A3 Supabase as code | Partly done | Migration tests in CI with an auth shim. Generated types and a local Supabase stack need the live schema |
+| A4 Edge Functions | `recipe-proxy` written, **not deployed** | `delete-account` is not needed (it is a database function); `send-invitation` is not started |
+| A5 Pipeline | Lint and lockfile done | Dependabot not enabled (it opens PRs); staging project and PR flow need the owner |
+| A6 Client structure | Coalesced, serialized writes done | Splitting `DbService` is deferred: specs reach into its internals |
+| A7 Headers | **Done**; CSP report-only | Enforced CSP is blocked on testing OCR, image models and recipe import |
+
+### Bugs found and fixed during the pass (not in the original review)
+
+- **Items created while signed in were invisible and never synced.** `createInventoryItem()`/`createIngredient()` inserted rows without a `userId`.
+- **Nutrition reads failed on a real database.** `queryByUser()` filtered on `isDeleted`, which the nutrition tables lack. Introduced in `2ae7cd9`; mocked specs hid it.
+- **Recipe import dropped steps** grouped in schema.org `HowToSection` blocks.
+- **Projects created from the old setup guide lacked synced columns** (`ingredients.barcode`, `sugar_g`; `recipe_ingredients.created_at`, `updated_at`), so every push of those tables would fail. Migration 004 adds them.
+- **`updateMeal()` could never report "not found"**, because it treated a row as an array.
+
+Rows already stored on devices without a `userId` (from the first bug) stay as guest data. Adopting them automatically could take another person's guest data on a shared device, so it is left as a decision for the owner.
 
 ## Part 1 - Broken Now
 
 Ordered by priority. Fix B1 first, because until CI runs, no other fix is verified by the gate.
 
 ### B1. CI has never executed tests - P0, Local + [External] secrets
+
+**Status: Done.**
 
 **[Verified]** All 12 runs of `.github/workflows/ci.yml` on `main` failed within 10-16 seconds. The latest is run 42667749268 on `main@39102e9`, and its job log was inspected. It failed in the "Set up Node.js" step with:
 
@@ -65,6 +110,8 @@ The missing lockfile also explains the earlier `idb` build break. Vercel resolve
 **Acceptance:** a green CI run on `main` that executes unit tests, the coverage gate, the build, and Playwright.
 
 ### B2. Production sign-in is down - P0, [External] first, then Local
+
+**Status: Repository hardening done; the outage needs the dashboard checks below.**
 
 **[Reported by the owner, not reproduced here]** On https://pantry-vibe-pal.vercel.app/auth/login, email/password, Google, and GitHub all fail. This environment cannot reach Supabase.
 
@@ -97,6 +144,8 @@ Repository hardening (Local):
 - The smoke check passes.
 
 ### B3. Sync can silently lose or resurrect data - P0, Local + Needs Supabase
+
+**Status: Minimum fixes done; see Status. Remaining items 6-8 are covered by A1/A2.**
 
 All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
@@ -144,6 +193,8 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B4. Password reset link has no route - P1, Local
 
+**Status: Done; redirect URL must be allowlisted.**
+
 **[Verified]** `resetPassword()` sends users to `/auth/reset-password` (`auth.service.ts:222`). `auth.routes.ts` defines no such route, so the wildcard redirects to `/auth/login`. `updatePassword()` exists (`auth.service.ts:243`), but nothing in `src/app` calls it, so there is no form anywhere to enter a new password. A user who forgot their password cannot recover the account.
 
 **Fix:** add a reset-password page that waits for the `PASSWORD_RECOVERY` session and calls `updatePassword()`. Add `/auth/reset-password` to the Supabase redirect allowlist [External].
@@ -151,6 +202,8 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 **Acceptance:** Playwright covers the request → link → new password → sign-in flow, with mocked auth.
 
 ### B5. Household sharing does not work end to end - P1, Needs Supabase
+
+**Status: Done in code; apply migration 004. The [Inferred] recursion was reproduced locally.**
 
 **[Verified]** in code:
 - `acceptInvitation()` has no caller, and there is no invitation inbox.
@@ -184,6 +237,8 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B6. Delete account deletes nothing - P1, Needs Supabase
 
+**Status: Done in code; apply migration 004.**
+
 **[Inferred - confirm live]** `UserProfileService.deleteAccount()` deletes from `users` (`user-profile.service.ts:230`). Neither migration 003 nor `SUPABASE_SETUP.md` defines a DELETE policy on `users`. RLS therefore filters the row out, the call returns no error, and the app shows "Account deleted successfully".
 
 The comment "cascade will delete all related data" depends on which schema is live (B8):
@@ -203,6 +258,8 @@ The auth user is never removed under either schema, and the client cannot remove
 
 ### B7. Memory-only persistence fallback is wrong - P2, Local
 
+**Status: Done.**
+
 **[Verified]** When sql.js cannot load, `DbService` falls back to an in-memory map that holds only three tables (`db.service.ts:116`).
 
 The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751`). The details update passes nine parameters (`db.service.ts:635`), so its id is at index 8. `setInventoryQuantity()` (`:646`) passes three. Editing in fallback mode therefore silently does nothing. Recipes, meal plans, and nutrition simply do not work in fallback mode.
@@ -215,6 +272,8 @@ The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751
 
 ### B8. Schema has no single source of truth - P1, Needs Supabase
 
+**Status: Done in the repository; a live schema dump is still needed (Status, item 5).**
+
 **[Verified]**
 - `SUPABASE_SETUP.md:52` defines `users` and `UUID` foreign keys to `auth.users`.
 - `001_initial_schema.sql` defines `user_id TEXT` with no foreign keys. It also starts with `DROP TABLE ... CASCADE` (`001:9-16`), so re-running it wipes production data.
@@ -225,6 +284,8 @@ The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751
 **Fix:** see A3. Pull the live schema with the Supabase CLI, commit it as the baseline migration, and delete the contradicting SQL from `SUPABASE_SETUP.md`.
 
 ### B9. Repository hygiene - P3, Local
+
+**Status: Mostly done; service strings are still English-only.**
 
 **[Verified]**
 - `ng-serve.err`, `ng-serve.log`, and `ng-watch.log` are tracked.
@@ -246,14 +307,14 @@ The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`
 | 1.5 Scanner stream cleanup | Done | |
 | 2.1 Duplicate barcode prevention | Done | User-scoped unique index |
 | 2.2 Product API cache | Done | IndexedDB via `idb` |
-| 2.3 Batch DB operations | Partial | `execBatch()` exists; sync pull and single `exec()` still persist per statement (B3.10) |
+| 2.3 Batch DB operations | Done | Sync applies each table in one transaction; file writes are coalesced (A6) |
 | 3.1 Smart meal of the day | Done | Expiry/availability scoring |
 | 3.2 Search, filter, sort | Done | Inventory search, location/expiry filters, sort column and direction |
 | 3.3 Unit conversions | Done | Used by cart, meal plan, nutrition |
 | 3.4 Analytics and waste reports | **Not started** | Needs a product decision (F7) |
 | 4.1-4.4 UI redesign | Done | Card grid, theme, bottom sheets; phone-width visual review outstanding |
 | 4.5 Loading skeletons | Done | `pp-skeleton` in inventory, recipes, cart |
-| 5.1 Confirmation dialogs | Done | Except `prompt()` in delete account (B6) |
+| 5.1 Confirmation dialogs | Done | Delete account now uses a typed confirmation |
 | 5.2 Keyboard shortcuts | Done | |
 
 The original plan's "Future enhancements" list is also mostly built:
@@ -394,31 +455,32 @@ All membership changes go through SECURITY DEFINER RPCs with explicit checks. A 
 
 ## Test Strategy And Coverage
 
-- Local unit suite: 745 tests in 63 spec files. The last local `npm run test:coverage` measured:
+- Unit suite: 824 tests in 65 spec files, run in CI on every push. The latest `npm run test:coverage` measured:
 
   | Metric | Coverage |
   | --- | --- |
-  | Statements | 76.81% |
-  | Branches | 69.54% |
-  | Functions | 76.01% |
-  | Lines | 77.4% |
+  | Statements | 81.34% |
+  | Branches | 73.28% |
+  | Functions | 79.33% |
+  | Lines | 82% |
 
-  The gate in `vitest.config.mts` is 70/65/70/70. It takes effect once CI runs (B1).
+  The gate in `vitest.config.mts` is now 78/70/76/78 (statements/branches/functions/lines).
+- SQL: `scripts/test-supabase-sql.sh` runs 34 RLS and function checks for migration 004 on three schema starting points, in CI.
 - Lowest-covered files, next in line for the 80% stage:
 
   | File | Statement coverage |
   | --- | --- |
   | `inventory-edit.dialog.ts` | 29% |
-  | `db.service.ts` | 32% (needs a real sql.js harness) |
+  | `db.service.ts` | 32% before this pass; now has a real sql.js harness covering sync, sharing, persistence and nutrition reads |
   | `nutrition.service.ts` | 51% |
   | `products.service.ts` | 58% |
   | `cache.service.ts` | 58% |
   | `ingredient-list.component.ts` | 58% |
 
 - Add tests where current mocks hide real failures:
-  - **sync:** two-device scenarios against a mocked or local Supabase (B3);
-  - **RLS:** tests against a local Supabase stack (A3);
-  - **auth flows** in Playwright: OAuth callback, password reset, sign-out.
+  - **sync:** two-device scenarios against a local Supabase stack (B3 is covered with mocks and real SQLite so far);
+  - **RLS:** done for 004 with an auth shim on plain PostgreSQL; a full local Supabase stack remains (A3);
+  - **auth flows** in Playwright: OAuth callback, a real recovery link, sign-out.
 - Replace route-level Playwright smoke checks with UI assertions for:
   - save;
   - product lookup;
@@ -447,9 +509,12 @@ The project is release-ready when all of the following hold:
 ## Verification Commands
 
 ```text
+npm run lint
 npm run test:coverage
 npm run build
 npm run e2e
+node --test supabase/functions/recipe-proxy/validate.test.ts
+PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres ./scripts/test-supabase-sql.sh
 ```
 
 ## Appendix - Completed Work (Summary)

@@ -19,10 +19,10 @@ export default defineConfig(() => ({
       // syntax, so we skip that broader "all files" scan.
       all: false,
       thresholds: {
-        statements: Number(process.env['COVERAGE_THRESHOLD'] ?? 70),
-        branches: Number(process.env['COVERAGE_THRESHOLD'] ?? 65),
-        functions: Number(process.env['COVERAGE_THRESHOLD'] ?? 70),
-        lines: Number(process.env['COVERAGE_THRESHOLD'] ?? 70),
+        statements: Number(process.env['COVERAGE_THRESHOLD'] ?? 78),
+        branches: Number(process.env['COVERAGE_THRESHOLD'] ?? 70),
+        functions: Number(process.env['COVERAGE_THRESHOLD'] ?? 76),
+        lines: Number(process.env['COVERAGE_THRESHOLD'] ?? 78),
       },
     },
   },

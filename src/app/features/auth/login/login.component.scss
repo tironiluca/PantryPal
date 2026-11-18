@@ -4,7 +4,7 @@
   align-items: center;
   min-height: 100vh;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--pp-bg);
 }
 
 .auth-card {
@@ -94,7 +94,7 @@ form {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: white;
+    background: var(--pp-surface-raised);
     padding: 0 var(--spacing-sm);
     color: var(--text-secondary);
     font-size: 14px;
@@ -132,7 +132,7 @@ form {
   }
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
+    background-color: var(--pp-hover);
   }
 }
 

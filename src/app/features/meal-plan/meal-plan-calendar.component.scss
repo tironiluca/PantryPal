@@ -43,8 +43,9 @@
 }
 
 .day-header {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--pp-surface);
+  color: var(--pp-text-muted);
+  border-bottom: 1px solid var(--pp-border);
   padding: var(--spacing-sm);
   text-align: center;
   font-weight: 600;
@@ -60,7 +61,7 @@
   position: relative;
 
   &.today {
-    background-color: rgba(67, 160, 71, 0.05);
+    background-color: var(--pp-hover);
     border: 2px solid var(--primary-color);
   }
 
@@ -115,7 +116,7 @@
   &:hover {
     background-color: var(--hover-color);
     transform: translateX(2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
   }
 
   &.completed {
@@ -198,7 +199,7 @@
 
   &:hover {
     opacity: 1;
-    background-color: rgba(67, 160, 71, 0.05);
+    background-color: var(--pp-hover);
     border-color: var(--primary-color);
 
     .add-hint {
@@ -285,8 +286,8 @@
     color: var(--mat-sys-on-surface);
 
     &.today-badge {
-      background: var(--primary-color);
-      color: white;
+      background: var(--pp-accent-fill);
+      color: var(--pp-on-accent);
       border-radius: 50%;
       width: 36px;
       height: 36px;

@@ -125,6 +125,49 @@ describe('InventoryListComponent', () => {
     });
   });
 
+  describe('expiry chip icon and label', () => {
+    // Local noon n calendar days from today, so the count never straddles midnight.
+    const inDays = (n: number) => {
+      const d = new Date();
+      d.setHours(12, 0, 0, 0);
+      d.setDate(d.getDate() + n);
+      return d.toISOString();
+    };
+    const localDate = (n: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    beforeEach(async () => { await setup(); });
+
+    it('gives each status its own icon, so colour is not the only signal', () => {
+      expect(component.getExpiryIcon(inDays(-2))).toBe('error');
+      expect(component.getExpiryIcon(inDays(3))).toBe('schedule');
+      expect(component.getExpiryIcon(inDays(30))).toBe('event');
+    });
+
+    it('labels expired and soon items in words', () => {
+      expect(component.getExpiryLabel(inDays(-2))).toEqual({ key: 'inventory.expired' });
+      expect(component.getExpiryLabel(inDays(0))).toEqual({ key: 'inventory.expiresToday' });
+      expect(component.getExpiryLabel(inDays(1))).toEqual({ key: 'inventory.expiresInOneDay' });
+      expect(component.getExpiryLabel(inDays(5))).toEqual({ key: 'inventory.expiresInDays', params: { days: 5 } });
+    });
+
+    it('counts calendar days for date-only values, so tomorrow is "1 day"', () => {
+      expect(component.getExpiryLabel(localDate(0))).toEqual({ key: 'inventory.expiresToday' });
+      expect(component.getExpiryLabel(localDate(1))).toEqual({ key: 'inventory.expiresInOneDay' });
+      expect(component.getExpiryLabel(localDate(2))).toEqual({ key: 'inventory.expiresInDays', params: { days: 2 } });
+      expect(component.getExpiryStatus(localDate(-1))).toBe('expired');
+      expect(component.getExpiryStatus(localDate(0))).toBe('warning');
+    });
+
+    it('shows the date itself for items that are fine or undated', () => {
+      expect(component.getExpiryLabel(inDays(30))).toBeNull();
+      expect(component.getExpiryLabel(undefined)).toBeNull();
+    });
+  });
+
   describe('getLocationIcon', () => {
     beforeEach(async () => { await setup(); });
 
@@ -263,6 +306,22 @@ describe('InventoryListComponent', () => {
     it('counts items expiring within the next week', async () => {
       await setup();
       expect(component.expiringCount).toBe(1);
+    });
+
+    it('agrees with the week filter and the "soon" chip, including items due today', async () => {
+      await setup();
+      const today = new Date();
+      const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      component.rows = [
+        { ...component.rows[0], id: 'today', expiry: iso },
+        { ...component.rows[1], id: 'past', expiry: daysFromNow(-3) },
+      ];
+      component.expiringFilter = 'week';
+      component.applyFilters();
+
+      expect(component.getExpiryStatus(iso)).toBe('warning');
+      expect(component.expiringCount).toBe(1);
+      expect(component.filteredRows.map(r => r.id)).toEqual(['today']);
     });
   });
 

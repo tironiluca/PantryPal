@@ -40,7 +40,7 @@ h2 {
 .camera-container {
   position: relative;
   width: 100%;
-  background: #000;
+  background: var(--pp-media-bg);
   border-radius: 8px;
   overflow: hidden;
 
@@ -65,7 +65,7 @@ h2 {
   max-height: 400px;
   display: flex;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--pp-surface);
   border-radius: 8px;
   overflow: hidden;
 
@@ -109,12 +109,12 @@ h2 {
     transition: all 0.2s ease;
 
     &:hover {
-      background-color: rgba(0, 0, 0, 0.05);
+      background-color: var(--pp-hover);
     }
 
     &.selected {
       border-color: var(--primary-color);
-      background-color: rgba(67, 160, 71, 0.1);
+      background-color: var(--pp-accent-subtle);
 
       mat-icon {
         color: var(--primary-color);
@@ -138,13 +138,13 @@ h2 {
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: rgba(255, 152, 0, 0.1);
-  border-left: 4px solid #ff9800;
+  background: var(--pp-status-soon-bg);
+  border-left: 4px solid var(--pp-status-soon);
   border-radius: 4px;
   margin-top: var(--spacing-md);
 
   mat-icon {
-    color: #ff9800;
+    color: var(--pp-status-soon);
     font-size: 20px;
     width: 20px;
     height: 20px;

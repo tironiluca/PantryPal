@@ -106,7 +106,7 @@ mat-dialog-content {
           margin-left: var(--spacing-xs);
           font-size: 11px;
           color: var(--text-secondary);
-          background-color: rgba(0, 0, 0, 0.05);
+          background-color: var(--pp-hover);
           padding: 2px 6px;
           border-radius: 4px;
         }
@@ -135,8 +135,8 @@ mat-dialog-content {
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--primary-color);
-        color: white;
+        background-color: var(--pp-accent-subtle);
+        color: var(--pp-on-accent-subtle);
         border-radius: 50%;
         font-weight: 600;
         font-size: 14px;

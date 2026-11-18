@@ -47,10 +47,10 @@ mat-stepper {
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background-color: rgba(244, 67, 54, 0.1);
-  border-left: 4px solid #f44336;
+  background-color: var(--pp-status-expired-bg);
+  border-left: 4px solid var(--pp-status-expired);
   border-radius: 4px;
-  color: #f44336;
+  color: var(--pp-status-expired);
 
   mat-icon {
     font-size: 20px;
@@ -148,13 +148,13 @@ mat-stepper {
     align-items: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-md);
-    background-color: rgba(33, 150, 243, 0.1);
+    background-color: var(--pp-info-bg);
     border-radius: 4px;
     margin-bottom: var(--spacing-md);
     color: var(--text-secondary);
 
     mat-icon {
-      color: #2196f3;
+      color: var(--pp-info);
     }
   }
 }
@@ -163,7 +163,7 @@ mat-stepper {
   margin-bottom: var(--spacing-md);
 
   &.needs-review {
-    border-left: 4px solid #ff9800;
+    border-left: 4px solid var(--pp-status-soon);
   }
 
   .mapping-header {

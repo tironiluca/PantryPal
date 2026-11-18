@@ -159,7 +159,10 @@
     "failedDeleteItem": "Failed to delete inventory item",
     "startingScanner": "Starting barcode scanner...",
     "barcodeScanned": "Barcode scanned:",
-    "pointCameraAtBarcode": "Point your camera at a barcode"
+    "pointCameraAtBarcode": "Point your camera at a barcode",
+    "expiresToday": "Today",
+    "expiresInDays": "{{days}} days",
+    "expiresInOneDay": "1 day"
   },
   "ingredients": {
     "title": "Ingredients",

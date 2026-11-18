@@ -17,11 +17,11 @@
   }
 
   &.error mat-icon {
-    color: var(--warn-color, #f44336);
+    color: var(--pp-status-expired);
   }
 
   &.offline mat-icon {
-    color: var(--text-secondary, #757575);
+    color: var(--pp-text-muted);
   }
 
   mat-icon {
@@ -29,7 +29,7 @@
   }
 
   &:not(.error):not(.offline):not(.syncing) mat-icon {
-    color: var(--primary-color, #1976d2);
+    color: var(--pp-text-muted);
   }
 }
 

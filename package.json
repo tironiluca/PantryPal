@@ -15,7 +15,7 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
-    "lint": "eslint src",
+    "lint": "eslint src && node scripts/check-theme.mjs",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
     "postinstall": "node -e \"require('fs').cpSync('node_modules/sql.js/dist/sql-wasm.wasm','src/assets/sql-wasm.wasm')\""

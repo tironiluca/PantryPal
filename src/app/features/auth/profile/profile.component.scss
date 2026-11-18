@@ -39,7 +39,7 @@
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .avatar-image {
@@ -54,8 +54,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--pp-accent-fill);
+  color: var(--pp-on-accent);
   font-size: 48px;
   font-weight: 500;
 }

@@ -11,6 +11,23 @@ export interface ExportOptions {
   showRecipes?: boolean;
 }
 
+/**
+ * Print and export colours. Paper is always light, so these are the light
+ * values of the theme tokens in src/styles/_tokens.scss (U9).
+ */
+const PRINT_COLORS = {
+  text: '#3b3b3b',
+  textStrong: '#1f1f1f',
+  muted: '#616161',
+  border: '#e5e5e5',
+  borderStrong: '#cecece',
+  surface: '#f8f8f8',
+  accent: '#005fb8',
+  accentHover: '#004a8f',
+  onAccent: '#ffffff',
+  accentSubtle: '#e1ecf8',
+} as const;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -224,13 +241,13 @@ export class ExportService {
 
           h1 {
             text-align: center;
-            color: #43a047;
+            color: ${PRINT_COLORS.textStrong};
             margin-bottom: 5px;
           }
 
           .date {
             text-align: center;
-            color: #666;
+            color: ${PRINT_COLORS.muted};
             font-size: 14px;
             margin-bottom: 30px;
           }
@@ -244,42 +261,44 @@ export class ExportService {
           th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid ${PRINT_COLORS.border};
           }
 
           th {
-            background-color: #43a047;
-            color: white;
+            background-color: ${PRINT_COLORS.surface};
+            color: ${PRINT_COLORS.textStrong};
+            border-bottom: 2px solid ${PRINT_COLORS.borderStrong};
             font-weight: bold;
           }
 
           tr:nth-child(even) {
-            background-color: #f5f5f5;
+            background-color: ${PRINT_COLORS.surface};
           }
 
           tr:hover {
-            background-color: #e8f5e9;
+            background-color: ${PRINT_COLORS.accentSubtle};
           }
 
           .checkbox {
             width: 20px;
             height: 20px;
-            border: 2px solid #43a047;
+            border: 2px solid ${PRINT_COLORS.borderStrong};
             display: inline-block;
             margin-right: 10px;
             vertical-align: middle;
           }
 
           .summary {
-            background-color: #e8f5e9;
+            background-color: ${PRINT_COLORS.surface};
+            border: 1px solid ${PRINT_COLORS.border};
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 4px;
             margin-top: 20px;
           }
 
           .summary h3 {
             margin-top: 0;
-            color: #43a047;
+            color: ${PRINT_COLORS.textStrong};
           }
 
           .summary p {
@@ -287,18 +306,18 @@ export class ExportService {
           }
 
           .print-button {
-            background-color: #43a047;
-            color: white;
+            background-color: ${PRINT_COLORS.accent};
+            color: ${PRINT_COLORS.onAccent};
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
             margin-bottom: 20px;
           }
 
           .print-button:hover {
-            background-color: #388e3c;
+            background-color: ${PRINT_COLORS.accentHover};
           }
         </style>
       </head>
@@ -339,7 +358,7 @@ export class ExportService {
           }
           ${
             showRecipes
-              ? `<td style="font-size: 12px; color: #666;">${this.escapeHtml(
+              ? `<td style="font-size: 12px; color: ${PRINT_COLORS.muted};">${this.escapeHtml(
                   item.mealPlans.slice(0, 3).join(', ')
                 )}</td>`
               : ''

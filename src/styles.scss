@@ -1,35 +1,127 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
+@use './styles/theme-colors' as palettes;
+@use './styles/tokens' as pp;
 
 // ============================================================================
-// PANTRYPAL MATERIAL 3 THEME — Food-Inspired Palette
+// PANTRYPAL THEME — VS Code-style, dark by default (IMPLEMENTATION_PLAN.md, U9)
 //
-// Light: warm parchment background, terracotta/paprika primary, soft-rose tertiary
-// Dark:  espresso/charred-wood background, same primary warmed slightly
+// Colours come from one place: src/styles/_tokens.scss, emitted as --pp-*
+// custom properties once per theme (dark on html, light on html.light-theme).
+// Material's system colours (--mat-sys-*) are pinned to the same tokens, so
+// components and our own styles always agree.
+//
+// Theme switch: html is dark unless ThemeService (or the boot script in
+// index.html) adds `.light-theme`.
 // ============================================================================
 
-// Light theme — terracotta primary, soft rose tertiary (strawberry / rosewater)
-$light-theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary: mat.$orange-palette,
-    tertiary: mat.$rose-palette,
-  )
-));
+$font-family: (-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 
-// Dark theme — same hues, dark variant
-$dark-theme: mat.define-theme((
-  color: (
-    theme-type: dark,
-    primary: mat.$orange-palette,
-    tertiary: mat.$rose-palette,
-  )
-));
+// Material system roles pinned to the tokens. Seed palettes alone would tint
+// the surfaces blue and give a pale primary in the dark theme. Included after
+// each mat.theme() call so it wins over the generated values.
+@mixin pp-system-overrides() {
+  @include mat.theme-overrides((
+    primary: var(--pp-accent),
+    on-primary: var(--pp-on-accent-text),
+    primary-container: var(--pp-accent-subtle),
+    on-primary-container: var(--pp-on-accent-subtle),
+    inverse-primary: var(--pp-inverse-accent),
+    secondary: var(--pp-text-muted),
+    on-secondary: var(--pp-bg),
+    secondary-container: var(--pp-accent-subtle),
+    on-secondary-container: var(--pp-on-accent-subtle),
+    tertiary: var(--pp-macro-carbs),
+    on-tertiary: var(--pp-bg),
+    tertiary-container: var(--pp-info-bg),
+    on-tertiary-container: var(--pp-info),
+    error: var(--pp-status-expired),
+    on-error: var(--pp-bg),
+    error-container: var(--pp-status-expired-bg),
+    on-error-container: var(--pp-status-expired),
+    background: var(--pp-bg),
+    on-background: var(--pp-text),
+    surface: var(--pp-bg),
+    on-surface: var(--pp-text),
+    surface-variant: var(--pp-surface),
+    on-surface-variant: var(--pp-text-muted),
+    surface-dim: var(--pp-surface-sunken),
+    surface-bright: var(--pp-surface-raised),
+    surface-container-lowest: var(--pp-surface-sunken),
+    surface-container-low: var(--pp-surface),
+    surface-container: var(--pp-surface),
+    surface-container-high: var(--pp-surface-raised),
+    surface-container-highest: var(--pp-surface-raised),
+    surface-tint: transparent,
+    inverse-surface: var(--pp-text-strong),
+    inverse-on-surface: var(--pp-bg),
+    outline: var(--pp-input-border),
+    outline-variant: var(--pp-border),
+    shadow: var(--pp-shadow),
+    scrim: var(--pp-scrim),
+    corner-extra-small: 2px,
+    corner-small: 4px,
+    corner-medium: 6px,
+    corner-large: 8px,
+    corner-extra-large: 10px,
+  ));
+}
 
-// Apply themes
+$pp-palette: (
+  primary: palettes.$primary-palette,
+  tertiary: palettes.$tertiary-palette,
+);
+
 html {
-  @include mat.all-component-themes($light-theme);
+  // Dark is the default; ThemeService or the boot script adds .light-theme.
+  color-scheme: dark;
 
-  // Custom CSS variables for spacing, shadows, transitions
+  @include mat.theme((
+    color: map.merge($pp-palette, (theme-type: dark)),
+    typography: (
+      plain-family: $font-family,
+      brand-family: $font-family,
+    ),
+    density: 0,
+  ));
+  @include pp.emit-tokens(dark);
+  @include pp-system-overrides();
+
+  &.light-theme {
+    color-scheme: light;
+    @include mat.theme((color: map.merge($pp-palette, (theme-type: light))));
+    @include pp.emit-tokens(light);
+    @include pp-system-overrides();
+  }
+
+  // Solid blue buttons with white text (the system primary is the lighter,
+  // text-safe blue in the dark theme).
+  @include mat.button-overrides((
+    filled-container-color: var(--pp-accent-fill),
+    filled-label-text-color: var(--pp-on-accent),
+    filled-container-shape: 4px,
+    outlined-container-shape: 4px,
+    text-container-shape: 4px,
+    protected-container-shape: 4px,
+    tonal-container-shape: 4px,
+  ));
+
+  // Progress tracks sit on cards, and Material's default track role equals the
+  // card colour here, so give them a visible border-strength track.
+  @include mat.progress-bar-overrides((
+    track-color: var(--pp-border-strong),
+  ));
+
+  @include mat.fab-overrides((
+    container-color: var(--pp-accent-fill),
+    foreground-color: var(--pp-on-accent),
+    small-container-color: var(--pp-surface-raised),
+    small-foreground-color: var(--pp-accent),
+    container-shape: 6px,
+    small-container-shape: 6px,
+  ));
+
+  // Spacing, radii, motion
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -43,75 +135,50 @@ html {
   --safe-area-left: max(env(safe-area-inset-left), 0px);
   --safe-area-right: max(env(safe-area-inset-right), 0px);
 
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
+  --border-radius-sm: 3px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 6px;
+  --border-radius-xl: 8px;
 
-  // Warm-tinted shadows (touch of amber) for light theme
-  --shadow-sm: 0 1px 3px rgba(120, 50, 10, 0.10), 0 1px 2px rgba(120, 50, 10, 0.18);
-  --shadow-md: 0 3px 6px rgba(120, 50, 10, 0.12), 0 2px 4px rgba(120, 50, 10, 0.10);
-  --shadow-lg: 0 10px 20px rgba(120, 50, 10, 0.12), 0 3px 6px rgba(120, 50, 10, 0.08);
-  --shadow-xl: 0 14px 28px rgba(120, 50, 10, 0.18), 0 10px 10px rgba(120, 50, 10, 0.12);
+  // Flat surfaces: borders separate, shadows only lift overlays and FABs.
+  --shadow-sm: none;
+  --shadow-md: 0 1px 3px var(--pp-shadow);
+  --shadow-lg: 0 4px 12px var(--pp-shadow);
+  --shadow-xl: 0 8px 24px var(--pp-shadow);
 
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  // Color variables - Light Theme
-  // Primary = paprika/terracotta, success = herb green, warning = saffron
-  --color-success: #558b2f;    // basil / fresh herb green
-  --color-warning: #f59f00;    // saffron / turmeric amber
-  --color-error: #c62828;      // chili red
-  --color-info: #0277bd;       // blueberry
-  --color-surface: #fffaf4;          // warm parchment white
-  --color-surface-variant: #fef3e0;  // light cream
-  --color-on-surface: #2d1a08;       // espresso brown
-  --color-on-surface-variant: #7a5c3a; // warm brown secondary text
-  --color-primary: #e64a19;          // paprika / terracotta
-  --color-primary-variant: #ff7043;  // lighter tomato
+  // Legacy aliases, kept so existing var() references follow the tokens.
+  --color-success: var(--pp-status-ok);
+  --color-warning: var(--pp-status-soon);
+  --color-error: var(--pp-status-expired);
+  --color-info: var(--pp-info);
+  --color-surface: var(--pp-surface);
+  --color-surface-variant: var(--pp-surface-raised);
+  --color-on-surface: var(--pp-text);
+  --color-on-surface-variant: var(--pp-text-muted);
+  --color-primary: var(--pp-accent);
+  --color-primary-variant: var(--pp-accent);
+  --text-primary: var(--pp-text);
+  --text-secondary: var(--pp-text-muted);
+  --surface-color: var(--pp-surface);
+  --primary-color: var(--pp-accent);
+  --warn-color: var(--pp-status-expired);
+  --divider-color: var(--pp-border);
+  --border-color: var(--pp-border);
+  --background-color: var(--pp-bg);
+  --hover-color: var(--pp-hover);
+  --accent-color: var(--pp-accent);
 
-  // Semantic aliases used across components
-  --text-primary: var(--color-on-surface);
-  --text-secondary: var(--color-on-surface-variant);
-  --surface-color: var(--color-surface);
-  --primary-color: var(--color-primary);
-  --divider-color: rgba(0, 0, 0, 0.08);
-
-  // Warm parchment background
-  background: linear-gradient(145deg, #fdf6ec 0%, #fae8cc 100%);
+  background: var(--pp-bg);
 }
 
-html.dark-theme {
-  @include mat.all-component-colors($dark-theme);
-
-  // Dark theme color overrides — charred wood / espresso kitchen
-  --color-success: #8bc34a;    // lighter herb green for dark
-  --color-warning: #ffb300;    // golden honey
-  --color-error: #ef5350;      // chili
-  --color-info: #29b6f6;       // sky
-  --color-surface: #1e1108;          // charred espresso
-  --color-surface-variant: #2d1e10;  // dark oak
-  --color-on-surface: #f5e9d3;       // warm cream text
-  --color-on-surface-variant: #c4a882; // muted caramel
-  --color-primary: #ff7043;          // warm terracotta (lighter for dark)
-  --color-primary-variant: #ffab91;  // blush / light peach
-
-  // Semantic aliases — dark theme overrides
-  --text-primary: var(--color-on-surface);
-  --text-secondary: var(--color-on-surface-variant);
-  --surface-color: var(--color-surface);
-  --primary-color: var(--color-primary);
-  --divider-color: rgba(255, 255, 255, 0.08);
-
-  // Deep espresso / charred wood background
-  background: linear-gradient(145deg, #150b02 0%, #241407 50%, #1a0e05 100%);
-
-  // Deeper warm-tinted shadows for dark
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.65);
-  --shadow-md: 0 3px 6px rgba(0,0,0,0.65), 0 2px 4px rgba(0,0,0,0.55);
-  --shadow-lg: 0 10px 20px rgba(0,0,0,0.75), 0 3px 6px rgba(0,0,0,0.65);
-  --shadow-xl: 0 14px 28px rgba(0,0,0,0.85), 0 10px 10px rgba(0,0,0,0.75);
+// Visible keyboard focus everywhere, in the accent focus colour.
+:focus-visible {
+  outline: 2px solid var(--pp-focus);
+  outline-offset: 2px;
 }
 
 // ============================================================================
@@ -133,8 +200,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--color-surface);
-  color: var(--color-on-surface);
+  background: var(--pp-bg);
+  color: var(--pp-text);
   transition: background var(--transition-slow), color var(--transition-slow);
 }
 
@@ -198,16 +265,20 @@ button, a, [role="button"] {
       border-radius: 12px;
       font-size: 14px;
       font-weight: 500;
-      background: rgba(120, 50, 10, 0.07);
+      background: var(--pp-surface);
+      border: 1px solid var(--pp-border);
+      color: var(--pp-text-muted);
 
       &.warning {
-        background-color: rgba(245, 159, 0, 0.15);
-        color: var(--color-warning);
+        background-color: var(--pp-status-soon-bg);
+        border-color: transparent;
+        color: var(--pp-status-soon);
       }
 
       &.success {
-        background-color: rgba(85, 139, 47, 0.15);
-        color: var(--color-success);
+        background-color: var(--pp-status-ok-bg);
+        border-color: transparent;
+        color: var(--pp-status-ok);
       }
     }
   }
@@ -241,8 +312,7 @@ button, a, [role="button"] {
     font-size: 96px;
     width: 96px;
     height: 96px;
-    color: rgba(120, 50, 10, 0.25);
-    opacity: 0.6;
+    color: var(--pp-text-faint);
   }
 
   h3 {
@@ -275,18 +345,17 @@ button, a, [role="button"] {
 }
 
 .list-card {
-  background: var(--color-surface);
+  background: var(--pp-surface);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--spacing-md);
   cursor: pointer;
-  transition: box-shadow var(--transition-normal), transform var(--transition-fast);
-  border: 1px solid rgba(120, 50, 10, 0.1);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  border: 1px solid var(--pp-border);
   overflow: hidden;
 
   &:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    border-color: var(--pp-border-strong);
+    background: var(--pp-surface-raised);
   }
 
   .list-card__title {
@@ -315,11 +384,6 @@ button, a, [role="button"] {
   }
 }
 
-.dark-theme .list-card {
-  background: var(--color-surface-variant);
-  border-color: rgba(255, 255, 255, 0.07);
-}
-
 // ============================================================================
 // SKELETON SHIMMER — used during loading states
 // ============================================================================
@@ -332,47 +396,44 @@ button, a, [role="button"] {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(120, 50, 10, 0.06) 25%,
-    rgba(120, 50, 10, 0.12) 50%,
-    rgba(120, 50, 10, 0.06) 75%
+    var(--pp-skeleton) 25%,
+    var(--pp-skeleton-shine) 50%,
+    var(--pp-skeleton) 75%
   );
   background-size: 800px 100%;
   animation: skeleton-shimmer 1.5s infinite linear;
   border-radius: var(--border-radius-sm);
 }
 
-.dark-theme .skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 180, 120, 0.05) 25%,
-    rgba(255, 180, 120, 0.12) 50%,
-    rgba(255, 180, 120, 0.05) 75%
-  );
-  background-size: 800px 100%;
-  animation: skeleton-shimmer 1.5s infinite linear;
-}
-
 // ============================================================================
 // MATERIAL COMPONENT OVERRIDES
 // ============================================================================
 
-// Snackbar custom styles
-.success-snackbar {
-  --mdc-snackbar-container-color: var(--color-success);
-  --mat-snack-bar-button-color: white;
-  --mdc-snackbar-supporting-text-color: white;
+// Snackbars: a raised neutral surface with a status-coloured edge, like an
+// editor notification. (The old --mdc-snackbar-* variables were not read by
+// Material 21, so these classes previously had no effect.)
+.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-color: var(--pp-surface-raised);
+  --mat-snack-bar-supporting-text-color: var(--pp-text);
+  --mat-snack-bar-button-color: var(--pp-accent);
+  --mat-snack-bar-container-shape: 4px;
+
+  .mdc-snackbar__surface {
+    border: 1px solid var(--pp-border-strong);
+    border-left: 3px solid var(--pp-accent);
+  }
 }
 
-.error-snackbar {
-  --mdc-snackbar-container-color: var(--color-error);
-  --mat-snack-bar-button-color: white;
-  --mdc-snackbar-supporting-text-color: white;
+.success-snackbar .mdc-snackbar__surface {
+  border-left-color: var(--pp-status-ok);
 }
 
-.warning-snackbar {
-  --mdc-snackbar-container-color: var(--color-warning);
-  --mat-snack-bar-button-color: white;
-  --mdc-snackbar-supporting-text-color: white;
+.error-snackbar .mdc-snackbar__surface {
+  border-left-color: var(--pp-status-expired);
+}
+
+.warning-snackbar .mdc-snackbar__surface {
+  border-left-color: var(--pp-status-soon);
 }
 
 // Table improvements
@@ -386,7 +447,7 @@ button, a, [role="button"] {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    background-color: rgba(120, 50, 10, 0.04);
+    background-color: var(--pp-surface);
 
     button {
       text-transform: none;
@@ -398,7 +459,7 @@ button, a, [role="button"] {
     transition: background-color var(--transition-fast);
 
     &:hover {
-      background-color: rgba(230, 74, 25, 0.04);
+      background-color: var(--pp-hover);
     }
   }
 
@@ -427,7 +488,7 @@ button, a, [role="button"] {
   .mat-mdc-dialog-title {
     margin: 0;
     padding: var(--spacing-lg);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--pp-border);
     font-size: 20px;
     font-weight: 600;
   }
@@ -439,27 +500,29 @@ button, a, [role="button"] {
 
   .mat-mdc-dialog-actions {
     padding: var(--spacing-md) var(--spacing-lg);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--pp-border);
     justify-content: flex-end;
     gap: var(--spacing-sm);
     min-height: auto;
   }
 }
 
-// Card improvements
+// Cards: flat, separated by a 1px border.
 .mat-mdc-card {
+  --mat-card-elevated-container-color: var(--pp-surface);
+  --mat-card-elevated-container-elevation: none;
+  --mat-card-outlined-container-color: var(--pp-surface);
+  --mat-card-outlined-outline-color: var(--pp-border);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
-
-  &:hover {
-    box-shadow: var(--shadow-md);
-  }
+  border: 1px solid var(--pp-border);
+  box-shadow: none;
 }
 
-// Chip improvements
+// Chips: square-ish tags.
 .mat-mdc-chip {
-  border-radius: 16px;
+  --mat-chip-container-shape-radius: 4px;
+  --mat-chip-outline-color: var(--pp-border-strong);
+  border-radius: 4px;
 }
 
 // Button improvements
@@ -521,40 +584,6 @@ button, a, [role="button"] {
 }
 
 // ============================================================================
-// DARK THEME ADJUSTMENTS
-// ============================================================================
-
-.dark-theme {
-  .mat-mdc-table {
-    .mat-mdc-header-cell {
-      background-color: rgba(255, 180, 120, 0.06);
-    }
-
-    .mat-mdc-row:hover {
-      background-color: rgba(255, 112, 67, 0.07);
-    }
-  }
-
-  .mat-mdc-dialog-container {
-    .mat-mdc-dialog-title {
-      border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-
-    .mat-mdc-dialog-actions {
-      border-top-color: rgba(255, 255, 255, 0.08);
-    }
-  }
-
-  .header .stats .stat {
-    background: rgba(255, 220, 180, 0.08);
-  }
-
-  .empty-state mat-icon {
-    color: rgba(255, 220, 180, 0.2);
-  }
-}
-
-// ============================================================================
 // DIALOG / BOTTOM SHEET (mobile)
 // ============================================================================
 
@@ -588,12 +617,12 @@ button, a, [role="button"] {
   // Rounded top corners, slide-up entrance feel
   .app-dialog .mdc-dialog__surface,
   .app-dialog .mat-mdc-dialog-surface {
-    border-radius: 20px 20px 0 0 !important;
+    border-radius: 10px 10px 0 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
     max-height: 92dvh !important;
     padding-bottom: env(safe-area-inset-bottom);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 0 -8px 32px var(--pp-shadow) !important;
   }
 
   // Dialog content scrollable
@@ -610,13 +639,8 @@ button, a, [role="button"] {
     width: 36px;
     height: 4px;
     border-radius: 2px;
-    background: rgba(0, 0, 0, 0.18);
+    background: var(--pp-border-strong);
     margin: 10px auto 0;
-  }
-
-  // Dark theme drag handle
-  .dark-theme .app-dialog .mdc-dialog__surface::before {
-    background: rgba(255, 255, 255, 0.2);
   }
 
   // Dialog title less top padding (handle already takes space)
@@ -695,14 +719,11 @@ button, a, [role="button"] {
 }
 
 .nav-dropdown a.mat-mdc-menu-item.nav-active {
-  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
-  color: #fff;
+  background: var(--pp-accent-subtle);
+  color: var(--pp-on-accent-subtle);
+  box-shadow: inset 2px 0 0 var(--pp-focus);
 
   .mat-icon {
-    color: #fff;
+    color: var(--pp-on-accent-subtle);
   }
-}
-
-.dark-theme .nav-dropdown a.mat-mdc-menu-item.nav-active {
-  background: linear-gradient(135deg, #b03a14 0%, #d4542a 100%);
 }

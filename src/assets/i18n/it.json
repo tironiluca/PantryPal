@@ -159,7 +159,10 @@
     "failedDeleteItem": "Eliminazione articolo inventario fallita",
     "startingScanner": "Avvio scanner codice a barre...",
     "barcodeScanned": "Codice a barre scansionato:",
-    "pointCameraAtBarcode": "Punta la fotocamera verso un codice a barre"
+    "pointCameraAtBarcode": "Punta la fotocamera verso un codice a barre",
+    "expiresToday": "Oggi",
+    "expiresInDays": "{{days}} giorni",
+    "expiresInOneDay": "1 giorno"
   },
   "ingredients": {
     "title": "Ingredienti",

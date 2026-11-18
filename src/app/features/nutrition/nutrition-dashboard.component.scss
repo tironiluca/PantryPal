@@ -20,10 +20,10 @@
       margin-top: var(--spacing-md);
     }
     .stat-card {
-      &.calories { border-left: 4px solid #ff5722; }
-      &.protein { border-left: 4px solid #2196f3; }
-      &.carbs { border-left: 4px solid #4caf50; }
-      &.fat { border-left: 4px solid #ff9800; }
+      &.calories { border-left: 4px solid var(--pp-macro-calories); }
+      &.protein { border-left: 4px solid var(--pp-macro-protein); }
+      &.carbs { border-left: 4px solid var(--pp-macro-carbs); }
+      &.fat { border-left: 4px solid var(--pp-macro-fat); }
       mat-card-content { padding: var(--spacing-md); }
       .stat-header {
         display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);
@@ -44,9 +44,9 @@
       .nutrient-item {
         display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md);
         background-color: var(--surface-color); border-radius: 8px;
-        mat-icon { font-size: 24px; width: 24px; height: 24px; color: var(--primary-color); }
+        mat-icon { font-size: 24px; width: 24px; height: 24px; color: var(--pp-text-muted); }
         .nutrient-label { flex: 1; font-weight: 500; }
-        .nutrient-value { font-weight: 700; color: var(--primary-color); }
+        .nutrient-value { font-weight: 700; color: var(--pp-text-strong); }
       }
     }
     .breakdown-card {
@@ -54,18 +54,18 @@
       .breakdown-bar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: var(--spacing-md); }
       .breakdown-segment {
         transition: all 0.3s ease;
-        &.protein { background-color: #2196f3; }
-        &.carbs { background-color: #4caf50; }
-        &.fat { background-color: #ff9800; }
+        &.protein { background-color: var(--pp-macro-protein); }
+        &.carbs { background-color: var(--pp-macro-carbs); }
+        &.fat { background-color: var(--pp-macro-fat); }
       }
       .breakdown-legend { display: flex; justify-content: center; gap: var(--spacing-lg); flex-wrap: wrap; }
       .legend-item {
         display: flex; align-items: center; gap: var(--spacing-xs); font-size: 14px;
         .legend-color {
           width: 16px; height: 16px; border-radius: 4px;
-          &.protein { background-color: #2196f3; }
-          &.carbs { background-color: #4caf50; }
-          &.fat { background-color: #ff9800; }
+          &.protein { background-color: var(--pp-macro-protein); }
+          &.carbs { background-color: var(--pp-macro-carbs); }
+          &.fat { background-color: var(--pp-macro-fat); }
         }
       }
     }

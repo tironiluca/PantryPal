@@ -16,43 +16,11 @@ nav[mat-tab-nav-bar] {
   padding: 8px 12px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   margin: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(230, 74, 25, 0.25) 50%,
-      transparent 100%
-    );
-  }
-}
-
-// Dark theme navigation styling
-:host-context(.dark-theme) nav[mat-tab-nav-bar] {
-  background: rgba(30, 30, 30, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
-
-  &::before {
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(255, 112, 67, 0.25) 50%,
-      transparent 100%
-    );
-  }
+  background: var(--pp-bar);
+  border-top: 1px solid var(--pp-border);
+  --mat-tab-active-indicator-color: transparent;
+  --mat-tab-active-focus-indicator-color: transparent;
+  --mat-tab-active-hover-indicator-color: transparent;
 }
 
 // Tab links styling
@@ -65,8 +33,8 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
   font-size: 0.75rem;
   padding: 8px 12px;
   min-width: 72px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
   position: relative;
   overflow: hidden;
 
@@ -78,69 +46,29 @@ nav[mat-tab-nav-bar] a[mat-tab-link] {
     gap: 2px;
   }
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(230, 74, 25, 0.08), rgba(255, 112, 67, 0.08));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
   &:hover {
-    background: rgba(230, 74, 25, 0.07);
-    transform: translateY(-2px);
-
-    &::before {
-      opacity: 1;
-    }
+    background: var(--pp-hover);
 
     mat-icon {
-      transform: scale(1.1);
-      color: #e64a19;
+      color: var(--pp-text);
     }
   }
 
-  // Active state
+  // Active state: subtle accent fill with an accent edge, like an editor tab.
   &.mdc-tab--active,
   &[active="true"] {
-    background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(230, 74, 25, 0.4);
-
-    &::before {
-      opacity: 0;
-    }
+    background: var(--pp-accent-subtle);
+    color: var(--pp-on-accent-subtle);
+    box-shadow: inset 0 2px 0 var(--pp-focus);
 
     mat-icon {
-      color: white;
-      transform: scale(1.15);
+      color: var(--pp-on-accent-subtle);
     }
 
     .tab-label {
       font-weight: 700;
-      color: white;
+      color: var(--pp-on-accent-subtle);
     }
-  }
-}
-
-// Dark theme tab links
-:host-context(.dark-theme) nav[mat-tab-nav-bar] a[mat-tab-link] {
-  &:hover {
-    background: rgba(255, 112, 67, 0.12);
-
-    mat-icon {
-      color: #ff7043;
-    }
-  }
-
-  &.mdc-tab--active,
-  &[active="true"] {
-    background: linear-gradient(135deg, #b03a14 0%, #d4542a 100%);
-    box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
   }
 }
 
@@ -149,12 +77,8 @@ nav[mat-tab-nav-bar] mat-icon {
   font-size: 24px;
   width: 24px;
   height: 24px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: rgba(0, 0, 0, 0.7);
-}
-
-:host-context(.dark-theme) nav[mat-tab-nav-bar] mat-icon {
-  color: rgba(255, 255, 255, 0.7);
+  transition: color var(--transition-fast);
+  color: var(--pp-text-muted);
 }
 
 // Label styling
@@ -190,21 +114,11 @@ mat-tab-nav-panel {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background: var(--pp-border-strong);
+    border-radius: 0;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
-  }
-}
-
-:host-context(.dark-theme) mat-tab-nav-panel {
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--pp-input-border);
     }
   }
 }

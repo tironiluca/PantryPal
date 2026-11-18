@@ -4,7 +4,7 @@
   align-items: center;
   min-height: 100vh;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--pp-bg);
 }
 
 .auth-card {
@@ -61,11 +61,11 @@ form {
 }
 
 .password-strong {
-  color: #4caf50;
+  color: var(--pp-status-ok);
 }
 
 .password-weak {
-  color: #ff9800;
+  color: var(--pp-status-soon);
 }
 
 .terms-checkbox {

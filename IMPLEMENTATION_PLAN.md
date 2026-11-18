@@ -1,11 +1,12 @@
 # PantryPal - Implementation Plan
 
-Rewritten 2026-11-17 after a full repository review; status updated the same day after the first implementation pass (see **Status**). This replaces the previous backlog. The plan is in four parts:
+Rewritten 2026-11-17 after a full repository review; status updated the same day after the first implementation pass (see **Status**). A UX review was added on 2026-11-18 (Part 5). This replaces the previous backlog. The plan is in five parts:
 
 1. what is broken now;
 2. what is still missing from the original plan;
 3. what is worth adding to the architecture;
-4. what is worth adding to the features.
+4. what is worth adding to the features;
+5. the UX review and the UX refactor.
 
 Test ownership is tracked in [TEST_MATRIX.md](TEST_MATRIX.md).
 
@@ -39,6 +40,7 @@ The weak points are everything that touches the server: sign-in, sync, sharing, 
 | Password reset | Broken - the email link has no route | Reset page shipped; needs the redirect URL allowlisted |
 | Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; migration 004 **applied to production 2026-11-18** |
 | Local features | Broadly complete; covered by unit specs | Three more data bugs found and fixed with real-SQLite tests (see Status) |
+| UX | Not reviewed | Reviewed 2026-11-18 (Part 5): phone navigation is hidden, Meal of the Day is unreachable (B10), several dead-end and untranslated screens. Refactor planned, not started |
 
 ## Status (2026-11-18, after the first implementation pass and migration 004)
 
@@ -72,6 +74,8 @@ These cannot be done from the repository. Until they are, the related features s
 | A5 Pipeline | Lint and lockfile done | Dependabot not enabled (it opens PRs); staging project and PR flow need the owner |
 | A6 Client structure | Coalesced, serialized writes done | Splitting `DbService` is deferred: specs reach into its internals |
 | A7 Headers | **Done**; CSP report-only | The policy has no report endpoint, so violations appear only in each browser's console. Enforcing it needs a manual pass over OCR, image recognition and recipe import (or a `report-to` endpoint) first |
+| B10 Meal of the Day link | **Open** | Found in the UX review; one-line fix plus an e2e destination check |
+| U0-U8 UX refactor | **Planned, not started** | See Part 5. U1 needs an owner decision on the primary navigation destinations |
 
 ### Bugs found and fixed during the pass (not in the original review)
 
@@ -295,6 +299,21 @@ The `UPDATE inventory` handler reads the id from `params[9]` (`db.service.ts:751
 - There are 126 `any` annotations or casts in production code.
 - The 21 snackbar literals in services are hard-coded English, despite en/it i18n.
 
+### B10. Meal of the Day is unreachable - P1, Local
+
+**Status: Open. Found in the 2026-11-18 UX review.**
+
+**[Verified]** The "Meal of the day" button on the recipe list links to `['/recipes/meal']` (`recipe-list.component.html:5`). The route actually lives at `/home/recipes/meal` (`recipes.routes.ts`, under the `home` children in `app.routes.ts`).
+- `/recipes/meal` matches the `**` wildcard, which redirects to `/auth/login`.
+- `guestGuard` then sends the signed-in user to `/home`, which redirects to inventory.
+- Clicking the button in the dev build landed on `/home/inventory`.
+
+Nothing else links to the page, so the smart meal of the day (original task 3.1) cannot be reached from the UI. The existing Playwright smoke tests only assert "not Page not found" on direct URLs, which is why this passed CI.
+
+**Fix:** change the link to `['/home/recipes/meal']`, or to the relative `['meal']`. Grep for other absolute links that are missing the `/home` prefix. A grep on 2026-11-18 found only this one.
+
+**Acceptance:** a Playwright test clicks the button and asserts the URL and the page heading (U0 covers the general version).
+
 ## Part 2 - Missing Against The Original Plan
 
 The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`, SEC-01 to SEC-10 and BUG-02 to BUG-25) are mostly delivered.
@@ -309,11 +328,11 @@ The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`
 | 2.1 Duplicate barcode prevention | Done | User-scoped unique index |
 | 2.2 Product API cache | Done | IndexedDB via `idb` |
 | 2.3 Batch DB operations | Done | Sync applies each table in one transaction; file writes are coalesced (A6) |
-| 3.1 Smart meal of the day | Done | Expiry/availability scoring |
+| 3.1 Smart meal of the day | Built, **unreachable** | Expiry/availability scoring works; the only link to it is broken (B10) |
 | 3.2 Search, filter, sort | Done | Inventory search, location/expiry filters, sort column and direction |
 | 3.3 Unit conversions | Done | Used by cart, meal plan, nutrition |
 | 3.4 Analytics and waste reports | **Not started** | Needs a product decision (F7) |
-| 4.1-4.4 UI redesign | Done | Card grid, theme, bottom sheets; phone-width visual review outstanding |
+| 4.1-4.4 UI redesign | Done, with UX debt | Card grid, theme, bottom sheets. The phone-width review was done on 2026-11-18 and found that phone navigation is hidden and list screens are filter-heavy (Part 5) |
 | 4.5 Loading skeletons | Done | `pp-skeleton` in inventory, recipes, cart |
 | 5.1 Confirmation dialogs | Done | Delete account now uses a typed confirmation |
 | 5.2 Keyboard shortcuts | Done | |
@@ -340,7 +359,7 @@ The 2026-08-27 plan (`145251f`) also listed four items. Three were confirmed fix
 - `ProductsService` awaits cache readiness before lookups;
 - the cart converts units through `UnitConverterService`, and inventory has visible sort controls.
 
-The fourth, meal-of-day missing-ingredient labels showing ids instead of names, was not re-verified.
+The fourth, meal-of-day missing-ingredient labels showing ids instead of names, was not re-verified. It cannot be checked from the UI until B10 is fixed, because the page is unreachable.
 
 Items carried over from the previous plan that are still open:
 - the third-party recipe CORS proxy (A4);
@@ -417,15 +436,204 @@ All membership changes go through SECURITY DEFINER RPCs with explicit checks. A 
 | # | Feature | Why | Depends on |
 | --- | --- | --- | --- |
 | F1 | Invitation inbox and join-by-link | Sharing is unusable without it | B5, A2, A4 |
-| F2 | Sync status panel: last sync, pending count, errors, retry, conflict review | Users cannot tell whether data is safe | A1 |
+| F2 | Sync status panel: last sync, pending count, errors, retry, conflict review | Users cannot tell whether data is safe. U3 fixes the indicator and toast noise first | A1, U3 |
 | F3 | Shared shopping list with live check-off | Strongest household use case | A1, A2 |
 | F4 | Expiry reminders via Web Push, not only while the app is open | Core pantry value; polling only runs in an open tab | A4 |
 | F5 | Data export and import (JSON backup), offered before account deletion | Trust, portability, GDPR-style deletion | B6 |
-| F6 | First-run onboarding and sample data | Empty app after sign-up; the seed adds one stray "Eggs" row | - |
+| F6 | First-run onboarding and sample data | Empty app after sign-up; the seed adds one stray "Eggs" row. Builds on U2's empty states | U2 |
 | F7 | Waste and consumption analytics | Original task 3.4; needs a product decision on metrics and retention | A1 |
 | F8 | Barcode/label generation for homemade or bulk items | Original future enhancement, never built | - |
-| F9 | Accessibility pass (keyboard, screen reader, contrast) and phone-width visual review | Outstanding from the dialog consistency work | - |
+| F9 | Accessibility pass (keyboard, screen reader, contrast) | Phone-width review done (Part 5). The automated part is U8; a manual screen-reader pass remains | U8 |
 | F10 | Recipe scaling by servings and "cook this" inventory deduction preview | Builds on unit conversions | - |
+
+## Part 5 - UX Review And Refactor
+
+### How the review was done
+
+On 2026-11-18 the dev build was run in Chromium with a mocked signed-in session (the same approach as `e2e/fixtures.ts`), and these combinations were checked:
+
+| Dimension | Covered |
+| --- | --- |
+| Widths | 390 px (phone), 768 px (tablet), 1280 px (desktop) |
+| Themes | Light and dark |
+| Languages | English and Italian |
+| Data | An empty account, and three inventory items added through the dialogs |
+| Screens | Login, register, every `/home` tab, the shopping list, settings, profile, the add-inventory and add-recipe sheets |
+
+Not reviewed:
+- the nutrition sub-tabs, recipe import, barcode, OCR, image recognition and voice flows;
+- sign-in, sign-up and reset against a real Supabase project;
+- the ingredient, meal and nutrition dialogs;
+- a manual screen-reader run.
+
+Two findings appeared only under the REST mock, which returns `[]`/`{}`: the blank profile and the "1 pushed" toast. Each is tagged below with what is verified and what is inferred for production.
+
+The general picture: the desktop layout is coherent, but the phone experience, which is the primary target for a pantry PWA, has three problems. Navigation is hidden. List screens put their filters before their content. Several screens dead-end. Most fixes repeat across features, so they are planned as a set of shared primitives (U0) instead of per-screen patches.
+
+### U0. Shared UX primitives - the refactor - P1, Local
+
+`src/app/shared/components` holds `skeleton`, `sync-conflict`, `sync-status` and `use-it-up-banner`. Each feature builds its own header, empty state, filter row and FAB stack. Build the following once and migrate every feature to them:
+
+| Primitive | Replaces | Fixes |
+| --- | --- | --- |
+| `AppShellComponent`: responsive navigation driven by `NAV_TABS` with a `primary` flag. A bottom bar under 600 px, a navigation rail from 600 px, with Settings and Profile inside the shell | The toolbar brand menu in `app.component.html` and the tab bar in `home.component.html` | U1 |
+| `pp-page-header`: title, count with ICU plurals, and actions that keep their text or move into an overflow menu | The per-feature `.header` blocks and icon-only pills | U2, U4, U7 |
+| `pp-empty-state`: icon, title, body and a primary action. Separate copy for "nothing yet" and "all done" | The per-feature empty markup | U2 |
+| `pp-filter-bar`: an always-visible search field, plus a "Filters" button that opens a bottom sheet (location, expiry, sort and direction). Shows active-filter chips; inline at 900 px and up | The four stacked `mat-form-field`s in inventory | U4 |
+| `pp-fab-menu`: one primary "Add" FAB whose secondary actions carry labels (manual, scan barcode, scan receipt). It reserves bottom padding so it never covers card actions | The stacked `mat-fab` and `mat-mini-fab` buttons in inventory and ingredients | U4, U8 |
+| `NotificationService` policy: background success stays silent; errors are persistent with a retry; the toast is offset above the bottom navigation | Direct `snackbar.*` calls | U3 |
+
+**Order.** Each step migrates every feature in one change, so that two patterns never coexist.
+1. U0 tests first: a phone Playwright project, a click-through navigation test and an axe baseline. These are expected to fail at first.
+2. The shell (U1).
+3. The page header and empty state (U2).
+4. The filter bar and FAB menu (U4).
+5. Status and feedback (U3).
+6. The calendar (U6).
+7. The i18n sweep (U7), then the accessibility fixes (U8).
+
+U5 can land at any point.
+
+**Tests that come with it.**
+- Add a `mobile` project to `playwright.config.ts` (a Pixel 7 or iPhone 13 device), next to Desktop Chrome.
+- A navigation e2e clicks every visible nav item and every header action, and asserts the destination URL and heading. Today's smoke tests only check that a URL does not say "Page not found", which is how B10 passed.
+- `@axe-core/playwright` runs on every `/home` route on both projects, failing on serious or critical violations.
+- Unit specs for each primitive. Feature specs that query old header or FAB markup are updated in the same change.
+
+**Acceptance:**
+- All feature pages use the primitives.
+- The navigation e2e and axe checks pass on both Playwright projects.
+- The coverage gate still holds.
+
+### U1. Phone navigation is hidden - P1, Local + [External] product decision
+
+**[Verified]**
+- Under 600 px the tab bar is `display: none` (`home.component.scss:213`). The only way to switch feature is to tap the "PantryPal" wordmark, which opens a menu (`app.component.html`, `navMenu`). Nothing marks it as a menu, and it is the brand position, where users expect "home".
+- Settings is a `/home` child but is not in `NAV_TABS`. It and Profile are reachable only from the account icon menu.
+- Profile lives at `/auth/profile`, outside the `/home` shell, so the bottom bar disappears there on wider screens.
+- From 600 px up, six tabs sit in a bottom bar with labels at 0.7 rem (11.2 px), and at 0.6 rem (9.6 px) between 600 and 900 px (`home.component.scss:161,239`).
+- On desktop the bottom bar is the only navigation. A side rail fits wide screens better.
+- The theme can be toggled from both the toolbar and Settings.
+
+**Fix:**
+- Build `AppShellComponent` (U0).
+- On phones, use a bottom bar with four or five primary destinations plus "More". **[External]** the owner chooses the primary set; the suggestion is Inventory, Recipes, Meal plan, Shopping list, plus More (Ingredients, Nutrition, Settings, Profile).
+- Use a rail at 600 px and up.
+- Make the wordmark navigate to `/home`.
+- Move Profile to `/home/profile` and keep `/auth/profile` as a redirect.
+- Keep one theme control.
+
+**Acceptance:** on the mobile project, every destination is reachable from visible navigation in at most two taps. Labels are at least 12 px.
+
+### U2. Dead ends and misleading states - P1, Local
+
+**[Verified]**
+- **Blank Profile.** `profile.component.html` renders `@if (loading())` and `@else if (profile())`, but has no `@else`. When `getProfile()` returns null, the page is empty below the toolbar, with no message, retry or sign-out. Under the mock this happened on every load. **[Inferred]** in production it happens whenever the `users` row is missing or the request fails.
+- **The shopping list says "Nothing to buy 🎉 / Your pantry is fully stocked!" when the pantry has no items at all.**
+- **Empty lists have no action.** The recipe empty state is only "No recipes yet." The inventory empty state has a hint but no button. On a phone, the inventory empty state is pushed below the fold and sits behind the FAB stack.
+- **B10** (Meal of the Day link) is a dead end in this group, but is tracked in Part 1 because it is a functional break.
+
+**Fix:**
+- Use `pp-empty-state` everywhere, with a primary action ("Add item", "Add recipe", "Import recipe").
+- The shopping list tells "pantry empty" apart from "nothing below minimum stock".
+- Profile gets error and empty states with Retry and Sign out.
+
+**Acceptance:** unit tests cover each empty and error branch. An e2e test checks that a fresh account sees an action on every list screen.
+
+### U3. Status and feedback - P2, Local
+
+**[Verified]**
+- **The sync indicator is invisible in the light theme.** The icon colour is `var(--primary-color)` (`sync-status.component.scss`, the `:not(.error)…` rule) on the primary-coloured toolbar, so only the badge dot shows. The dark theme is fine.
+- **Every page load shows a "Synced: N pushed, M pulled" toast.** Under the mock it read "Synced: 1 pushed, 0 pulled" with no user edits. **[Inferred]** in production the same toast follows every sign-in sync, because successful background syncs announce themselves.
+- **The toast covers the content.** It sits over the bottom tab bar on desktop (hiding two tabs) and over the FAB stack on phones.
+- **The sync button's only label is its tooltip,** and the signed-out tooltip is an English literal.
+
+**Fix:**
+- Silent success for background sync. A toast only for user-started sync or errors.
+- An on-primary icon colour token.
+- Offset the snackbar above the navigation.
+- An `aria-label` from Transloco.
+- The full status panel is F2. Error reporting is A7.
+
+**Acceptance:**
+- Loading a page with nothing pending shows no toast.
+- The indicator passes 3:1 non-text contrast in both themes.
+
+### U4. Phone list screens put controls before content - P2, Local
+
+**[Verified]**
+- **Inventory:** at 390 px and at 768 px, search, location, expiry and sort each take a full-width row, and the sort direction arrow sits alone on a fifth row. About 400 px of controls come before the first item, and at 390 px the first card starts below the fold.
+- **The FAB stack covers card actions.** Inventory has three stacked FABs (add, barcode, receipt OCR) with no visible labels, and ingredients has two. They overlap the top-right edit and delete area of cards in the right column.
+- **Recipe header actions become icon-only.** Under 600 px, the "Meal of the day" and "Import recipe" buttons lose their labels and become unlabelled pills (`recipe-list.component.scss:143`).
+
+**Fix:** use `pp-filter-bar`, `pp-fab-menu` and `pp-page-header` (U0).
+
+**Acceptance:** at 390 x 844 with three items, the first item card is fully visible without scrolling, and no FAB overlaps a card action.
+
+### U5. Sheets and forms - P3, Local
+
+**[Verified]**
+- **The add-recipe sheet clips the first field's floating label** ("Recipe Name") under its sticky header at 390 px.
+- **Escape needs two presses in the add-inventory sheet.** The ingredient autocomplete opens on focus, so the first Escape closes the panel and only the second closes the sheet.
+- **Expiry dates use the native date input,** so the format follows the browser locale (mm/dd/yyyy in en-US Chromium), not the app language.
+
+**Fix:**
+- Pad the sheet content below the header.
+- Open the autocomplete on input, not on focus.
+- Use `MatDatepicker` with a date adapter locale bound to the active Transloco language.
+
+**Acceptance:** sheet snapshots at 390 px show every label in full. An Italian session shows dd/mm/yyyy.
+
+### U6. Meal-plan calendar on phones - P2, Local
+
+**[Verified]**
+- **At 390 px the default month grid is unreadable.** It shows seven columns about 45 px wide and empty cells about 150 px tall, so one month needs roughly 800 px of scrolling.
+- **The week starts on Sunday, hard-coded.** See `meal-plan-calendar.component.ts:68,93` and `weekly-shopping-list.component.ts:64`. Italian users expect Monday.
+- **Dates stay English in an Italian session.** The weekday names (`weekDays = ['Sun', …]`) and the month title ("November 2026") do not change.
+- **Six toolbar controls have no accessible name:** the view toggle, Today, shopping list, and the previous and next buttons.
+
+**Fix:**
+- Default to the week or agenda view under 600 px. The toggle already exists.
+- Derive the first day and the names from `Intl.DateTimeFormat` and `getLocaleFirstDayOfWeek` for the active language.
+- Label the toolbar.
+
+**Acceptance:**
+- An Italian session shows "lun"-first weekdays and "novembre 2026".
+- The mobile e2e opens on the week view.
+
+### U7. Copy and i18n - P2, Local
+
+B9 counted 21 snackbar literals in services. This item covers templates and copy, and the counts come from a heuristic grep:
+
+- **Literal text in templates:** 46 English text nodes across 9 templates. Examples are the account menu ("Profile", "Settings", "Logout" in `app.component.html`), both storage banners, and inventory's "Sort by" and "Expiration" (`inventory-list.component.html:47-49`). All of these appeared in English in the Italian session.
+- **Literal `aria-label`s:** 5 hard-coded English values.
+- **Snackbar literals:** 46 literal `snackbar.*('…')` calls across services and components.
+- **Plurals:** "1 items" on ingredients and "0 / 0 items" on the shopping list.
+- **Raw ids:** the ingredient card shows the category id `cat-fridge` instead of its name.
+- **Jargon:** "start: 3d · repeat: 1d" for expiry reminders. Better copy: "Remind 3 days before, then daily".
+- **Units:** "pcs" is not translated.
+
+**Fix:**
+- Transloco keys for everything above.
+- ICU plurals via `@jsverse/transloco-messageformat`.
+- Category names from the category table.
+- A lint check that fails on new literal template text.
+
+**Acceptance:** an Italian session shows no English on any `/home` screen, the account menu or the banners. The lint check runs in CI.
+
+### U8. Accessibility - P2, Local (the automated part of F9)
+
+**[Verified]**
+- **Icon-only controls lack accessible names.** A heuristic script counted 3 on inventory, 6 on meal plan and 4 on ingredients (edit and delete icons, FABs). `matTooltip` is not an accessible name.
+- **Recipe cards are not keyboard-operable.** They are clickable `div (click)` elements with no role, tabindex or key handler (`recipe-list.component.html:29`).
+- **Contrast:** the light-theme sync icon (U3), and the 9.6-11.2 px navigation labels (U1).
+
+**Fix:**
+- `aria-label`s from Transloco on every icon button.
+- Cards become `<a>` or `<button>` elements, or get `role="button"`, `tabindex="0"` and Enter/Space handling.
+- The axe gate from U0.
+
+**Acceptance:** axe reports zero serious or critical issues on every `/home` route on both Playwright projects. Every action can be reached with Tab and triggered with Enter.
 
 ## Roadmap
 
@@ -434,6 +642,7 @@ All membership changes go through SECURITY DEFINER RPCs with explicit checks. A 
    - B2: sign-in restored, plus hardening.
    - B4: reset-password page.
    - B9: hygiene quick wins.
+   - B10: Meal of the Day link (one line plus an e2e test).
 2. **Phase 1: data correctness**
    - A3: Supabase as code, starting from the live schema.
    - B8: single schema source of truth.
@@ -451,8 +660,14 @@ All membership changes go through SECURITY DEFINER RPCs with explicit checks. A 
    - A7: headers and observability.
    - A4: `recipe-proxy`.
    - A5: staging project and PR flow.
-5. **Phase 4: features**
-   - F2 to F10, in table order, unless product priorities say otherwise.
+5. **Phase 4: UX refactor** (Local; can run in parallel with Phases 1-3, since it touches no sync or schema code)
+   - U0 tests first: the mobile Playwright project, the navigation e2e and the axe baseline.
+   - U1 shell, once the owner picks the primary navigation destinations.
+   - U2 and U4: page header, empty state, filter bar, FAB menu.
+   - U3, U5, U6.
+   - U7 i18n sweep, then U8 accessibility.
+6. **Phase 5: features**
+   - F2 to F10, in table order, unless product priorities say otherwise. F2, F6 and F9 build on U3, U2 and U8.
 
 ## Test Strategy And Coverage
 
@@ -490,6 +705,11 @@ All membership changes go through SECURITY DEFINER RPCs with explicit checks. A 
   - the persistence fallback;
   - permissions;
   - household isolation.
+- UX (Part 5):
+  - a `mobile` Playwright project next to Desktop Chrome;
+  - a navigation e2e that clicks every nav item and header action and asserts where it lands (closes the gap that let B10 through);
+  - `@axe-core/playwright` on every `/home` route;
+  - an Italian-session check that no English literals remain.
 - Keep `TEST_MATRIX.md` current, so that every production file maps to a Vitest spec and a Playwright workflow.
 - Targets: 80%, then 90% on all four metrics.
 
@@ -506,6 +726,8 @@ The project is release-ready when all of the following hold:
 7. The live schema matches the committed migrations.
 8. Vitest reaches 90% on all four metrics.
 9. The production bundle contains no secret keys. The publishable anon key is expected.
+10. On a phone viewport, every feature is reachable from visible navigation, and every header action lands where it says.
+11. Axe reports no serious or critical issues on any `/home` route, and an Italian session shows no English UI text.
 
 ## Verification Commands
 

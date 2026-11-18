@@ -662,7 +662,7 @@ The owner dislikes the current palette. This item has two halves.
 **[Verified] What is wrong today**
 - **Several unrelated colour sources:**
   - the Material 3 theme generated from `mat.$orange-palette` and `mat.$rose-palette` (`styles.scss:11-26`);
-  - a hand-written token set (`--color-primary: #e64a19` and others, `styles.scss:60-76`) that does not match the Material output;
+  - a hand-written token set (`--color-primary: #e64a19` and others, `styles.scss:60-78`) that does not match the Material output;
   - Material 2 hex values hard-coded in components (`#ff9800`, `#4caf50`, `#2196f3`, `#f44336`);
   - a blue-to-purple template gradient (`#667eea` → `#764ba2`) on login, register, forgot password and the profile avatar;
   - `theme_color: #1976d2` (Material blue) in `manifest.webmanifest`, while `index.html` says `#e64a19`;

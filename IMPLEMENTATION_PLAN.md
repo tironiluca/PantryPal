@@ -454,13 +454,15 @@ On 2026-11-18 the dev build was run in Chromium with a mocked signed-in session 
 
 | Dimension | Covered |
 | --- | --- |
-| Widths | 390 px (phone), 768 px (tablet), 1280 px (desktop) |
-| Themes | Light and dark |
-| Languages | English and Italian |
-| Data | An empty account, and three inventory items added through the dialogs |
-| Screens | Login, register, every `/home` tab, the shopping list, settings, profile, the add-inventory and add-recipe sheets |
+| Phone, 390 px, light, English | Login, register, every `/home` tab, the weekly shopping list, settings, profile, the navigation and account menus, the add-inventory and add-recipe sheets |
+| Phone, 390 px, dark, Italian | Inventory, recipes, meal plan, settings, the account menu |
+| Tablet, 768 px, dark, Italian | Inventory, meal plan |
+| Desktop, 1280 px, light, English | Login, inventory, recipes, meal plan, profile |
+| Data | An empty account, and three inventory items added through the dialogs (inventory and shopping list) |
 
 Not reviewed:
+- desktop ingredients, nutrition, cart, settings and the weekly shopping list;
+- dark theme in English, and light theme in Italian;
 - the nutrition sub-tabs, recipe import, barcode, OCR, image recognition and voice flows;
 - sign-in, sign-up and reset against a real Supabase project;
 - the ingredient, meal and nutrition dialogs;
@@ -514,10 +516,11 @@ U5 can land at any point.
 - From 600 px up, six tabs sit in a bottom bar with labels at 0.7 rem (11.2 px), and at 0.6 rem (9.6 px) between 600 and 900 px (`home.component.scss:161,239`).
 - On desktop the bottom bar is the only navigation. A side rail fits wide screens better.
 - The theme can be toggled from both the toolbar and Settings.
+- **Two different screens are called "Shopping List".** The "Cart" tab's page title is "Shopping List" (restock from inventory). The meal plan also has "Shopping List from Meal Plan" at `/home/meal-plan/shopping-list` (from planned meals). Navigation, page titles and voice commands should use one name for each.
 
 **Fix:**
 - Build `AppShellComponent` (U0).
-- On phones, use a bottom bar with four or five primary destinations plus "More". **[External]** the owner chooses the primary set; the suggestion is Inventory, Recipes, Meal plan, Shopping list, plus More (Ingredients, Nutrition, Settings, Profile).
+- On phones, use a bottom bar with four or five primary destinations plus "More". **[External]** the owner chooses the primary set; the suggestion is Inventory, Recipes, Meal plan, Cart (restock list), plus More (Ingredients, Nutrition, Settings, Profile). The owner also picks the names for the two shopping lists.
 - Use a rail at 600 px and up.
 - Make the wordmark navigate to `/home`.
 - Move Profile to `/home/profile` and keep `/auth/profile` as a redirect.
@@ -529,13 +532,14 @@ U5 can land at any point.
 
 **[Verified]**
 - **Blank Profile.** `profile.component.html` renders `@if (loading())` and `@else if (profile())`, but has no `@else`. When `getProfile()` returns null, the page is empty below the toolbar, with no message, retry or sign-out. Under the mock this happened on every load. **[Inferred]** in production it happens whenever the `users` row is missing or the request fails.
-- **The shopping list says "Nothing to buy 🎉 / Your pantry is fully stocked!" when the pantry has no items at all.**
-- **Empty lists have no action.** The recipe empty state is only "No recipes yet." The inventory empty state has a hint but no button. On a phone, the inventory empty state is pushed below the fold and sits behind the FAB stack.
+- **The Cart page says "Nothing to buy 🎉 / Your pantry is fully stocked!" when the pantry has no items at all.**
+- **Empty lists have no action.** The recipe empty state is only "No recipes yet." The inventory empty state has a hint but no button. On a phone, the filters push the inventory empty state to the bottom edge, where its hint text is cut off.
+- **A button overlaps its icon on the weekly shopping list.** In the "No Meal Plans Found" state at 390 px, the "Go to Meal Plan" button is drawn over a second calendar icon.
 - **B10** (Meal of the Day link) is a dead end in this group, but is tracked in Part 1 because it is a functional break.
 
 **Fix:**
 - Use `pp-empty-state` everywhere, with a primary action ("Add item", "Add recipe", "Import recipe").
-- The shopping list tells "pantry empty" apart from "nothing below minimum stock".
+- The Cart page tells "pantry empty" apart from "nothing below minimum stock".
 - Profile gets error and empty states with Retry and Sign out.
 
 **Acceptance:** unit tests cover each empty and error branch. An e2e test checks that a fresh account sees an action on every list screen.
@@ -544,8 +548,8 @@ U5 can land at any point.
 
 **[Verified]**
 - **The sync indicator is invisible in the light theme.** The icon colour is `var(--primary-color)` (`sync-status.component.scss`, the `:not(.error)…` rule) on the primary-coloured toolbar, so only the badge dot shows. The dark theme is fine.
-- **Every page load shows a "Synced: N pushed, M pulled" toast.** Under the mock it read "Synced: 1 pushed, 0 pulled" with no user edits. **[Inferred]** in production the same toast follows every sign-in sync, because successful background syncs announce themselves.
-- **The toast covers the content.** It sits over the bottom tab bar on desktop (hiding two tabs) and over the FAB stack on phones.
+- **Background syncs announce themselves.** `sync.service.ts:157-160` shows "Synced: N pushed, M pulled" after any successful sync that moved at least one row, including the sync on sign-in and the 5-minute auto-sync, not only after a manual sync. Under the mock it appeared on the first page load ("Synced: 1 pushed, 0 pulled", with no user edits) and again after each item was added. **[Inferred]** in production a household or multi-device user sees it whenever another device has changed something.
+- **The toast covers the bottom tab bar on desktop,** hiding two of the six tabs while it shows.
 - **The sync button's only label is its tooltip,** and the signed-out tooltip is an English literal.
 
 **Fix:**
@@ -556,19 +560,23 @@ U5 can land at any point.
 - The full status panel is F2. Error reporting is A7.
 
 **Acceptance:**
-- Loading a page with nothing pending shows no toast.
+- An auto-sync or sign-in sync that pulls rows shows no toast. A manual sync still confirms.
+- The desktop toast does not cover the navigation.
 - The indicator passes 3:1 non-text contrast in both themes.
 
 ### U4. Phone list screens put controls before content - P2, Local
 
 **[Verified]**
-- **Inventory:** at 390 px and at 768 px, search, location, expiry and sort each take a full-width row, and the sort direction arrow sits alone on a fifth row. About 400 px of controls come before the first item, and at 390 px the first card starts below the fold.
-- **The FAB stack covers card actions.** Inventory has three stacked FABs (add, barcode, receipt OCR) with no visible labels, and ingredients has two. They overlap the top-right edit and delete area of cards in the right column.
+- **Inventory:** at 390 px and at 768 px, search, location, expiry and sort each take a full-width row, and the sort direction arrow sits alone on a fifth row. About 400 px of controls come before the first item. On an 844 px phone only one card is visible below the toolbar.
+- **The FAB stack covers card actions.** Inventory has three stacked FABs (add, barcode, receipt OCR) with no visible labels, and ingredients has two. At 390 px the cards are full width, and the stack sits over their right edge, including the delete button of the first card.
 - **Recipe header actions become icon-only.** Under 600 px, the "Meal of the day" and "Import recipe" buttons lose their labels and become unlabelled pills (`recipe-list.component.scss:143`).
 
 **Fix:** use `pp-filter-bar`, `pp-fab-menu` and `pp-page-header` (U0).
 
-**Acceptance:** at 390 x 844 with three items, the first item card is fully visible without scrolling, and no FAB overlaps a card action.
+**Acceptance:** at 390 x 844 with three items:
+- the controls above the list take at most 140 px;
+- at least two item cards are fully visible without scrolling;
+- with the list scrolled to its end, no FAB overlaps a card action.
 
 ### U5. Sheets and forms - P3, Local
 
@@ -594,7 +602,8 @@ U5 can land at any point.
 
 **Fix:**
 - Default to the week or agenda view under 600 px. The toggle already exists.
-- Derive the first day and the names from `Intl.DateTimeFormat` and `getLocaleFirstDayOfWeek` for the active language.
+- Derive the names from `Intl.DateTimeFormat` for the active language. Take the first day from `Intl.Locale`'s week info, with a per-language fallback (Monday for `it`). Angular's `getLocaleFirstDayOfWeek` would need extra locale data registered, so it is not used.
+- "Add Meal" and the other meal-plan labels stayed English in the Italian session. They go into the U7 sweep.
 - Label the toolbar.
 
 **Acceptance:**
@@ -605,7 +614,12 @@ U5 can land at any point.
 
 B9 counted 21 snackbar literals in services. This item covers templates and copy, and the counts come from a heuristic grep:
 
-- **Literal text in templates:** 46 English text nodes across 9 templates. Examples are the account menu ("Profile", "Settings", "Logout" in `app.component.html`), both storage banners, and inventory's "Sort by" and "Expiration" (`inventory-list.component.html:47-49`). All of these appeared in English in the Italian session.
+- **Literal text in templates:** 46 English text nodes across 9 templates. Examples are:
+- the account menu ("Profile", "Settings", "Logout" in `app.component.html`);
+- inventory's "Sort by" and "Expiration" (`inventory-list.component.html:47-49`);
+- the meal plan's "Add Meal".
+
+These appeared in English in the Italian session, as did the household description on Settings. Both storage banners are also literal in the template, but they did not render in this session.
 - **Literal `aria-label`s:** 5 hard-coded English values.
 - **Snackbar literals:** 46 literal `snackbar.*('…')` calls across services and components.
 - **Plurals:** "1 items" on ingredients and "0 / 0 items" on the shopping list.

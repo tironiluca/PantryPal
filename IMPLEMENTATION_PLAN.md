@@ -40,7 +40,7 @@ The weak points are everything that touches the server: sign-in, sync, sharing, 
 | Password reset | Broken - the email link has no route | Reset page shipped; needs the redirect URL allowlisted |
 | Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; migration 004 **applied to production 2026-11-18** |
 | Local features | Broadly complete; covered by unit specs | Three more data bugs found and fixed with real-SQLite tests (see Status) |
-| UX | Not reviewed | Reviewed 2026-11-18 (Part 5): phone navigation is hidden, Meal of the Day is unreachable (B10), several dead-end and untranslated screens. Refactor planned, not started |
+| UX | Not reviewed | Reviewed 2026-11-18 (Part 5): phone navigation is hidden, Meal of the Day is unreachable (B10), several dead-end and untranslated screens. The palette mixes four colour sources and fails contrast in the light theme. Refactor planned, not started |
 
 ## Status (2026-11-18, after the first implementation pass and migration 004)
 
@@ -75,7 +75,7 @@ These cannot be done from the repository. Until they are, the related features s
 | A6 Client structure | Coalesced, serialized writes done | Splitting `DbService` is deferred: specs reach into its internals |
 | A7 Headers | **Done**; CSP report-only | The policy has no report endpoint, so violations appear only in each browser's console. Enforcing it needs a manual pass over OCR, image recognition and recipe import (or a `report-to` endpoint) first |
 | B10 Meal of the Day link | **Open** | Found in the UX review; one-line fix plus an e2e destination check |
-| U0-U8 UX refactor | **Planned, not started** | See Part 5. U1 needs an owner decision on the primary navigation destinations |
+| U0-U9 UX refactor | **Planned, not started** | See Part 5. Two owner decisions are open: the primary navigation destinations (U1) and the palette (U9) |
 
 ### Bugs found and fixed during the pass (not in the original review)
 
@@ -332,7 +332,7 @@ The original plan (commit `a03aa5e`, 16 tasks) and the security audit (`ee70179`
 | 3.2 Search, filter, sort | Done | Inventory search, location/expiry filters, sort column and direction |
 | 3.3 Unit conversions | Done | Used by cart, meal plan, nutrition |
 | 3.4 Analytics and waste reports | **Not started** | Needs a product decision (F7) |
-| 4.1-4.4 UI redesign | Done, with UX debt | Card grid, theme, bottom sheets. The phone-width review was done on 2026-11-18 and found that phone navigation is hidden and list screens are filter-heavy (Part 5) |
+| 4.1-4.4 UI redesign | Done, with UX debt | Card grid, theme, bottom sheets. The phone-width review was done on 2026-11-18 and found that phone navigation is hidden, list screens are filter-heavy, and the palette is inconsistent (Part 5, U9) |
 | 4.5 Loading skeletons | Done | `pp-skeleton` in inventory, recipes, cart |
 | 5.1 Confirmation dialogs | Done | Delete account now uses a typed confirmation |
 | 5.2 Keyboard shortcuts | Done | |
@@ -487,14 +487,15 @@ The general picture: the desktop layout is coherent, but the phone experience, w
 
 **Order.** Each step migrates every feature in one change, so that two patterns never coexist.
 1. U0 tests first: a phone Playwright project, a click-through navigation test and an axe baseline. These are expected to fail at first.
-2. The shell (U1).
-3. The page header and empty state (U2).
-4. The filter bar and FAB menu (U4).
-5. Status and feedback (U3).
-6. The calendar (U6).
-7. The i18n sweep (U7), then the accessibility fixes (U8).
+2. Colour tokens (U9, part 1), so that the primitives are built on tokens.
+3. The shell (U1).
+4. The page header and empty state (U2).
+5. The filter bar and FAB menu (U4).
+6. Status and feedback (U3).
+7. The calendar (U6).
+8. The i18n sweep (U7), then the accessibility fixes (U8).
 
-U5 can land at any point.
+U5 can land at any point. The new palette values (U9, part 2) land whenever the owner picks one, after step 2.
 
 **Tests that come with it.**
 - Add a `mobile` project to `playwright.config.ts` (a Pixel 7 or iPhone 13 device), next to Desktop Chrome.
@@ -554,7 +555,7 @@ U5 can land at any point.
 
 **Fix:**
 - Silent success for background sync. A toast only for user-started sync or errors.
-- An on-primary icon colour token.
+- An on-primary icon colour token. Under U9 the toolbar becomes a neutral surface, which removes the clash altogether.
 - Offset the snackbar above the navigation.
 - An `aria-label` from Transloco.
 - The full status panel is F2. Error reporting is A7.
@@ -640,7 +641,10 @@ These appeared in English in the Italian session, as did the household descripti
 **[Verified]**
 - **Icon-only controls lack accessible names.** A heuristic script counted 3 on inventory, 6 on meal plan and 4 on ingredients (edit and delete icons, FABs). `matTooltip` is not an accessible name.
 - **Recipe cards are not keyboard-operable.** They are clickable `div (click)` elements with no role, tabindex or key handler (`recipe-list.component.html:30`).
-- **Contrast:** the light-theme sync icon (U3), and the 9.6-11.2 px navigation labels (U1).
+- **Contrast:**
+  - the light-theme sync icon (U3);
+  - the 9.6-11.2 px navigation labels (U1);
+  - the expiry-warning chips and small primary-coloured links (U9).
 
 **Fix:**
 - `aria-label`s from Transloco on every icon button.
@@ -648,6 +652,71 @@ These appeared in English in the Italian session, as did the household descripti
 - The axe gate from U0.
 
 **Acceptance:** axe reports zero serious or critical issues on every `/home` route on both Playwright projects. Every action can be reached with Tab and triggered with Enter.
+
+### U9. Colour palette and tokens - P1, Local + [External] palette choice
+
+The owner dislikes the current palette. This item has two halves.
+- **Token consolidation** is needed whatever palette is chosen, and is fully specified here.
+- **New colour values** are the owner's choice. The candidates below meet the constraints, but none is picked.
+
+**[Verified] What is wrong today**
+- **Several unrelated colour sources:**
+  - the Material 3 theme generated from `mat.$orange-palette` and `mat.$rose-palette` (`styles.scss:11-26`);
+  - a hand-written token set (`--color-primary: #e64a19` and others, `styles.scss:60-76`) that does not match the Material output;
+  - Material 2 hex values hard-coded in components (`#ff9800`, `#4caf50`, `#2196f3`, `#f44336`);
+  - a blue-to-purple template gradient (`#667eea` → `#764ba2`) on login, register, forgot password and the profile avatar;
+  - `theme_color: #1976d2` (Material blue) in `manifest.webmanifest`, while `index.html` says `#e64a19`;
+  - green `#43a047` in the export and print output (`export.service.ts`).
+- **Four primaries on one screen.** Pixels sampled from the 390 px inventory screens show:
+  - the page title at `#ed5525`;
+  - the toolbar as a gradient from `#c5511e` to `#e24b1a`;
+  - the Save button at `#964900` (Material's orange tone 40);
+  - the add FAB at `#ffdcc7`.
+
+  Cards are pink (`#fef1ec`, a Material surface tint) on a cream page (`#fffaf4`).
+- **Saturated colour everywhere, so nothing stands out.** The toolbar, titles, calendar header, active tab, FABs and the sync icon are all orange, which is also the cause of the invisible sync icon (U3).
+- **Expiry status looks like the brand.** The brand orange is 14° of hue from the "expired" red and 25° from the "soon" amber. Expiry is the app's most important signal, and it cannot be told apart from decoration.
+- **Light-theme contrast failures, measured against the hand-written tokens:**
+  - the `.expiry-warning` chip text (`#f59f00` on a 15% amber tint over the cream page) is about 2:1, against the 4.5:1 required for small text;
+  - primary-coloured small links on the login card ("Forgot password?", "Sign up": `#e64a19` on `#fef1ec`) are 3.55:1;
+  - page titles in primary (`#e64a19` on `#fffaf4`) are 3.78:1, which passes only because they are large text.
+
+  The dark theme passes.
+- **Hard-coded colours.** A heuristic count found 108 hex values in 21 component stylesheets (246 including `rgba()` shadows and tints), and 16 in `.ts` files, in `app.component.ts` and `export.service.ts`. Nutrition macros use Material 2 hex values directly (`nutrition-dashboard.component.scss:23-66`).
+
+**Fix, part 1 - token consolidation (any palette):**
+- **One source.** Generate the Material 3 theme from the chosen seed colours with `ng generate @angular/material:theme-color`. Derive every custom token from the system variables it produces (`--mat-sys-*`) instead of keeping a parallel hex set.
+- **Semantic tokens** for everything that is not a Material role:
+  - `--pp-status-expired`, `--pp-status-soon` and `--pp-status-ok`, each with a container and an on-container colour;
+  - `--pp-macro-{calories,protein,carbs,fat}`;
+  - `--pp-meal-{breakfast,lunch,dinner,snack}`, if the meal types get colours.
+- **Neutral surfaces.** The toolbar and navigation use surface colours. Brand colour is kept for primary actions, the active navigation item and focus. Status colours are kept for status. No page or toolbar gradients.
+- **Status never relies on hue alone.** Expiry chips carry an icon and text ("Expired", "2 days"). An item that is fine gets no coloured chip.
+- **No raw colours in components.** A Stylelint rule (`color-no-hex` plus a function allowlist) runs on `src/app/**/*.scss`. The auth pages, the export HTML, `index.html` and the manifest read from the same values. The export's print CSS gets a light-only copy that a build step generates from the tokens.
+
+**Fix, part 2 - the new palette (owner's choice).** Every candidate must meet these constraints:
+- the brand colour is at least 90° of hue from both the "soon" and "expired" colours, or the warm-hue exception below applies;
+- AA contrast (4.5:1) holds for every text pair actually rendered, in both themes;
+- it can be expressed as a Material 3 seed palette.
+
+| Candidate | Light primary | Dark primary | Hue from expired / soon | Lowest text contrast (light / dark) |
+| --- | --- | --- | --- | --- |
+| Current | `#e64a19` | `#ff7043` | 14° / 25° | 2.06 / 4.62 |
+| A. Terracotta, repaired (same warm hue, fixed execution) | `#a83c17` | `#ff9b73` | 15° / 26° | 5.91 / 6.93 |
+| B. Sage (herb green, warm neutrals) | `#2f6b48` | `#8fd1a6` | 145° / 104° | 5.85 / 7.21 |
+| C. Ink (deep blue on cream) | `#2d4f86` | `#a8c3f0` | 143° / 176° | 6.22 / 6.89 |
+
+All three candidates share the status colours: soon `#6b4a00` on `#fff1c2`, and expired `#8f1d1d` on `#fde2e2`. In the dark theme these are `#ffd86b` on `#3d3000` and `#ffb4ab` on `#4a1515`.
+
+A keeps the warm identity but stays close to the expiry reds. It is acceptable only because part 1 adds icons and text to every status, and it is the weakest at separating brand from status. The contrast figures were computed for each candidate's text, muted-text, primary-text, button and status-chip pairs. **[External]** the owner picks one, or asks for others that meet the same constraints.
+
+**Order.** Do part 1 before the U0 primitives, so that they are built on tokens and not recoloured twice. Part 2 is then a change to the seed colours plus the semantic token values.
+
+**Acceptance:**
+- No hex or `rgb()` values remain in component styles outside the token file (the Stylelint rule passes).
+- The manifest, `theme-color`, the auth pages and the export use the same palette.
+- A unit test checks every documented token pair against 4.5:1 in both themes. Axe reports text over gradients and translucent tints as "incomplete" rather than as a violation, so it cannot be the only check.
+- Expiry chips are distinguishable in a greyscale screenshot.
 
 ## Roadmap
 
@@ -676,6 +745,7 @@ These appeared in English in the Italian session, as did the household descripti
    - A5: staging project and PR flow.
 5. **Phase 4: UX refactor** (Local; can run in parallel with Phases 1-3, since it touches no sync or schema code)
    - U0 tests first: the mobile Playwright project, the navigation e2e and the axe baseline.
+   - U9 part 1: colour token consolidation. Part 2 (the new palette) follows once the owner picks one.
    - U1 shell, once the owner picks the primary navigation destinations.
    - U2 and U4: page header, empty state, filter bar, FAB menu.
    - U3, U5, U6.
@@ -742,6 +812,7 @@ The project is release-ready when all of the following hold:
 9. The production bundle contains no secret keys. The publishable anon key is expected.
 10. On a phone viewport, every feature is reachable from visible navigation, and every header action lands where it says.
 11. Axe reports no serious or critical issues on any `/home` route, and an Italian session shows no English UI text.
+12. Every colour comes from the theme tokens, and every documented text pair meets 4.5:1 in both themes.
 
 ## Verification Commands
 

@@ -307,6 +307,22 @@ describe('InventoryListComponent', () => {
       await setup();
       expect(component.expiringCount).toBe(1);
     });
+
+    it('agrees with the week filter and the "soon" chip, including items due today', async () => {
+      await setup();
+      const today = new Date();
+      const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      component.rows = [
+        { ...component.rows[0], id: 'today', expiry: iso },
+        { ...component.rows[1], id: 'past', expiry: daysFromNow(-3) },
+      ];
+      component.expiringFilter = 'week';
+      component.applyFilters();
+
+      expect(component.getExpiryStatus(iso)).toBe('warning');
+      expect(component.expiringCount).toBe(1);
+      expect(component.filteredRows.map(r => r.id)).toEqual(['today']);
+    });
   });
 
   describe('activeFilterCount', () => {

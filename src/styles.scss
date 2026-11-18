@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 @use './styles/theme-colors' as palettes;
 @use './styles/tokens' as pp;
@@ -6,7 +7,7 @@
 // PANTRYPAL THEME — VS Code-style, dark by default (IMPLEMENTATION_PLAN.md, U9)
 //
 // Colours come from one place: src/styles/_tokens.scss, emitted as --pp-*
-// custom properties with light-dark(), so `color-scheme` picks the theme.
+// custom properties once per theme (dark on html, light on html.light-theme).
 // Material's system colours (--mat-sys-*) are pinned to the same tokens, so
 // components and our own styles always agree.
 //
@@ -16,30 +17,10 @@
 
 $font-family: (-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 
-html {
-  color-scheme: dark;
-
-  &.light-theme {
-    color-scheme: light;
-  }
-
-  @include mat.theme((
-    color: (
-      primary: palettes.$primary-palette,
-      tertiary: palettes.$tertiary-palette,
-      theme-type: color-scheme,
-    ),
-    typography: (
-      plain-family: $font-family,
-      brand-family: $font-family,
-    ),
-    density: 0,
-  ));
-
-  @include pp.emit-tokens();
-
-  // Pin Material's system roles to the tokens. Seed palettes alone would tint
-  // the surfaces blue and give a pale primary in the dark theme.
+// Material system roles pinned to the tokens. Seed palettes alone would tint
+// the surfaces blue and give a pale primary in the dark theme. Included after
+// each mat.theme() call so it wins over the generated values.
+@mixin pp-system-overrides() {
   @include mat.theme-overrides((
     primary: var(--pp-accent),
     on-primary: var(--pp-on-accent-text),
@@ -84,6 +65,34 @@ html {
     corner-large: 8px,
     corner-extra-large: 10px,
   ));
+}
+
+$pp-palette: (
+  primary: palettes.$primary-palette,
+  tertiary: palettes.$tertiary-palette,
+);
+
+html {
+  // Dark is the default; ThemeService or the boot script adds .light-theme.
+  color-scheme: dark;
+
+  @include mat.theme((
+    color: map.merge($pp-palette, (theme-type: dark)),
+    typography: (
+      plain-family: $font-family,
+      brand-family: $font-family,
+    ),
+    density: 0,
+  ));
+  @include pp.emit-tokens(dark);
+  @include pp-system-overrides();
+
+  &.light-theme {
+    color-scheme: light;
+    @include mat.theme((color: map.merge($pp-palette, (theme-type: light))));
+    @include pp.emit-tokens(light);
+    @include pp-system-overrides();
+  }
 
   // Solid blue buttons with white text (the system primary is the lighter,
   // text-safe blue in the dark theme).
@@ -95,6 +104,12 @@ html {
     text-container-shape: 4px,
     protected-container-shape: 4px,
     tonal-container-shape: 4px,
+  ));
+
+  // Progress tracks sit on cards, and Material's default track role equals the
+  // card colour here, so give them a visible border-strength track.
+  @include mat.progress-bar-overrides((
+    track-color: var(--pp-border-strong),
   ));
 
   @include mat.fab-overrides((

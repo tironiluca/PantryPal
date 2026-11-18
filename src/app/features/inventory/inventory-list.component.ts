@@ -148,16 +148,8 @@ export class InventoryListComponent {
     return null;
   }
 
-  /** Whole calendar days from today to the expiry date, in local time (0 = today). */
   private daysUntil(expiry: string): number {
-    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(expiry);
-    const parsed = dateOnly
-      ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
-      : new Date(expiry);
-    const day = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return Math.round((day.getTime() - today.getTime()) / 86400000);
+    return daysUntilExpiry(expiry);
   }
 
   getLocationIcon(location?: string): string {
@@ -194,11 +186,9 @@ export class InventoryListComponent {
 
     // Expiry filter
     if (this.expiringFilter !== 'all') {
-      const now = new Date();
       filtered = filtered.filter(item => {
         if (!item.expiry) return false;
-        const expiry = new Date(item.expiry);
-        const daysUntil = Math.floor((expiry.getTime() - now.getTime()) / 86400000);
+        const daysUntil = daysUntilExpiry(item.expiry);
 
         switch (this.expiringFilter) {
           case 'expired':
@@ -257,13 +247,8 @@ export class InventoryListComponent {
   }
 
   get expiringCount(): number {
-    return this.rows.filter(item => {
-      if (!item.expiry) return false;
-      const expiry = new Date(item.expiry);
-      const weekFromNow = new Date();
-      weekFromNow.setDate(weekFromNow.getDate() + 7);
-      return expiry > new Date() && expiry <= weekFromNow;
-    }).length;
+    // Same rule as the "soon" chip: today up to 7 days ahead.
+    return this.rows.filter(item => this.getExpiryStatus(item.expiry) === 'warning').length;
   }
 
   get activeFilterCount(): number {
@@ -355,4 +340,21 @@ export class InventoryListComponent {
         }
       });
   }
+}
+
+/**
+ * Whole calendar days from today to an expiry date, in local time: 0 is today,
+ * negative is past. Date-only values (YYYY-MM-DD) are read as local dates, not
+ * UTC midnight, so "tomorrow" is always 1. Used by the chip, the filter and the
+ * stat so they agree.
+ */
+export function daysUntilExpiry(expiry: string): number {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(expiry);
+  const parsed = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(expiry);
+  const day = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((day.getTime() - today.getTime()) / 86400000);
 }

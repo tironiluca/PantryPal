@@ -140,6 +140,14 @@ for (const file of SCAN_DIRS.flatMap(walk)) {
   });
 }
 
+// light-dark() is unsupported below Safari 17.5 / Chrome 123, but Angular 21
+// supports Safari 16.4 and Chrome 111: themes are switched by class instead.
+for (const file of [join(root, 'src')].flatMap(walk)) {
+  readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    if (/light-dark\(/.test(line.replace(/\/\/.*$/, ''))) errors.push(`${relative(root, file)}:${i + 1}: light-dark() is not supported by all target browsers (Safari 16.4); emit per theme class`);
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Every custom property used in a stylesheet is defined somewhere. An
 // undefined var() silently falls back to nothing (the calendar cells were

@@ -66,10 +66,12 @@ $pp-tokens: (
   on-media: (#ffffff, #ffffff),
 );
 
-/// Emits every token as `--pp-<name>: light-dark(<light>, <dark>)`.
-/// Requires `color-scheme` to be set on the same element or an ancestor.
-@mixin emit-tokens() {
+/// Emits every token as `--pp-<name>: <value>` for one theme ('light' or 'dark').
+/// Plain values, not light-dark(): Angular 21 supports Safari 16.4 and
+/// Chrome 111, which do not understand light-dark().
+@mixin emit-tokens($theme) {
+  $index: if($theme == light, 1, 2);
   @each $name, $pair in $pp-tokens {
-    --pp-#{$name}: light-dark(#{list.nth($pair, 1)}, #{list.nth($pair, 2)});
+    --pp-#{$name}: #{list.nth($pair, $index)};
   }
 }

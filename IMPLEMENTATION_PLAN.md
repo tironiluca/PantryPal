@@ -35,22 +35,22 @@ The weak points are everything that touches the server: sign-in, sync, sharing, 
 | Production sign-in | **Down** - all methods fail on the production site | Still reported down; needs the dashboard checks in B2. Diagnostics and a smoke check are in place |
 | CI | **Has never run a test** - all 12 runs failed within about 15 seconds | Green on every push: lint, unit tests with coverage gate, build, Playwright, SQL/RLS tests |
 | Cloud sync | Works on the happy path; several silent data-loss paths | Minimum fixes shipped and tested (B3) |
-| Household sharing | Likely non-functional end to end | Fixed in code and migration 004; **works once 004 is applied** |
+| Household sharing | Likely non-functional end to end | Fixed in code; migration 004 **applied to production 2026-11-18** |
 | Password reset | Broken - the email link has no route | Reset page shipped; needs the redirect URL allowlisted |
-| Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; **works once 004 is applied** |
+| Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; migration 004 **applied to production 2026-11-18** |
 | Local features | Broadly complete; covered by unit specs | Three more data bugs found and fixed with real-SQLite tests (see Status) |
 
-## Status (2026-11-17, after the first implementation pass)
+## Status (2026-11-18, after the first implementation pass and migration 004)
 
 ### Needs the project owner
 
 These cannot be done from the repository. Until they are, the related features stay broken in production.
 
-1. **Restore sign-in (B2).** In the Supabase dashboard, check whether project `yszsmwuremvxajibydem` is paused, and that Vercel's `SUPABASE_URL`/`SUPABASE_ANON_KEY` belong to it. Then check URL Configuration: Site URL, and `https://pantry-vibe-pal.vercel.app/**` in Redirect URLs, which also covers the new `/auth/reset-password` page. Then check the Google and GitHub providers. The browser console now logs the raw Supabase error (`Supabase auth error {name, status, code}`).
-2. **Apply migration 004** (`supabase/migrations/004_household_rpcs_and_account_deletion.sql`) in the Supabase SQL editor. It is one transaction and safe to re-run. Households, invitations and account deletion fail with "needs a database update" until it is applied. Never run 003 after it.
+1. **Restore sign-in (B2).** **[Verified 2026-11-18]** project `yszsmwuremvxajibydem` is not paused (status `ACTIVE_HEALTHY`). Still check that Vercel's `SUPABASE_URL`/`SUPABASE_ANON_KEY` belong to it. Then check URL Configuration: Site URL, and `https://pantry-vibe-pal.vercel.app/**` in Redirect URLs, which also covers the new `/auth/reset-password` page. Then check the Google and GitHub providers. The browser console now logs the raw Supabase error (`Supabase auth error {name, status, code}`).
+2. ~~**Apply migration 004**~~ **Done 2026-11-18.** Run by the owner in the SQL editor and verified live: all 14 functions, the 4 household policies, member-read policies on 6 tables, `set_server_updated_at` triggers on 8 synced tables and the `recipe_ingredients` timestamp columns are present; the old `Household shared …` policies are gone; the functions are executable by `authenticated` and not by `anon`. Never run 003 against this project.
 3. **Add repository secrets `PROD_SUPABASE_URL` and `PROD_SUPABASE_ANON_KEY`** to enable the scheduled auth smoke check. Until then it passes by skipping. CI never reads these.
 4. **Deploy the recipe fetcher** (optional): `supabase functions deploy recipe-proxy`. Until then, recipe import keeps using third-party proxies.
-5. **Before the next schema change:** share a schema dump of the live project (`supabase db dump --schema public`). A2 (`household_id`), nutrition sync and version-checked upserts change the sync payload, so they wait for it.
+5. **Before the next schema change:** share a schema dump of the live project (`supabase db dump --schema public`). **[Verified 2026-11-18]** the live schema matched migrations 001-003 (TEXT user ids on data tables, UUID on `users`) before 004, and all data tables were empty; a full dump is still wanted for types and policy details. A2 (`household_id`), nutrition sync and version-checked upserts change the sync payload, so they wait for it.
 
 ### Item status
 
@@ -58,10 +58,10 @@ These cannot be done from the repository. Until they are, the related features s
 | --- | --- | --- |
 | B1 CI | **Done, verified** | CI green on every push since `251a4f4`; Vercel installs with `npm ci` |
 | B2 Sign-in | Repository part done; outage **open** | Raw error logging, unreachable-service message, `auth-smoke.yml`. `/auth/callback` was deliberately not added while the outage is undiagnosed |
-| B3 Sync | **Minimum fixes done, verified** in unit and real-SQLite tests | Soft deletes, per-row dirty tracking, per-table server cursors, paging, batched apply, partial failure reported, sync on sign-in. Upgrading devices resume from their last sync, so rows hard-deleted earlier are not pulled back; a brand-new device still receives them (they were never deleted on the server). Clock skew is fixed only once 004's server `updated_at` trigger is live. Not run against the live project |
+| B3 Sync | **Minimum fixes done, verified** in unit and real-SQLite tests | Soft deletes, per-row dirty tracking, per-table server cursors, paging, batched apply, partial failure reported, sync on sign-in. Upgrading devices resume from their last sync, so rows hard-deleted earlier are not pulled back; a brand-new device still receives them (they were never deleted on the server). Clock skew is fixed by 004's server `updated_at` trigger, live since 2026-11-18. Not run against the live project |
 | B4 Password reset | **Done**; link handoff not verified live | Page and e2e use a stored session, not a real recovery link |
-| B5 Households | **Done in code**, needs 004 applied | 39 SQL checks pass on three schema variants; old policies reproduced as "infinite recursion detected". Invitations are matched on the caller's **confirmed** email, so they depend on email confirmation being enabled for email/password sign-ups |
-| B6 Delete account | **Done in code**, needs 004 applied | `DELETE FROM auth.users` inside `delete_my_account()` is untested against the live role's privileges |
+| B5 Households | **Done**; 004 applied 2026-11-18 | 39 SQL checks pass on three schema variants; old policies reproduced as "infinite recursion detected". Invitations are matched on the caller's **confirmed** email, so they depend on email confirmation being enabled for email/password sign-ups |
+| B6 Delete account | **Done**; 004 applied 2026-11-18 | `DELETE FROM auth.users` inside `delete_my_account()` is untested against the live role's privileges |
 | B7 Storage fallback | **Done, verified** | Data stays readable when saving fails; a blocking alert when SQLite cannot start |
 | B8 Schema source | **Done** | Migrations are the only schema; 001 no longer drops tables; 003 marked superseded |
 | B9 Hygiene | **Mostly done** | Logs untracked, README rewritten, ESLint added. Service messages are still English-only |
@@ -204,7 +204,7 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B5. Household sharing does not work end to end - P1, Needs Supabase
 
-**Status: Done in code; apply migration 004. The [Inferred] recursion was reproduced locally.**
+**Status: Done; migration 004 applied 2026-11-18. The [Inferred] recursion was reproduced locally.**
 
 **[Verified]** in code:
 - `acceptInvitation()` has no caller, and there is no invitation inbox.
@@ -238,7 +238,7 @@ All findings below are **[Verified]** in `sync.service.ts` and `db.service.ts`:
 
 ### B6. Delete account deletes nothing - P1, Needs Supabase
 
-**Status: Done in code; apply migration 004.**
+**Status: Done; migration 004 applied 2026-11-18.**
 
 **[Inferred - confirm live]** `UserProfileService.deleteAccount()` deletes from `users` (`user-profile.service.ts:230`). Neither migration 003 nor `SUPABASE_SETUP.md` defines a DELETE policy on `users`. RLS therefore filters the row out, the call returns no error, and the app shows "Account deleted successfully".
 

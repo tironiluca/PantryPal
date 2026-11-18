@@ -40,7 +40,7 @@ The weak points are everything that touches the server: sign-in, sync, sharing, 
 | Password reset | Broken - the email link has no route | Reset page shipped; needs the redirect URL allowlisted |
 | Delete account | Reports success but deletes nothing | Fixed via `delete_my_account()`; migration 004 **applied to production 2026-11-18** |
 | Local features | Broadly complete; covered by unit specs | Three more data bugs found and fixed with real-SQLite tests (see Status) |
-| UX | Not reviewed | Reviewed 2026-11-18 (Part 5): phone navigation is hidden, Meal of the Day is unreachable (B10), several dead-end and untranslated screens. The palette mixes four colour sources and fails contrast in the light theme. Refactor planned, not started |
+| UX | Not reviewed | Reviewed 2026-11-18 (Part 5): phone navigation is hidden, Meal of the Day is unreachable (B10), several dead-end and untranslated screens. The palette mixes four colour sources and fails contrast in the light theme; a VS Code-style dark palette was chosen as its replacement. Refactor planned, not started |
 
 ## Status (2026-11-18, after the first implementation pass and migration 004)
 
@@ -75,7 +75,7 @@ These cannot be done from the repository. Until they are, the related features s
 | A6 Client structure | Coalesced, serialized writes done | Splitting `DbService` is deferred: specs reach into its internals |
 | A7 Headers | **Done**; CSP report-only | The policy has no report endpoint, so violations appear only in each browser's console. Enforcing it needs a manual pass over OCR, image recognition and recipe import (or a `report-to` endpoint) first |
 | B10 Meal of the Day link | **Open** | Found in the UX review; one-line fix plus an e2e destination check |
-| U0-U9 UX refactor | **Planned, not started** | See Part 5. Two owner decisions are open: the primary navigation destinations (U1) and the palette (U9) |
+| U0-U9 UX refactor | **Planned, not started** | See Part 5. The palette is decided: a VS Code-style dark theme, dark by default (U9). Still open: the primary navigation destinations (U1) |
 
 ### Bugs found and fixed during the pass (not in the original review)
 
@@ -495,7 +495,7 @@ The general picture: the desktop layout is coherent, but the phone experience, w
 7. The calendar (U6).
 8. The i18n sweep (U7), then the accessibility fixes (U8).
 
-U5 can land at any point. The new palette values (U9, part 2) land whenever the owner picks one, after step 2.
+U5 can land at any point. The VS Code-style palette (U9, part 2) lands with step 2.
 
 **Tests that come with it.**
 - Add a `mobile` project to `playwright.config.ts` (a Pixel 7 or iPhone 13 device), next to Desktop Chrome.
@@ -653,11 +653,13 @@ These appeared in English in the Italian session, as did the household descripti
 
 **Acceptance:** axe reports zero serious or critical issues on every `/home` route on both Playwright projects. Every action can be reached with Tab and triggered with Enter.
 
-### U9. Colour palette and tokens - P1, Local + [External] palette choice
+### U9. Colour palette and tokens - P1, Local
 
-The owner dislikes the current palette. This item has two halves.
-- **Token consolidation** is needed whatever palette is chosen, and is fully specified here.
-- **New colour values** are the owner's choice. The candidates below meet the constraints, but none is picked.
+**Decision (owner, 2026-11-18):** the problem is the colour combination. The owner wants a darker, VS Code-like style. Part 2 below records the chosen direction. The earlier candidates (Terracotta, Sage, Ink) were not chosen.
+
+This item has two halves:
+- **Token consolidation**, which is needed whatever palette is used;
+- **the new colour values**, which follow the chosen direction.
 
 **[Verified] What is wrong today**
 - **Several unrelated colour sources:**
@@ -685,7 +687,10 @@ The owner dislikes the current palette. This item has two halves.
 - **Hard-coded colours.** A heuristic count found 108 hex values in 21 component stylesheets (246 including `rgba()` shadows and tints), and 16 in `.ts` files, in `app.component.ts` and `export.service.ts`. Nutrition macros use Material 2 hex values directly (`nutrition-dashboard.component.scss:23-66`).
 
 **Fix, part 1 - token consolidation (any palette):**
-- **One source.** Generate the Material 3 theme from the chosen seed colours with `ng generate @angular/material:theme-color`. Derive every custom token from the system variables it produces (`--mat-sys-*`) instead of keeping a parallel hex set.
+- **One source.** Generate the Material 3 palettes with `ng generate @angular/material:theme-color` (installed version 21.2.14). Use a blue primary seed and a neutral grey `neutralColor` seed, so that surfaces come out grey rather than tinted by the primary.
+  - A seed scheme alone gives a pale primary with dark text in the dark theme. So pin the exact values with `mat.theme-overrides(...)`: `primary`, `on-primary`, `surface`, the `surface-container-*` steps, `outline` and `outline-variant`.
+  - Switch `styles.scss` from `mat.all-component-themes` and `define-theme` to `mat.theme`, so that every component reads the `--mat-sys-*` variables.
+  - Derive every custom token from those variables instead of keeping a parallel hex set.
 - **Semantic tokens** for everything that is not a Material role:
   - `--pp-status-expired`, `--pp-status-soon` and `--pp-status-ok`, each with a container and an on-container colour;
   - `--pp-macro-{calories,protein,carbs,fat}`;
@@ -694,29 +699,59 @@ The owner dislikes the current palette. This item has two halves.
 - **Status never relies on hue alone.** Expiry chips carry an icon and text ("Expired", "2 days"). An item that is fine gets no coloured chip.
 - **No raw colours in components.** A Stylelint rule (`color-no-hex` plus a function allowlist) runs on `src/app/**/*.scss`. The auth pages, the export HTML, `index.html` and the manifest read from the same values. The export's print CSS gets a light-only copy that a build step generates from the tokens.
 
-**Fix, part 2 - the new palette (owner's choice).** Every candidate must meet these constraints:
-- the brand colour is at least 90° of hue from both the "soon" and "expired" colours, or the warm-hue exception below applies;
-- AA contrast (4.5:1) holds for every text pair actually rendered, in both themes;
-- it can be expressed as a Material 3 seed palette.
+**Fix, part 2 - the new palette: a VS Code-style dark theme.**
 
-| Candidate | Light primary | Dark primary | Hue from expired / soon | Lowest text contrast (light / dark) |
-| --- | --- | --- | --- | --- |
-| Current | `#e64a19` | `#ff7043` | 14° / 25° | 2.06 / 4.62 |
-| A. Terracotta, repaired (same warm hue, fixed execution) | `#a83c17` | `#ff9b73` | 15° / 26° | 5.91 / 6.93 |
-| B. Sage (herb green, warm neutrals) | `#2f6b48` | `#8fd1a6` | 145° / 104° | 5.85 / 7.21 |
-| C. Ink (deep blue on cream) | `#2d4f86` | `#a8c3f0` | 143° / 176° | 6.22 / 6.89 |
+This is a style in the spirit of VS Code's dark theme, not a copy of its theme file. The values below were chosen and checked here.
 
-All three candidates share the status colours: soon `#6b4a00` on `#fff1c2`, and expired `#8f1d1d` on `#fde2e2`. In the dark theme these are `#ffd86b` on `#3d3000` and `#ffb4ab` on `#4a1515`.
+The look:
+- dark by default;
+- neutral charcoal greys with no hue tint;
+- a slightly darker bar for the toolbar and navigation;
+- 1 px borders instead of shadows;
+- one blue accent, used only for primary actions, links, focus and the active navigation item;
+- small radii (4-6 px).
 
-A keeps the warm identity but stays close to the expiry reds. It is acceptable only because part 1 adds icons and text to every status, and it is the weakest at separating brand from status. The contrast figures were computed for each candidate's text, muted-text, primary-text, button and status-chip pairs. **[External]** the owner picks one, or asks for others that meet the same constraints.
+The light theme stays as a secondary option, with the same structure.
 
-**Order.** Do part 1 before the U0 primitives, so that they are built on tokens and not recoloured twice. Part 2 is then a change to the seed colours plus the semantic token values.
+| Role | Dark (default) | Light |
+| --- | --- | --- |
+| Page / editor surface | `#1f1f1f` | `#ffffff` |
+| Cards, sheets (`surface-container`) | `#252526` | `#f8f8f8` |
+| Toolbar, navigation, status bar | `#181818` | `#f8f8f8` |
+| Borders (`outline-variant`) | `#2b2b2b` | `#e5e5e5` |
+| Text | `#cccccc` | `#3b3b3b` |
+| Secondary text | `#9d9d9d` | `#616161` |
+| Primary button (white text) | `#0067b8` | `#005fb8` |
+| Links, primary text | `#4daafc` | `#005fb8` |
+| Focus ring | `#0078d4` | `#005fb8` |
+| Active navigation item | `#ffffff` on `#04395e` | `#005fb8` on `#e1ecf8` |
+| Status "soon" (text on container) | `#e2c08d` on `#3a2f12` | `#6b4a00` on `#fff1c2` |
+| Status "expired" and low stock | `#f48771` on `#3d1a17` | `#a1260d` on `#fde7e3` |
+| Macros: calories, protein, carbs, fat | `#d7ba7d`, `#c586c0`, `#4ec9b0`, `#ce9178` | `#795e26`, `#af00db`, `#267f99`, `#b0561c` |
+
+The macro colours follow a code-editor syntax palette (gold, purple, teal, rust), which fits the style.
+
+Checked 2026-11-18 against both themes:
+- every text pair is at least 5.27:1, against the 4.5:1 required;
+- the macro bars and focus ring are at least 3.64:1, against the 3:1 required for non-text;
+- the brand blue is 161°-170° of hue from both status colours.
+
+The VS Code blue `#0078d4` as a button fill gives white text only 4.53:1, so buttons use `#0067b8` (5.78:1) and `#0078d4` is kept for focus. The fat colour is close in hue to "expired". It is accepted because the two never appear on the same screen.
+
+Changes that come with the dark default:
+- **Theme default.** `ThemeService` falls back to `'light'` (`theme.service.ts:5`). It becomes `'dark'` when nothing is stored, and a stored choice is kept. An inline script in `index.html` sets the `dark-theme` class before Angular boots, so the page does not flash light first.
+- **Single-valued colours take the dark values.** These are `<meta name="theme-color">` in `index.html` (today `#e64a19`), and `theme_color` and `background_color` in `manifest.webmanifest` (today `#1976d2` and `#ffffff`): all three become `#181818`.
+- **The export and print output stays light.** It is paper, so it uses the light values.
+- **The auth pages lose their purple gradient** and use the same surfaces as the rest of the app.
+
+**Order.** Do part 1 before the U0 primitives, so that they are built on tokens and not recoloured twice. Part 2 then sets the seeds, overrides and semantic token values above, and can land in the same change as part 1.
 
 **Acceptance:**
 - No hex or `rgb()` values remain in component styles outside the token file (the Stylelint rule passes).
 - The manifest, `theme-color`, the auth pages and the export use the same palette.
 - A unit test checks every documented token pair against 4.5:1 in both themes. Axe reports text over gradients and translucent tints as "incomplete" rather than as a violation, so it cannot be the only check.
 - Expiry chips are distinguishable in a greyscale screenshot.
+- A first visit with no stored theme renders dark from the first paint, and a stored light choice is kept.
 
 ## Roadmap
 
@@ -745,7 +780,7 @@ A keeps the warm identity but stays close to the expiry reds. It is acceptable o
    - A5: staging project and PR flow.
 5. **Phase 4: UX refactor** (Local; can run in parallel with Phases 1-3, since it touches no sync or schema code)
    - U0 tests first: the mobile Playwright project, the navigation e2e and the axe baseline.
-   - U9 part 1: colour token consolidation. Part 2 (the new palette) follows once the owner picks one.
+   - U9: colour token consolidation and the VS Code-style dark palette (dark by default).
    - U1 shell, once the owner picks the primary navigation destinations.
    - U2 and U4: page header, empty state, filter bar, FAB menu.
    - U3, U5, U6.

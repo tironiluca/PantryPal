@@ -85,7 +85,7 @@
       transition: height 0.3s ease;
 
       &.has-data {
-        background: linear-gradient(180deg, #ff5722, #e64a19);
+        background: var(--pp-macro-calories);
       }
     }
 

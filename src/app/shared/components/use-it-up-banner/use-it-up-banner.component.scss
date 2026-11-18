@@ -1,6 +1,6 @@
 .use-it-up-banner {
-  background: rgba(245, 159, 0, 0.1);
-  border: 1px solid rgba(245, 159, 0, 0.4);
+  background: var(--pp-status-soon-bg);
+  border: 1px solid transparent;
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
@@ -61,7 +61,3 @@
   }
 }
 
-:host-context(.dark-theme) .use-it-up-banner {
-  background: rgba(255, 179, 0, 0.07);
-  border-color: rgba(255, 179, 0, 0.3);
-}

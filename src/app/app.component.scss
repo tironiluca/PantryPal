@@ -6,17 +6,14 @@
 }
 
 .app-toolbar {
-  background: linear-gradient(135deg, #c4521f 0%, #e64a19 100%) !important;
-  box-shadow: 0 2px 8px rgba(120, 50, 10, 0.25);
-  height: 64px;
+  --mat-toolbar-container-background-color: var(--pp-bar);
+  --mat-toolbar-container-text-color: var(--pp-text);
+  background: var(--pp-bar) !important;
+  color: var(--pp-text);
+  border-bottom: 1px solid var(--pp-border);
+  height: 56px;
   flex-shrink: 0;
   z-index: 100;
-}
-
-:host-context(.dark-theme) .app-toolbar {
-  background: linear-gradient(135deg, #2d1105 0%, #4a1e0a 100%) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid rgba(255, 150, 100, 0.12);
 }
 
 .toolbar-content {
@@ -46,15 +43,16 @@
 }
 
 .brand-icon {
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-  animation: pulse 2s ease-in-out infinite;
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+  color: var(--pp-accent);
 }
 
 .brand-name {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--pp-text-strong);
   letter-spacing: -0.5px;
 }
 
@@ -69,7 +67,7 @@
 
   &:hover {
     transform: rotate(180deg);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--pp-hover);
   }
 }
 
@@ -79,16 +77,7 @@
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
+    background-color: var(--pp-hover);
   }
 }
 
@@ -98,16 +87,16 @@
   align-items: flex-start;
   margin: 12px 16px 0;
   padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--mat-sys-error-container, #f9dedc);
-  color: var(--mat-sys-on-error-container, #410e0b);
+  border-radius: 4px;
+  background: var(--pp-status-expired-bg);
+  color: var(--pp-status-expired);
 
   p {
     margin: 4px 0 0;
   }
 
   &.storage-warning {
-    background: var(--mat-sys-tertiary-container, #fff4d6);
-    color: var(--mat-sys-on-tertiary-container, #3d2f00);
+    background: var(--pp-status-soon-bg);
+    color: var(--pp-status-soon);
   }
 }

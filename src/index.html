@@ -6,9 +6,12 @@
   <title>PantryPal</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e64a19">
+  <meta name="theme-color" content="#181818">
+  <meta name="color-scheme" content="dark light">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Theme boot (U9): dark by default; apply a stored light choice before first paint. Its hash is in vercel.json's CSP. -->
+  <script>try{if(localStorage.getItem('pp-theme')==='light'){document.documentElement.classList.add('light-theme');document.querySelector('meta[name=theme-color]').content='#f8f8f8'}}catch(e){}</script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script>

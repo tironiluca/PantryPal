@@ -12,16 +12,13 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(230, 74, 25, 0.2);
+  border-bottom: 1px solid var(--pp-border);
 
   h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 700;
-    background: linear-gradient(135deg, #e64a19 0%, #ff7043 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--pp-text-strong);
   }
 
   .header-actions {
@@ -31,39 +28,15 @@
     align-items: center;
 
     button[mat-stroked-button] {
-      height: 40px;
-      border-radius: 20px;
+      height: 36px;
+      border-radius: 4px;
       font-weight: 600;
-      border: 2px solid #e64a19;
-      color: #e64a19;
-      transition: all 0.3s ease;
+      border: 1px solid var(--pp-border-strong);
+      color: var(--pp-text);
 
       &:hover {
-        background: rgba(230, 74, 25, 0.1);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(230, 74, 25, 0.3);
+        background: var(--pp-hover);
       }
-    }
-  }
-}
-
-:host-context(.dark-theme) .header {
-  border-bottom: 2px solid rgba(255, 112, 67, 0.3);
-
-  h2 {
-    background: linear-gradient(135deg, #ff7043 0%, #ff8a65 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .header-actions button[mat-stroked-button] {
-    border-color: #ff7043;
-    color: #ff7043;
-
-    &:hover {
-      background: rgba(255, 112, 67, 0.15);
-      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
     }
   }
 }
@@ -85,8 +58,11 @@
 
 // "Can cook" chip
 .can-cook-chip {
-  --mdc-chip-elevated-container-color: rgba(85, 139, 47, 0.15);
-  color: var(--color-success);
+  --mat-chip-elevated-container-color: var(--pp-status-ok-bg);
+  --mat-chip-label-text-color: var(--pp-status-ok);
+  --mat-chip-with-icon-icon-color: var(--pp-status-ok);
+  --mat-chip-outline-color: transparent;
+  color: var(--pp-status-ok);
 }
 
 // Ensure chip icons are sized right
@@ -106,7 +82,7 @@ mat-chip mat-icon {
     font-size: 96px;
     width: 96px;
     height: 96px;
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--pp-text-faint);
     margin-bottom: 1rem;
   }
 
@@ -118,26 +94,18 @@ mat-chip mat-icon {
   }
 }
 
-:host-context(.dark-theme) .empty-state mat-icon {
-  color: rgba(255, 255, 255, 0.2);
-}
-
 .fab {
   position: fixed;
   bottom: 88px;
   right: 24px;
   z-index: 15;
-  box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
+  box-shadow: var(--shadow-lg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
+    box-shadow: var(--shadow-xl);
   }
-}
-
-:host-context(.dark-theme) .fab {
-  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
 }
 
 @media (max-width: 600px) {

@@ -10,16 +10,13 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(230, 74, 25, 0.2);
+  border-bottom: 1px solid var(--pp-border);
 
   h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 700;
-    background: linear-gradient(135deg, #e64a19 0%, #ff7043 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--pp-text-strong);
   }
 
   .stats {
@@ -29,39 +26,20 @@
 
   .stat {
     padding: 6px 16px;
-    border-radius: 20px;
+    border-radius: 4px;
     font-size: 0.875rem;
     font-weight: 600;
-    background: rgba(230, 74, 25, 0.1);
-    color: #b03a14;
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-text-muted);
     display: flex;
     align-items: center;
     gap: 0.5rem;
 
     &.warning {
-      background: rgba(255, 152, 0, 0.1);
-      color: #f57c00;
-    }
-  }
-}
-
-:host-context(.dark-theme) .header {
-  border-bottom: 2px solid rgba(255, 112, 67, 0.3);
-
-  h2 {
-    background: linear-gradient(135deg, #ff7043 0%, #ff8a65 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .stat {
-    background: rgba(255, 112, 67, 0.15);
-    color: #ff8a65;
-
-    &.warning {
-      background: rgba(255, 152, 0, 0.15);
-      color: #ffb74d;
+      background: var(--pp-status-soon-bg);
+      border-color: transparent;
+      color: var(--pp-status-soon);
     }
   }
 }
@@ -104,25 +82,35 @@
   }
 }
 
-// Expiry chip colour overrides (MDC chip CSS variables)
+// Expiry chip colours (Material 21 chip tokens)
 .expiry-expired {
-  --mdc-chip-elevated-container-color: rgba(198, 40, 40, 0.15);
-  color: var(--color-error);
+  --mat-chip-elevated-container-color: var(--pp-status-expired-bg);
+  --mat-chip-label-text-color: var(--pp-status-expired);
+  --mat-chip-with-icon-icon-color: var(--pp-status-expired);
+  --mat-chip-outline-color: transparent;
+  color: var(--pp-status-expired);
 }
 
 .expiry-warning {
-  --mdc-chip-elevated-container-color: rgba(245, 159, 0, 0.15);
-  color: var(--color-warning);
+  --mat-chip-elevated-container-color: var(--pp-status-soon-bg);
+  --mat-chip-label-text-color: var(--pp-status-soon);
+  --mat-chip-with-icon-icon-color: var(--pp-status-soon);
+  --mat-chip-outline-color: transparent;
+  color: var(--pp-status-soon);
 }
 
+// Fine: a neutral chip. Only states that need attention get colour.
 .expiry-ok {
-  --mdc-chip-elevated-container-color: rgba(85, 139, 47, 0.15);
-  color: var(--color-success);
+  --mat-chip-label-text-color: var(--pp-text-muted);
+  --mat-chip-with-icon-icon-color: var(--pp-text-muted);
 }
 
 .low-stock-chip {
-  --mdc-chip-elevated-container-color: rgba(198, 40, 40, 0.15);
-  color: var(--color-error);
+  --mat-chip-elevated-container-color: var(--pp-status-expired-bg);
+  --mat-chip-label-text-color: var(--pp-status-expired);
+  --mat-chip-with-icon-icon-color: var(--pp-status-expired);
+  --mat-chip-outline-color: transparent;
+  color: var(--pp-status-expired);
 }
 
 // Empty state
@@ -134,7 +122,7 @@
     font-size: 96px;
     width: 96px;
     height: 96px;
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--pp-text-faint);
     margin-bottom: 1rem;
   }
 
@@ -152,10 +140,6 @@
   }
 }
 
-:host-context(.dark-theme) .empty-state mat-icon {
-  color: rgba(255, 255, 255, 0.2);
-}
-
 // FAB speed-dial group
 .fab-group {
   position: fixed;
@@ -169,12 +153,12 @@
 
   // Main FAB
   button[mat-fab] {
-    box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
+    box-shadow: var(--shadow-lg);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
       transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
+      box-shadow: var(--shadow-xl);
     }
 
     &:active {
@@ -184,21 +168,13 @@
 
   // Mini FABs
   button[mat-mini-fab] {
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--shadow-md);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     &:hover {
       transform: scale(1.12);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      box-shadow: var(--shadow-lg);
     }
-  }
-}
-
-:host-context(.dark-theme) .fab-group button[mat-fab] {
-  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
-
-  &:hover {
-    box-shadow: 0 8px 28px rgba(255, 112, 67, 0.5);
   }
 }
 

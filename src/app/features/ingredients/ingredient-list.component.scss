@@ -10,41 +10,23 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(230, 74, 25, 0.2);
+  border-bottom: 1px solid var(--pp-border);
 
   h2 {
     margin: 0;
     font-size: 28px;
     font-weight: 700;
-    background: linear-gradient(135deg, #e64a19 0%, #ff7043 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--pp-text-strong);
   }
 
   .stat {
     padding: 6px 16px;
-    border-radius: 20px;
+    border-radius: 4px;
     font-size: 0.875rem;
     font-weight: 600;
-    background: rgba(230, 74, 25, 0.1);
-    color: #b03a14;
-  }
-}
-
-:host-context(.dark-theme) .header {
-  border-bottom: 2px solid rgba(255, 112, 67, 0.3);
-
-  h2 {
-    background: linear-gradient(135deg, #ff7043 0%, #ff8a65 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .stat {
-    background: rgba(255, 112, 67, 0.15);
-    color: #ff8a65;
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+    color: var(--pp-text-muted);
   }
 }
 
@@ -68,7 +50,7 @@
     font-size: 96px;
     width: 96px;
     height: 96px;
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--pp-text-faint);
     margin-bottom: 1rem;
   }
 
@@ -78,10 +60,6 @@
     font-weight: 600;
     color: var(--mat-sys-on-surface);
   }
-}
-
-:host-context(.dark-theme) .empty-state mat-icon {
-  color: rgba(255, 255, 255, 0.2);
 }
 
 .fab-group {
@@ -95,31 +73,23 @@
   gap: 12px;
 
   button[mat-fab] {
-    box-shadow: 0 6px 20px rgba(230, 74, 25, 0.4);
+    box-shadow: var(--shadow-lg);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
       transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 8px 28px rgba(230, 74, 25, 0.5);
+      box-shadow: var(--shadow-xl);
     }
   }
 
   button[mat-mini-fab] {
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--shadow-md);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     &:hover {
       transform: scale(1.12);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      box-shadow: var(--shadow-lg);
     }
-  }
-}
-
-:host-context(.dark-theme) .fab-group button[mat-fab] {
-  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
-
-  &:hover {
-    box-shadow: 0 8px 28px rgba(255, 112, 67, 0.5);
   }
 }
 

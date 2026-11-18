@@ -21,8 +21,8 @@
   margin-bottom: 12px;
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--mat-sys-error-container, #f9dedc);
-  color: var(--mat-sys-on-error-container, #410e0b);
+  background: var(--pp-status-expired-bg);
+  color: var(--pp-status-expired);
 
   span {
     flex: 1;

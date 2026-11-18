@@ -96,10 +96,11 @@
               }
 
               @if (r.expiry) {
+                @let expiryLabel = getExpiryLabel(r.expiry);
                 <mat-chip [class]="'expiry-chip expiry-' + getExpiryStatus(r.expiry)"
-                          [matTooltip]="r.expiry">
-                  <mat-icon>schedule</mat-icon>
-                  {{ r.expiry }}
+                          [matTooltip]="t('inventory.expiryDate') + ': ' + r.expiry">
+                  <mat-icon aria-hidden="true">{{ getExpiryIcon(r.expiry) }}</mat-icon>
+                  {{ expiryLabel ? t(expiryLabel.key, expiryLabel.params) : r.expiry }}
                 </mat-chip>
               }
             </mat-chip-set>

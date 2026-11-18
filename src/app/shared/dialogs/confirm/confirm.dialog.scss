@@ -7,8 +7,8 @@
       font-size: 18px;
     }
 
-    .icon-warn  { color: var(--mat-warn-color, #f44336); }
-    .icon-primary { color: var(--mat-primary-color, #43a047); }
+    .icon-warn  { color: var(--pp-status-expired); }
+    .icon-primary { color: var(--pp-accent); }
 
     [mat-dialog-content] p {
       margin: 0;

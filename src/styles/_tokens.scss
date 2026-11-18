@@ -1,0 +1,75 @@
+// ============================================================================
+// PANTRYPAL COLOUR TOKENS — the single source of colour (U9)
+//
+// VS Code-style: neutral charcoal greys, one blue accent for actions, links,
+// focus and the active navigation item, and separate status colours.
+//
+@use 'sass:list';
+
+// Every entry is `name: (light, dark),` on one line. scripts/check-theme.mjs
+// parses this file to check contrast, so keep that exact shape.
+// Components use the emitted `--pp-<name>` custom properties and never raw
+// colour values.
+// ============================================================================
+
+$pp-tokens: (
+  // Surfaces
+  bg: (#ffffff, #1f1f1f),
+  surface: (#f8f8f8, #252526),
+  surface-raised: (#ffffff, #2d2d2d),
+  surface-sunken: (#f3f3f3, #181818),
+  bar: (#f8f8f8, #181818),
+  border: (#e5e5e5, #2b2b2b),
+  border-strong: (#cecece, #3c3c3c),
+  input-border: (#8a8a8a, #6e6e6e),
+
+  // Text
+  text: (#3b3b3b, #cccccc),
+  text-strong: (#1f1f1f, #e7e7e7),
+  text-muted: (#616161, #9d9d9d),
+  text-faint: (#a0a0a0, #5a5a5a),
+
+  // Accent (actions, links, focus, active navigation)
+  accent: (#005fb8, #4daafc),
+  accent-fill: (#005fb8, #0067b8),
+  on-accent: (#ffffff, #ffffff),
+  accent-subtle: (#e1ecf8, #04395e),
+  on-accent-subtle: (#005fb8, #ffffff),
+  on-accent-text: (#ffffff, #0b1a2a),
+  inverse-accent: (#4daafc, #005fb8),
+  focus: (#005fb8, #0078d4),
+
+  // Status
+  status-expired: (#a1260d, #f48771),
+  status-expired-bg: (#fde7e3, #3d1a17),
+  status-soon: (#6b4a00, #e2c08d),
+  status-soon-bg: (#fff1c2, #3a2f12),
+  status-ok: (#2e6b30, #89d185),
+  status-ok-bg: (#e3f1e3, #1d3320),
+  info: (#005fb8, #75beff),
+  info-bg: (#e1ecf8, #10304d),
+
+  // Nutrition macros (bars and markers, non-text)
+  macro-calories: (#795e26, #d7ba7d),
+  macro-protein: (#af00db, #c586c0),
+  macro-carbs: (#267f99, #4ec9b0),
+  macro-fat: (#b0561c, #ce9178),
+
+  // Overlays and effects
+  hover: (rgb(0 0 0 / 4%), rgb(255 255 255 / 5%)),
+  pressed: (rgb(0 0 0 / 8%), rgb(255 255 255 / 9%)),
+  shadow: (rgb(0 0 0 / 10%), rgb(0 0 0 / 45%)),
+  scrim: (rgb(0 0 0 / 40%), rgb(0 0 0 / 60%)),
+  skeleton: (rgb(0 0 0 / 6%), rgb(255 255 255 / 6%)),
+  skeleton-shine: (rgb(0 0 0 / 11%), rgb(255 255 255 / 11%)),
+  media-bg: (#000000, #000000),
+  on-media: (#ffffff, #ffffff),
+);
+
+/// Emits every token as `--pp-<name>: light-dark(<light>, <dark>)`.
+/// Requires `color-scheme` to be set on the same element or an ancestor.
+@mixin emit-tokens() {
+  @each $name, $pair in $pp-tokens {
+    --pp-#{$name}: light-dark(#{list.nth($pair, 1)}, #{list.nth($pair, 2)});
+  }
+}

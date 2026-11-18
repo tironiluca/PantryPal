@@ -625,7 +625,7 @@ B9 counted 21 snackbar literals in services. This item covers templates and copy
 
 **[Verified]**
 - **Icon-only controls lack accessible names.** A heuristic script counted 3 on inventory, 6 on meal plan and 4 on ingredients (edit and delete icons, FABs). `matTooltip` is not an accessible name.
-- **Recipe cards are not keyboard-operable.** They are clickable `div (click)` elements with no role, tabindex or key handler (`recipe-list.component.html:29`).
+- **Recipe cards are not keyboard-operable.** They are clickable `div (click)` elements with no role, tabindex or key handler (`recipe-list.component.html:30`).
 - **Contrast:** the light-theme sync icon (U3), and the 9.6-11.2 px navigation labels (U1).
 
 **Fix:**
